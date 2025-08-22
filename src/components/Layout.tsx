@@ -6,7 +6,8 @@ import {
   TestTube2, 
   TrendingUp,
   Brain,
-  Settings
+  Settings,
+  Users
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -25,6 +26,11 @@ const Layout = ({ children }: LayoutProps) => {
       path: '/sessions',
       name: '会话查询',
       icon: MessageSquare
+    },
+    {
+      path: '/digital-employees',
+      name: '数字员工管理',
+      icon: Users
     },
     {
       path: '/ab-testing',

@@ -116,6 +116,21 @@ export const mockABTests: ABTest[] = [
     description: '测试不同模型在客服场景下的表现差异',
     status: 'running',
     startDate: '2024-05-15T00:00:00Z',
+    config: {
+      splittingStrategy: 'session',
+      stratificationDimensions: ['user_type', 'query_complexity'],
+      environmentControl: {
+        fixedSeed: 12345,
+        temperature: 0.7,
+        consistentParams: true
+      },
+      complexityLevel: 'medium',
+      budget: {
+        maxTokens: 1000000,
+        maxCost: 500,
+        currentSpent: 234.56
+      }
+    },
     groups: [
       {
         id: 'group_a',
@@ -139,10 +154,32 @@ export const mockABTests: ABTest[] = [
       }
     ],
     metrics: {
-      totalSessions: 2456,
-      successRate: 92.3,
-      avgResponseTime: 2.1,
-      avgTokenCost: 0.045,
+      businessMetrics: {
+        taskSuccessRate: 92.3,
+        userValueDensity: 0.85,
+        retentionRate7d: 0.78,
+        retentionRate30d: 0.65,
+        userActivation: 0.82
+      },
+      supportMetrics: {
+        effectiveInteractionDepth: 3.2,
+        clarificationRequestRatio: 0.15,
+        firstResponseHitRate: 0.87,
+        timeToResolution: 120,
+        knowledgeCoverage: 0.75
+      },
+      technicalMetrics: {
+        totalSessions: 2456,
+        successRate: 92.3,
+        avgResponseTime: 2.1,
+        p95ResponseTime: 4.5,
+        avgTokenCost: 0.045,
+        tokenCostPerSession: 0.12,
+        retryRate: 0.08,
+        earlyExitRate: 0.05,
+        toolCallSuccessRate: 0.94,
+        modelFailureRate: 0.02
+      },
       satisfactionScore: 4.2
     }
   },
@@ -154,6 +191,21 @@ export const mockABTests: ABTest[] = [
     startDate: '2024-05-01T00:00:00Z',
     endDate: '2024-05-14T23:59:59Z',
     winnerGroup: 'group_b',
+    config: {
+      splittingStrategy: 'user',
+      stratificationDimensions: ['user_experience'],
+      environmentControl: {
+        fixedSeed: 54321,
+        temperature: 0.8,
+        consistentParams: true
+      },
+      complexityLevel: 'low',
+      budget: {
+        maxTokens: 500000,
+        maxCost: 300,
+        currentSpent: 289.43
+      }
+    },
     groups: [
       {
         id: 'group_a',
@@ -175,10 +227,32 @@ export const mockABTests: ABTest[] = [
       }
     ],
     metrics: {
-      totalSessions: 5678,
-      successRate: 94.7,
-      avgResponseTime: 1.8,
-      avgTokenCost: 0.038,
+      businessMetrics: {
+        taskSuccessRate: 94.7,
+        userValueDensity: 0.91,
+        retentionRate7d: 0.82,
+        retentionRate30d: 0.71,
+        userActivation: 0.87
+      },
+      supportMetrics: {
+        effectiveInteractionDepth: 3.8,
+        clarificationRequestRatio: 0.12,
+        firstResponseHitRate: 0.91,
+        timeToResolution: 95,
+        knowledgeCoverage: 0.82
+      },
+      technicalMetrics: {
+        totalSessions: 5678,
+        successRate: 94.7,
+        avgResponseTime: 1.8,
+        p95ResponseTime: 3.2,
+        avgTokenCost: 0.038,
+        tokenCostPerSession: 0.095,
+        retryRate: 0.06,
+        earlyExitRate: 0.03,
+        toolCallSuccessRate: 0.96,
+        modelFailureRate: 0.015
+      },
       satisfactionScore: 4.5
     }
   }

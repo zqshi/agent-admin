@@ -14,7 +14,7 @@ export interface Session {
   toolTrace: ToolTrace[];
 }
 
-// 数字员工实例
+// 数字员工实例（基础版本）
 export interface DigitalEmployee {
   id: string;
   name: string;
@@ -25,6 +25,207 @@ export interface DigitalEmployee {
   avgResponseTime: number;
   successRate: number;
   capabilities: string[];
+}
+
+// 数字员工管理（完整版本）
+export interface DigitalEmployeeManagement {
+  id: string;
+  name: string;
+  employeeNumber: string;
+  avatar?: string;
+  description?: string;
+  
+  // 基础状态
+  status: 'active' | 'disabled' | 'retired';
+  department: string;
+  createdAt: string;
+  updatedAt: string;
+  lastActiveAt?: string;
+  
+  // 角色与人设配置
+  persona: {
+    systemPrompt: string;
+    exampleDialogues?: ConversationExample[];
+    personality: string;
+    responsibilities: string[];
+  };
+  
+  // 导师汇报机制
+  mentorConfig?: {
+    mentorId: string;
+    mentorName: string;
+    reportingCycle: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'custom';
+    cronExpression?: string;
+    reportingMethod: 'im' | 'document';
+    documentPath?: string;
+  };
+  
+  // 能力与权限
+  permissions: {
+    allowedTools: string[];
+    resourceAccess: ResourcePermission[];
+    knowledgeManagement: {
+      canSelfLearn: boolean;
+      canModifyKnowledge: boolean;
+    };
+  };
+  
+  // 知识库
+  knowledgeBase: {
+    documents: KnowledgeDocument[];
+    faqItems: FAQItem[];
+    autoLearnedItems?: LearnedKnowledge[];
+    knowledgeGraph?: KnowledgeGraphData;
+  };
+  
+  // 记忆系统（高级功能）
+  memorySystem?: {
+    workingMemory: MemoryEntry[];
+    episodicMemory: MemoryEntry[];
+    semanticMemory: MemoryEntry[];
+    proceduralMemory: MemoryEntry[];
+    emotionalMemory: MemoryEntry[];
+  };
+  
+  // 运行统计
+  metrics: {
+    totalSessions: number;
+    successfulSessions: number;
+    avgResponseTime: number;
+    userSatisfactionScore?: number;
+    knowledgeUtilizationRate: number;
+    toolUsageStats: Record<string, number>;
+  };
+}
+
+// 对话示例
+export interface ConversationExample {
+  id: string;
+  userInput: string;
+  expectedResponse: string;
+  tags: string[];
+}
+
+// 资源权限
+export interface ResourcePermission {
+  resourceType: 'api' | 'database' | 'file_system' | 'external_service';
+  resourceId: string;
+  resourceName: string;
+  accessLevel: 'read' | 'write' | 'admin';
+  restrictions?: string[];
+}
+
+// 知识文档
+export interface KnowledgeDocument {
+  id: string;
+  name: string;
+  type: 'pdf' | 'txt' | 'md' | 'doc' | 'url';
+  filePath?: string;
+  url?: string;
+  uploadedAt: string;
+  size: number;
+  processedAt?: string;
+  extractedContent?: string;
+  tags: string[];
+  metadata?: Record<string, any>;
+}
+
+// FAQ条目
+export interface FAQItem {
+  id: string;
+  question: string;
+  answer: string;
+  tags: string[];
+  confidence: number;
+  usageCount: number;
+  lastUsed?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 自动学习的知识
+export interface LearnedKnowledge {
+  id: string;
+  content: string;
+  source: 'conversation' | 'feedback' | 'external';
+  confidence: number;
+  reviewStatus: 'pending' | 'approved' | 'rejected';
+  learnedAt: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  tags: string[];
+}
+
+// 知识图谱数据
+export interface KnowledgeGraphData {
+  entities: GraphEntity[];
+  relations: GraphRelation[];
+  lastUpdated: string;
+  statistics: {
+    entityCount: number;
+    relationCount: number;
+    avgConnectivity: number;
+  };
+}
+
+export interface GraphEntity {
+  id: string;
+  name: string;
+  type: string;
+  properties: Record<string, any>;
+  confidence: number;
+}
+
+export interface GraphRelation {
+  id: string;
+  sourceId: string;
+  targetId: string;
+  type: string;
+  properties: Record<string, any>;
+  confidence: number;
+}
+
+// 记忆条目
+export interface MemoryEntry {
+  id: string;
+  type: 'working' | 'episodic' | 'semantic' | 'procedural' | 'emotional';
+  content: string;
+  timestamp: string;
+  importance: number;
+  accessCount: number;
+  lastAccessed?: string;
+  associatedIds: string[];
+  metadata?: Record<string, any>;
+}
+
+// 数字员工创建表单数据
+export interface CreateDigitalEmployeeForm {
+  name: string;
+  employeeNumber: string;
+  avatar?: File;
+  description?: string;
+  department: string;
+  
+  // 人设配置
+  systemPrompt: string;
+  personality: string;
+  responsibilities: string[];
+  exampleDialogues: ConversationExample[];
+  
+  // 导师配置
+  enableMentor: boolean;
+  mentorId?: string;
+  reportingCycle?: string;
+  reportingMethod?: 'im' | 'document';
+  
+  // 权限配置
+  allowedTools: string[];
+  resourcePermissions: ResourcePermission[];
+  canSelfLearn: boolean;
+  
+  // 初始知识库
+  initialDocuments?: File[];
+  initialFAQs: FAQItem[];
 }
 
 // 人类员工
