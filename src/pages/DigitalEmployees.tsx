@@ -83,7 +83,7 @@ const DigitalEmployees = () => {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">数字员工管理</h1>
+            <h1 className="text-3xl font-semibold text-gray-900">员工管理</h1>
             <p className="text-gray-600 mt-1">管理和配置您的数字员工团队</p>
           </div>
           <button 

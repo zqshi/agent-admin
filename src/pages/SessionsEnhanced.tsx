@@ -973,7 +973,7 @@ const SessionsEnhanced = () => {
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">实时会话监控与追溯中心</h1>
+            <h1 className="text-3xl font-semibold text-gray-900">会话查询</h1>
             <p className="text-gray-600 mt-2">全方位监控数字员工运行状态和深度会话分析</p>
           </div>
           

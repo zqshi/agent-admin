@@ -501,3 +501,252 @@ export interface ComplexityAssessment {
   analysisComplexity: number;
   recommendations: string[];
 }
+
+// ==================== 工具管理模块 ====================
+
+// MCP工具状态枚举
+export type MCPToolStatus = 'draft' | 'configuring' | 'testing' | 'pending_release' | 'published' | 'maintenance' | 'retired';
+
+// MCP连接类型
+export type MCPConnectionType = 'stdio' | 'sse' | 'http';
+
+// 工具能力类型
+export type MCPCapabilityType = 'tools' | 'resources' | 'prompts';
+
+// MCP工具配置
+export interface MCPToolConfig {
+  connectionType: MCPConnectionType;
+  
+  // stdio配置
+  stdio?: {
+    command: string;
+    args: string[];
+    env?: Record<string, string>;
+    workingDirectory?: string;
+  };
+  
+  // sse/http配置
+  network?: {
+    url: string;
+    headers?: Record<string, string>;
+    authentication?: {
+      type: 'bearer' | 'api_key' | 'oauth2';
+      token?: string;
+      apiKey?: string;
+      oauthConfig?: {
+        clientId: string;
+        clientSecret: string;
+        tokenUrl: string;
+      };
+    };
+    timeout?: number;
+    retryPolicy?: {
+      maxRetries: number;
+      retryDelay: number;
+    };
+  };
+  
+  // 安全配置
+  security?: {
+    sandbox: boolean;
+    networkRestrictions: string[];
+    resourceLimits: {
+      maxMemory?: string;
+      maxCpu?: string;
+      maxExecutionTime?: number;
+    };
+    rateLimiting: {
+      globalQPS: number;
+      perUserQPS?: number;
+    };
+  };
+}
+
+// JSON Schema定义
+export interface ToolSchema {
+  type: string;
+  properties: Record<string, any>;
+  required?: string[];
+  description?: string;
+}
+
+// MCP能力定义
+export interface MCPCapability {
+  type: MCPCapabilityType;
+  name: string;
+  description: string;
+  schema?: ToolSchema;
+  metadata?: Record<string, any>;
+}
+
+// MCP工具定义
+export interface MCPTool {
+  id: string;
+  name: string;
+  displayName: string;
+  description: string;
+  version: string;
+  author: string;
+  createdAt: string;
+  updatedAt: string;
+  
+  // 状态管理
+  status: MCPToolStatus;
+  statusHistory: StatusHistoryEntry[];
+  
+  // 配置信息
+  config: MCPToolConfig;
+  capabilities: MCPCapability[];
+  
+  // 权限和治理
+  permissions: {
+    allowedDepartments: string[];
+    allowedUsers?: string[];
+    requiresApproval: boolean;
+  };
+  
+  // 版本控制
+  versions: MCPToolVersion[];
+  currentVersion: string;
+  
+  // 测试信息
+  testing?: {
+    testCases: ToolTestCase[];
+    lastTestResult?: TestResult;
+    testEnvironment?: string;
+  };
+  
+  // 运行时统计
+  metrics?: {
+    totalCalls: number;
+    successRate: number;
+    avgResponseTime: number;
+    errorRate: number;
+    lastUsed?: string;
+    popularityScore: number;
+  };
+  
+  // 标签和分类
+  tags: string[];
+  category: string;
+}
+
+// 状态历史记录
+export interface StatusHistoryEntry {
+  id: string;
+  fromStatus: MCPToolStatus;
+  toStatus: MCPToolStatus;
+  timestamp: string;
+  operator: string;
+  reason?: string;
+  metadata?: Record<string, any>;
+}
+
+// 工具版本
+export interface MCPToolVersion {
+  version: string;
+  config: MCPToolConfig;
+  capabilities: MCPCapability[];
+  releaseNotes?: string;
+  releasedAt: string;
+  releasedBy: string;
+  isActive: boolean;
+}
+
+// 测试用例
+export interface ToolTestCase {
+  id: string;
+  name: string;
+  description: string;
+  toolName: string;
+  parameters: Record<string, any>;
+  expectedResult?: any;
+  tags: string[];
+  createdAt: string;
+  createdBy: string;
+}
+
+// 测试结果
+export interface TestResult {
+  id: string;
+  testCaseId: string;
+  toolId: string;
+  status: 'passed' | 'failed' | 'error' | 'timeout';
+  executedAt: string;
+  executionTime: number;
+  input: Record<string, any>;
+  output?: any;
+  expectedOutput?: any;
+  error?: string;
+  logs: string[];
+  metadata?: Record<string, any>;
+}
+
+// 工具调用记录
+export interface ToolCallRecord {
+  id: string;
+  toolId: string;
+  toolName: string;
+  userId: string;
+  sessionId?: string;
+  parameters: Record<string, any>;
+  result?: any;
+  status: 'success' | 'failed' | 'timeout';
+  responseTime: number;
+  timestamp: string;
+  error?: string;
+  metadata?: Record<string, any>;
+}
+
+// 工具创建表单
+export interface CreateMCPToolForm {
+  // 基础信息
+  name: string;
+  displayName: string;
+  description: string;
+  category: string;
+  tags: string[];
+  
+  // 连接配置
+  connectionType: MCPConnectionType;
+  stdioConfig?: {
+    command: string;
+    args: string[];
+    env: Record<string, string>;
+  };
+  networkConfig?: {
+    url: string;
+    headers: Record<string, string>;
+    authentication?: {
+      type: string;
+      token?: string;
+    };
+  };
+  
+  // 安全配置
+  enableSandbox: boolean;
+  rateLimiting: {
+    globalQPS: number;
+    perUserQPS?: number;
+  };
+  
+  // 权限配置
+  allowedDepartments: string[];
+  requiresApproval: boolean;
+  
+  // 初始测试用例
+  testCases: Omit<ToolTestCase, 'id' | 'createdAt' | 'createdBy'>[];
+}
+
+// 工具发现结果
+export interface ToolDiscoveryResult {
+  success: boolean;
+  capabilities: MCPCapability[];
+  serverInfo?: {
+    name: string;
+    version: string;
+    protocolVersion: string;
+  };
+  error?: string;
+  discoveredAt: string;
+}

@@ -65,7 +65,7 @@ const Analytics = () => {
     <div className="p-6">
       {/* 页面标题 */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">数据分析与报表</h1>
+        <h1 className="text-3xl font-semibold text-gray-900">数据分析</h1>
         <p className="text-gray-600 mt-2">多维度分析数字员工的运行数据和性能指标</p>
       </div>
 

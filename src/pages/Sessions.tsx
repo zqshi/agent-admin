@@ -9,7 +9,7 @@ const Sessions = () => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">会话查询与追溯</h1>
+        <h1 className="text-3xl font-semibold text-gray-900">会话查询</h1>
         <p className="text-gray-600 mt-2">搜索和查看数字员工会话的详细执行过程</p>
       </div>
 

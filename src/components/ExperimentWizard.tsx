@@ -690,10 +690,10 @@ const ExperimentWizard = ({ onClose, onCreateExperiment }: {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[95vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">智能实验设计向导</h2>
             <p className="text-sm text-gray-600 mt-1">AI辅助你设计科学、高效的A/B实验</p>
@@ -707,7 +707,7 @@ const ExperimentWizard = ({ onClose, onCreateExperiment }: {
         </div>
 
         {/* 步骤指示器 */}
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between">
             {steps.map((step, index) => (
               <div key={step.id} className="flex items-center">
@@ -739,7 +739,7 @@ const ExperimentWizard = ({ onClose, onCreateExperiment }: {
         </div>
 
         {/* 步骤内容 */}
-        <div className="p-6 overflow-y-auto max-h-[60vh]">
+        <div className="p-6 overflow-y-auto flex-1">
           {currentStep === 0 && <BusinessGoalStep />}
           {currentStep === 1 && <VariableSelectionStep />}
           {currentStep === 2 && <StrategyRecommendationStep />}
@@ -747,7 +747,7 @@ const ExperimentWizard = ({ onClose, onCreateExperiment }: {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50">
+        <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
           <button
             onClick={prevStep}
             disabled={currentStep === 0}

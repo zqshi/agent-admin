@@ -6,6 +6,7 @@ import DigitalEmployees from './pages/DigitalEmployees';
 import DigitalEmployeeDetail from './pages/DigitalEmployeeDetail';
 import ABTestingEnhanced from './pages/ABTestingEnhanced';
 import Analytics from './pages/Analytics';
+import ToolManagement from './pages/ToolManagement';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="/digital-employees/:id" element={<DigitalEmployeeDetail />} />
           <Route path="/ab-testing" element={<ABTestingEnhanced />} />
           <Route path="/analytics" element={<Analytics />} />
+          <Route path="/tools" element={<ToolManagement />} />
         </Routes>
       </Layout>
     </Router>
