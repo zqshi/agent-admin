@@ -8,6 +8,7 @@ import { ABTest, BayesianAnalysis, ComplexityAssessment } from '../types';
 import ExperimentWizard from '../components/ExperimentWizard';
 import CreateExperiment from '../components/CreateExperiment';
 import { MetricTooltip } from '../components/ui/MetricTooltip';
+import { PageLayout, PageHeader, PageContent, Card, CardHeader, CardBody, Button } from '../components/ui';
 
 // 指标定义和说明数据
 interface MetricDefinition {
@@ -791,50 +792,44 @@ const ABTestingEnhanced = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-semibold text-gray-900">A/B实验</h1>
-          <p className="text-gray-600 mt-2">基于贝叶斯统计的智能实验分析平台</p>
-        </div>
+    <PageLayout>
+      <PageHeader 
+        title="A/B实验" 
+        subtitle="基于贝叶斯统计的智能实验分析平台"
+      >
         <div className="flex gap-3">
-          <button 
-            onClick={() => {
-              console.log('点击实验向导按钮');
-              setShowWizard(true);
-            }}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+          <Button 
+            variant="secondary"
+            onClick={() => setShowWizard(true)}
           >
-            <Settings className="h-4 w-4 mr-2" />
+            <Settings className="h-4 w-4" />
             实验向导
-          </button>
-          <button 
-            onClick={() => {
-              console.log('点击创建实验按钮');
-              setShowCreateExperiment(true);
-            }}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center"
+          </Button>
+          <Button 
+            variant="primary"
+            onClick={() => setShowCreateExperiment(true)}
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4" />
             创建实验
-          </button>
+          </Button>
         </div>
-      </div>
+      </PageHeader>
+
+      <PageContent>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* 实验列表 */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="p-4 border-b border-gray-200">
-              <h3 className="font-semibold text-gray-900">实验列表</h3>
+          <Card>
+            <CardHeader>
+              <h3 className="card-title">实验列表</h3>
               <div className="flex items-center mt-2">
                 <div className="flex items-center text-sm text-gray-500">
                   <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
                   实时更新
                 </div>
               </div>
-            </div>
+            </CardHeader>
             <div className="divide-y divide-gray-200">
               {mockEnhancedABTests.map((test) => (
                 <div
@@ -885,7 +880,7 @@ const ABTestingEnhanced = () => {
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
         </div>
 
         {/* 主内容区域 */}
@@ -893,7 +888,8 @@ const ABTestingEnhanced = () => {
           {selectedTest ? (
             <div className="space-y-6">
               {/* 实验概览卡片 */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <Card>
+                <CardBody>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">{selectedTest.name}</h3>
@@ -954,10 +950,11 @@ const ABTestingEnhanced = () => {
                     )}
                   </div>
                 </div>
-              </div>
+                </CardBody>
+              </Card>
 
               {/* 标签导航 */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <Card>
                 <div className="border-b border-gray-200">
                   <nav className="flex space-x-8 px-6">
                     {[
@@ -983,7 +980,7 @@ const ABTestingEnhanced = () => {
                 </div>
 
                 {/* 标签内容 */}
-                <div className="p-6">
+                <CardBody>
                   {activeTab === 'overview' && (
                     <ExperimentOverview test={selectedTest} />
                   )}
@@ -996,15 +993,17 @@ const ABTestingEnhanced = () => {
                   {activeTab === 'insights' && (
                     <ExplainabilityInsights explainability={selectedTest.explainability} />
                   )}
-                </div>
-              </div>
+                </CardBody>
+              </Card>
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-              <BarChart3 className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">选择一个实验开始分析</h3>
-              <p className="text-gray-500">从左侧列表中选择一个实验来查看详细的分析结果</p>
-            </div>
+            <Card>
+              <CardBody className="text-center py-12">
+                <BarChart3 className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">选择一个实验开始分析</h3>
+                <p className="text-gray-500">从左侧列表中选择一个实验来查看详细的分析结果</p>
+              </CardBody>
+            </Card>
           )}
         </div>
       </div>
@@ -1034,7 +1033,8 @@ const ABTestingEnhanced = () => {
           }}
         />
       )}
-    </div>
+      </PageContent>
+    </PageLayout>
   );
 };
 
@@ -1044,11 +1044,12 @@ const ExperimentOverview = ({ test }: { test: ABTest }) => (
     {/* 实验组对比 */}
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {test.groups.map((group) => (
-        <div key={group.id} className="border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="font-semibold text-gray-900">{group.name}</h4>
-            <span className="text-sm text-gray-500">{group.trafficRatio}% 流量</span>
-          </div>
+        <Card key={group.id}>
+          <CardBody>
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="font-semibold text-gray-900">{group.name}</h4>
+              <span className="text-sm text-gray-500">{group.trafficRatio}% 流量</span>
+            </div>
           
           {/* 实时指标 */}
           {group.realTimeMetrics && (
@@ -1072,19 +1073,21 @@ const ExperimentOverview = ({ test }: { test: ABTest }) => (
             </div>
           )}
           
-          {/* 配置信息 */}
-          <div className="text-sm text-gray-600">
-            <div>模型: {group.config.model}</div>
-            <div>温度: {group.config.temperature}</div>
-            <div>种子: {group.config.seed}</div>
-          </div>
-        </div>
+            {/* 配置信息 */}
+            <div className="text-sm text-gray-600">
+              <div>模型: {group.config.model}</div>
+              <div>温度: {group.config.temperature}</div>
+              <div>种子: {group.config.seed}</div>
+            </div>
+          </CardBody>
+        </Card>
       ))}
     </div>
 
     {/* 预算使用情况 */}
-    <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6">
-      <h4 className="font-semibold text-gray-900 mb-4">预算使用情况</h4>
+    <Card className="bg-gradient-to-r from-blue-50 to-purple-50">
+      <CardBody>
+        <h4 className="font-semibold text-gray-900 mb-4">预算使用情况</h4>
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm text-gray-600">已使用 ${test.config.budget.currentSpent} / ${test.config.budget.maxCost}</span>
         <span className="text-sm text-gray-600">
@@ -1103,7 +1106,8 @@ const ExperimentOverview = ({ test }: { test: ABTest }) => (
           <span className="text-sm">预算即将耗尽，建议调整或增加预算</span>
         </div>
       )}
-    </div>
+      </CardBody>
+    </Card>
   </div>
 );
 
@@ -1379,8 +1383,9 @@ const StatisticalAnalysis = ({ analysis, groups }: {
 
       {/* 频率学派分析 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h5 className="font-semibold text-gray-900 mb-4">频率学派检验</h5>
+        <Card>
+          <CardBody>
+            <h5 className="font-semibold text-gray-900 mb-4">频率学派检验</h5>
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-600">P值</span>
@@ -1399,10 +1404,12 @@ const StatisticalAnalysis = ({ analysis, groups }: {
               </span>
             </div>
           </div>
-        </div>
+          </CardBody>
+        </Card>
 
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h5 className="font-semibold text-gray-900 mb-4">决策矩阵</h5>
+        <Card>
+          <CardBody>
+            <h5 className="font-semibold text-gray-900 mb-4">决策矩阵</h5>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className={`p-2 rounded text-center ${
               analysis.statisticalSignificance && analysis.practicalSignificance 
@@ -1437,7 +1444,8 @@ const StatisticalAnalysis = ({ analysis, groups }: {
               <strong>停止实验</strong>
             </div>
           </div>
-        </div>
+          </CardBody>
+        </Card>
       </div>
     </div>
   );
@@ -1447,19 +1455,22 @@ const StatisticalAnalysis = ({ analysis, groups }: {
 const ExplainabilityInsights = ({ explainability }: { explainability?: ABTest['explainability'] }) => {
   if (!explainability) {
     return (
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-        <Brain className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">暂无洞察分析数据</h3>
-        <p className="text-gray-500">实验数据尚未达到分析阈值，请等待更多数据收集</p>
-      </div>
+      <Card>
+        <CardBody className="text-center py-12">
+          <Brain className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">暂无洞察分析数据</h3>
+          <p className="text-gray-500">实验数据尚未达到分析阈值，请等待更多数据收集</p>
+        </CardBody>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-6">
       {/* 特征重要性分析 */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h4 className="text-lg font-semibold text-gray-900 mb-4">特征重要性分析</h4>
+      <Card>
+        <CardBody>
+          <h4 className="text-lg font-semibold text-gray-900 mb-4">特征重要性分析</h4>
         <div className="space-y-3">
           {explainability.featureImportance && Object.entries(explainability.featureImportance).map(([feature, importance]) => (
             <div key={feature} className="flex items-center">
@@ -1476,12 +1487,14 @@ const ExplainabilityInsights = ({ explainability }: { explainability?: ABTest['e
             </div>
           ))}
         </div>
-      </div>
+        </CardBody>
+      </Card>
 
       {/* 用户行为路径分析 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-          <h5 className="font-semibold text-green-800 mb-4">成功路径模式</h5>
+        <Card className="bg-green-50 border-green-200">
+          <CardBody>
+            <h5 className="font-semibold text-green-800 mb-4">成功路径模式</h5>
           <div className="space-y-2 text-sm">
             <div className="flex items-center">
               <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
@@ -1496,10 +1509,12 @@ const ExplainabilityInsights = ({ explainability }: { explainability?: ABTest['e
               <span>多轮对话 → 逐步细化 → 达成目标</span>
             </div>
           </div>
-        </div>
+          </CardBody>
+        </Card>
 
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-          <h5 className="font-semibold text-red-800 mb-4">失败路径模式</h5>
+        <Card className="bg-red-50 border-red-200">
+          <CardBody>
+            <h5 className="font-semibold text-red-800 mb-4">失败路径模式</h5>
           <div className="space-y-2 text-sm">
             <div className="flex items-center">
               <XCircle className="h-4 w-4 text-red-600 mr-2" />
@@ -1514,12 +1529,14 @@ const ExplainabilityInsights = ({ explainability }: { explainability?: ABTest['e
               <span>工具失效：工具调用失败导致中断</span>
             </div>
           </div>
-        </div>
+          </CardBody>
+        </Card>
       </div>
 
       {/* 改进建议 */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h4 className="text-lg font-semibold text-blue-900 mb-4">改进建议</h4>
+      <Card className="bg-blue-50 border-blue-200">
+        <CardBody>
+          <h4 className="text-lg font-semibold text-blue-900 mb-4">改进建议</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <h5 className="font-medium text-blue-800 mb-2">立即行动</h5>
@@ -1538,7 +1555,8 @@ const ExplainabilityInsights = ({ explainability }: { explainability?: ABTest['e
             </ul>
           </div>
         </div>
-      </div>
+        </CardBody>
+      </Card>
       
     </div>
   );

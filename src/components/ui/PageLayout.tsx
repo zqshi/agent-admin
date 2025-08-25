@@ -50,7 +50,7 @@ const PageContent = React.forwardRef<HTMLDivElement, PageContentProps>(
   ({ children, className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('space-y-6', className)}
+      className={cn('space-y-8', className)}
       {...props}
     >
       {children}

@@ -11,6 +11,7 @@ import {
   Clock,
   RefreshCw
 } from 'lucide-react';
+import { PageLayout, PageHeader, PageContent, MetricCard, Card, CardHeader, CardBody, Button } from '../components/ui';
 
 const Analytics = () => {
   const [selectedTimeRange, setSelectedTimeRange] = useState('7d');
@@ -62,15 +63,28 @@ const Analytics = () => {
   ];
 
   return (
-    <div className="p-6">
-      {/* 页面标题 */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-semibold text-gray-900">数据分析</h1>
-        <p className="text-gray-600 mt-2">多维度分析数字员工的运行数据和性能指标</p>
-      </div>
+    <PageLayout>
+      <PageHeader 
+        title="数据分析" 
+        subtitle="多维度分析数字员工的运行数据和性能指标"
+      >
+        <div className="flex gap-2">
+          <Button variant="ghost">
+            <RefreshCw className="h-4 w-4" />
+            刷新
+          </Button>
+          <Button variant="secondary">
+            <Download className="h-4 w-4" />
+            导出
+          </Button>
+        </div>
+      </PageHeader>
 
-      {/* 筛选条和操作栏 */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+      <PageContent>
+
+        {/* 筛选条和操作栏 */}
+        <Card>
+          <CardBody>
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-gray-500" />
@@ -122,199 +136,220 @@ const Analytics = () => {
             </button>
           </div>
         </div>
-      </div>
+          </CardBody>
+        </Card>
 
-      {/* Token成本分析 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Token成本分析</h3>
-            <DollarSign className="h-5 w-5 text-gray-400" />
-          </div>
-          <div className="space-y-4">
-            {tokenCostData.map((item) => (
-              <div key={item.model} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <span className="font-medium text-gray-900">{item.model}</span>
-                    <span className={`ml-2 text-xs px-2 py-1 rounded-full ${
-                      item.change.startsWith('+') ? 'bg-red-100 text-red-600' :
-                      item.change.startsWith('-') ? 'bg-green-100 text-green-600' :
-                      'bg-gray-100 text-gray-600'
-                    }`}>
-                      {item.change}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-semibold text-gray-900">${item.cost.toLocaleString()}</div>
-                    <div className="text-sm text-gray-500">{item.percentage}%</div>
-                  </div>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-primary-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${item.percentage}%` }}
-                  ></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 每日趋势图 */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">趋势分析</h3>
-            <TrendingUp className="h-5 w-5 text-gray-400" />
-          </div>
-          <div className="h-64 flex items-center justify-center text-gray-500">
-            [这里将显示线性图表]<br/>
-            数据Token消耗趋势、成本变化等
-          </div>
-        </div>
-      </div>
-
-      {/* 工具调用分析 */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">工具调用分析</h3>
-          <Zap className="h-5 w-5 text-gray-400" />
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  工具名称
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  调用次数
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  失败次数
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  失败率
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  平均时间
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {toolCallData.map((tool) => (
-                <tr key={tool.tool} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="font-medium text-gray-900">{tool.tool}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-gray-900">{tool.calls.toLocaleString()}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-red-600 font-medium">{tool.failures}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      tool.failureRate > 5 ? 'bg-red-100 text-red-800' :
-                      tool.failureRate > 2 ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
-                      {tool.failureRate.toFixed(2)}%
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <Clock className="h-4 w-4 text-gray-400 mr-1" />
-                      <span className="text-gray-900">{tool.avgTime}s</span>
+        {/* Token成本分析 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <h3 className="card-title">Token成本分析</h3>
+            </CardHeader>
+            <CardBody>
+              <div className="space-y-4">
+                {tokenCostData.map((item) => (
+                  <div key={item.model} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <span className="font-medium text-gray-900">{item.model}</span>
+                        <span className={`ml-2 text-xs px-2 py-1 rounded-full ${
+                          item.change.startsWith('+') ? 'bg-red-100 text-red-600' :
+                          item.change.startsWith('-') ? 'bg-green-100 text-green-600' :
+                          'bg-gray-100 text-gray-600'
+                        }`}>
+                          {item.change}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold text-gray-900">${item.cost.toLocaleString()}</div>
+                        <div className="text-sm text-gray-500">{item.percentage}%</div>
+                      </div>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* 问题分析 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* 错误类型分布 */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">错误类型分布</h3>
-            <AlertTriangle className="h-5 w-5 text-gray-400" />
-          </div>
-          <div className="space-y-4">
-            {errorAnalysisData.map((error) => (
-              <div key={error.type} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <span className="font-medium text-gray-900">{error.type}</span>
-                    <div className={`ml-2 flex items-center text-xs ${
-                      error.trend === 'up' ? 'text-red-600' :
-                      error.trend === 'down' ? 'text-green-600' :
-                      'text-gray-600'
-                    }`}>
-                      {error.trend === 'up' ? <TrendingUp className="h-3 w-3 mr-1" /> :
-                       error.trend === 'down' ? <TrendingUp className="h-3 w-3 mr-1 transform rotate-180" /> : null}
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-primary-600 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${item.percentage}%` }}
+                      ></div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="font-semibold text-gray-900">{error.count}</div>
-                    <div className="text-sm text-gray-500">{error.percentage}%</div>
-                  </div>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      error.trend === 'up' ? 'bg-red-500' :
-                      error.trend === 'down' ? 'bg-green-500' :
-                      'bg-gray-500'
-                    }`}
-                    style={{ width: `${error.percentage}%` }}
-                  ></div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </CardBody>
+          </Card>
+
+          {/* 每日趋势图 */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <h3 className="card-title">趋势分析</h3>
+                <TrendingUp className="h-5 w-5 text-gray-400" />
+              </div>
+            </CardHeader>
+            <CardBody>
+              <div className="h-64 flex items-center justify-center text-gray-500">
+                [这里将显示线性图表]<br/>
+                数据Token消耗趋势、成本变化等
+              </div>
+            </CardBody>
+          </Card>
         </div>
 
-        {/* 关键指标卡片 */}
-        <div className="space-y-4">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        {/* 工具调用分析 */}
+        <Card>
+          <CardHeader>
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">总错误数</p>
-                <p className="text-3xl font-bold text-red-600">245</p>
-                <p className="text-sm text-gray-500 mt-1">较上周 -12%</p>
-              </div>
-              <AlertTriangle className="h-12 w-12 text-red-400" />
+              <h3 className="card-title">工具调用分析</h3>
+              <Zap className="h-5 w-5 text-gray-400" />
             </div>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">最常见错误</p>
-                <p className="text-lg font-bold text-gray-900">工具超时</p>
-                <p className="text-sm text-gray-500 mt-1">36.3% 的错误</p>
-              </div>
-              <Clock className="h-12 w-12 text-yellow-400" />
+          </CardHeader>
+          <CardBody>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      工具名称
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      调用次数
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      失败次数
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      失败率
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      平均时间
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {toolCallData.map((tool) => (
+                    <tr key={tool.tool} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="font-medium text-gray-900">{tool.tool}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-gray-900">{tool.calls.toLocaleString()}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-red-600 font-medium">{tool.failures}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          tool.failureRate > 5 ? 'bg-red-100 text-red-800' :
+                          tool.failureRate > 2 ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {tool.failureRate.toFixed(2)}%
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <Clock className="h-4 w-4 text-gray-400 mr-1" />
+                          <span className="text-gray-900">{tool.avgTime}s</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">平均修复时间</p>
-                <p className="text-3xl font-bold text-blue-600">4.2分钟</p>
-                <p className="text-sm text-gray-500 mt-1">较上周 -8%</p>
+          </CardBody>
+        </Card>
+
+        {/* 问题分析 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* 错误类型分布 */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <h3 className="card-title">错误类型分布</h3>
+                <AlertTriangle className="h-5 w-5 text-gray-400" />
               </div>
-              <RefreshCw className="h-12 w-12 text-blue-400" />
-            </div>
+            </CardHeader>
+            <CardBody>
+              <div className="space-y-4">
+                {errorAnalysisData.map((error) => (
+                  <div key={error.type} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <span className="font-medium text-gray-900">{error.type}</span>
+                        <div className={`ml-2 flex items-center text-xs ${
+                          error.trend === 'up' ? 'text-red-600' :
+                          error.trend === 'down' ? 'text-green-600' :
+                          'text-gray-600'
+                        }`}>
+                          {error.trend === 'up' ? <TrendingUp className="h-3 w-3 mr-1" /> :
+                           error.trend === 'down' ? <TrendingUp className="h-3 w-3 mr-1 transform rotate-180" /> : null}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold text-gray-900">{error.count}</div>
+                        <div className="text-sm text-gray-500">{error.percentage}%</div>
+                      </div>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full transition-all duration-300 ${
+                          error.trend === 'up' ? 'bg-red-500' :
+                          error.trend === 'down' ? 'bg-green-500' :
+                          'bg-gray-500'
+                        }`}
+                        style={{ width: `${error.percentage}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardBody>
+          </Card>
+
+          {/* 关键指标卡片 */}
+          <div className="space-y-4">
+            <Card>
+              <CardBody>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">总错误数</p>
+                    <p className="text-3xl font-bold text-red-600">245</p>
+                    <p className="text-sm text-gray-500 mt-1">较上周 -12%</p>
+                  </div>
+                  <AlertTriangle className="h-12 w-12 text-red-400" />
+                </div>
+              </CardBody>
+            </Card>
+            
+            <Card>
+              <CardBody>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">最常见错误</p>
+                    <p className="text-lg font-bold text-gray-900">工具超时</p>
+                    <p className="text-sm text-gray-500 mt-1">36.3% 的错误</p>
+                  </div>
+                  <Clock className="h-12 w-12 text-yellow-400" />
+                </div>
+              </CardBody>
+            </Card>
+            
+            <Card>
+              <CardBody>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">平均修复时间</p>
+                    <p className="text-3xl font-bold text-blue-600">4.2分钟</p>
+                    <p className="text-sm text-gray-500 mt-1">较上周 -8%</p>
+                  </div>
+                  <RefreshCw className="h-12 w-12 text-blue-400" />
+                </div>
+              </CardBody>
+            </Card>
           </div>
         </div>
-      </div>
-    </div>
+      </PageContent>
+    </PageLayout>
   );
 };
 

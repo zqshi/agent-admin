@@ -51,7 +51,7 @@ const MetricCard = React.forwardRef<HTMLDivElement, MetricCardProps>(
             </div>
           </div>
           {Icon && (
-            <div className={cn('rounded-lg p-3', iconColorClasses[color])}>
+            <div className={cn('rounded-xl p-3', iconColorClasses[color])}>
               <Icon className="h-6 w-6" />
             </div>
           )}

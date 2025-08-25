@@ -53,23 +53,23 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <div className="flex h-screen bg-gray-25">
-      {/* 侧边栏 */}
-      <div className="w-64 bg-white shadow-sm border-r border-gray-200">
-        {/* Logo */}
-        <div className="flex items-center px-6 py-5 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-600">
-              <Brain className="h-6 w-6 text-white" />
+      {/* 苹果风格侧边栏 */}
+      <div className="w-64 bg-white shadow-apple border-r border-gray-100" style={{backdropFilter: 'blur(20px)', backgroundColor: 'rgba(255, 255, 255, 0.95)'}}>
+        {/* 苹果风格 Logo */}
+        <div className="flex items-center px-8 py-6 border-b border-gray-100">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-600 shadow-lg">
+              <Brain className="h-7 w-7 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-gray-900">CogVision</h1>
-              <p className="text-xs text-gray-500">数字员工管理平台</p>
+              <h1 className="text-lg font-semibold text-gray-900" style={{fontWeight: 600, letterSpacing: '-0.01em'}}>CogVision</h1>
+              <p className="text-xs text-gray-500" style={{fontWeight: 400, letterSpacing: '-0.005em'}}>数字员工管理平台</p>
             </div>
           </div>
         </div>
         
-        {/* 导航菜单 */}
-        <nav className="mt-6 px-3 space-y-1">
+        {/* 苹果风格导航菜单 */}
+        <nav className="mt-8 px-4 space-y-2">
           {navigationItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -79,12 +79,16 @@ const Layout = ({ children }: LayoutProps) => {
                 end={item.exact}
                 className={({ isActive }) =>
                   cn(
-                    'flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200',
+                    'flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all duration-300',
                     isActive
-                      ? 'bg-primary-50 text-primary-700 shadow-sm'
+                      ? 'bg-primary-50 text-primary-700 shadow-apple'
                       : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                   )
                 }
+                style={{
+                  fontWeight: 500,
+                  letterSpacing: '-0.005em'
+                }}
               >
                 <Icon className="h-5 w-5 flex-shrink-0" />
                 <span>{item.name}</span>
@@ -93,9 +97,9 @@ const Layout = ({ children }: LayoutProps) => {
           })}
         </nav>
         
-        {/* 底部设置 */}
-        <div className="absolute bottom-0 left-0 w-64 p-4 border-t border-gray-200 bg-white">
-          <button className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 rounded-lg w-full transition-colors duration-200">
+        {/* 苹果风格底部设置 */}
+        <div className="absolute bottom-0 left-0 w-64 p-6 border-t border-gray-100 bg-white" style={{backdropFilter: 'blur(20px)', backgroundColor: 'rgba(255, 255, 255, 0.95)'}}>
+          <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 rounded-xl w-full transition-all duration-300" style={{fontWeight: 500, letterSpacing: '-0.005em'}}>
             <Settings className="h-5 w-5 flex-shrink-0" />
             <span>设置</span>
           </button>

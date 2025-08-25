@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   X, Save, Play, AlertTriangle, CheckCircle, Settings, 
   Users, Target, DollarSign, Clock, Zap, Brain, Copy
@@ -292,20 +293,20 @@ const CreateExperiment = ({ onClose, onSave, initialConfig }: CreateExperimentPr
     onSave(experiment);
   };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[95vh] overflow-hidden">
+  return createPortal(
+    <div className="modal-overlay">
+      <div className="modal max-w-6xl max-h-[95vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="modal-header">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">创建A/B实验</h2>
+            <h2 className="modal-title">创建A/B实验</h2>
             <p className="text-sm text-gray-600 mt-1">配置实验参数并启动智能测试</p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <X className="h-6 w-6" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
@@ -817,7 +818,8 @@ const CreateExperiment = ({ onClose, onSave, initialConfig }: CreateExperimentPr
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

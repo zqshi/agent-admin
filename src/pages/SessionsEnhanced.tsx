@@ -9,6 +9,7 @@ import { mockSessions } from '../data/mockData';
 import { digitalEmployees, humanEmployees, liveSessions, mockRealtimeUpdates } from '../data/realtimeData';
 import { Session, DigitalEmployee, HumanEmployee, LiveSession, ReasoningStep } from '../types';
 import { format } from 'date-fns';
+import { PageLayout, PageHeader, PageContent, Card, CardHeader, CardBody } from '../components/ui';
 
 type ViewMode = 'realtime' | 'historical';
 type RealtimeDimension = 'digital-employees' | 'human-employees' | 'global-activity';
@@ -20,6 +21,12 @@ const SessionsEnhanced = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<DigitalEmployee | null>(null);
   const [expandedTraces, setExpandedTraces] = useState<Set<string>>(new Set());
   const [expandedReasoningSteps, setExpandedReasoningSteps] = useState<Set<string>>(new Set());
+  
+  // Helper function to get user name by user ID
+  const getUserName = (userId: string) => {
+    const user = humanEmployees.find(emp => emp.id === userId);
+    return user ? user.name : userId; // Fallback to ID if name not found
+  };
   
   // 实时数据状态
   const [liveDigitalEmployees, setLiveDigitalEmployees] = useState(digitalEmployees);
@@ -689,7 +696,8 @@ const SessionsEnhanced = () => {
                       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
                         <div className="flex items-center text-gray-600">
                           <User className="h-4 w-4 mr-2 text-blue-500" />
-                          <span className="font-medium">{session.userId}</span>
+                          <span className="font-medium">{getUserName(session.userId)}</span>
+                          <span className="text-xs text-gray-400 ml-1">({session.userId})</span>
                         </div>
                         <div className="flex items-center text-gray-600">
                           <Clock className="h-4 w-4 mr-2 text-green-500" />
@@ -968,100 +976,102 @@ const SessionsEnhanced = () => {
   );
 
   return (
-    <div className="p-6">
-      {/* 页面标题和模式切换 */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-semibold text-gray-900">会话查询</h1>
-            <p className="text-gray-600 mt-2">全方位监控数字员工运行状态和深度会话分析</p>
-          </div>
-          
-          {/* 模式切换器 */}
-          <div className="bg-gray-100 p-1 rounded-lg">
-            <button
-              onClick={() => setViewMode('realtime')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                viewMode === 'realtime'
-                  ? 'bg-white text-primary-700 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <Activity className="h-4 w-4 inline mr-2" />
-              实时监控
-            </button>
-            <button
-              onClick={() => setViewMode('historical')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                viewMode === 'historical'
-                  ? 'bg-white text-primary-700 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <Eye className="h-4 w-4 inline mr-2" />
-              历史查询
-            </button>
-          </div>
+    <PageLayout>
+      <PageHeader 
+        title="会话查询" 
+        subtitle="全方位监控数字员工运行状态和深度会话分析"
+      >
+        {/* 模式切换器 */}
+        <div className="bg-gray-100 p-1 rounded-lg">
+          <button
+            onClick={() => setViewMode('realtime')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              viewMode === 'realtime'
+                ? 'bg-white text-primary-700 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <Activity className="h-4 w-4 inline mr-2" />
+            实时监控
+          </button>
+          <button
+            onClick={() => setViewMode('historical')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              viewMode === 'historical'
+                ? 'bg-white text-primary-700 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <Eye className="h-4 w-4 inline mr-2" />
+            历史查询
+          </button>
         </div>
-      </div>
+      </PageHeader>
+
+      <PageContent>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 左侧：视图选择和内容 */}
         <div className="lg:col-span-2">
           {viewMode === 'realtime' ? (
-            <>
+            <div className="space-y-8">
               {/* 实时模式维度选择 */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-                <div className="flex items-center space-x-4">
-                  <span className="text-sm font-medium text-gray-700">视图维度:</span>
-                  <div className="flex space-x-2">
-                    {[
-                      { id: 'global-activity', label: '全局活动', icon: Activity },
-                      { id: 'digital-employees', label: '数字员工', icon: Brain },
-                      { id: 'human-employees', label: '人类员工', icon: Users }
-                    ].map(({ id, label, icon: Icon }) => (
-                      <button
-                        key={id}
-                        onClick={() => setRealtimeDimension(id as RealtimeDimension)}
-                        className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          realtimeDimension === id
-                            ? 'bg-primary-100 text-primary-700'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
-                      >
-                        <Icon className="h-4 w-4 mr-2" />
-                        {label}
-                      </button>
-                    ))}
+              <Card>
+                <CardBody>
+                  <div className="flex items-center space-x-4">
+                    <span className="text-sm font-medium text-gray-700">视图维度:</span>
+                    <div className="flex space-x-2">
+                      {[
+                        { id: 'global-activity', label: '全局活动', icon: Activity },
+                        { id: 'digital-employees', label: '数字员工', icon: Brain },
+                        { id: 'human-employees', label: '人类员工', icon: Users }
+                      ].map(({ id, label, icon: Icon }) => (
+                        <button
+                          key={id}
+                          onClick={() => setRealtimeDimension(id as RealtimeDimension)}
+                          className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            realtimeDimension === id
+                              ? 'bg-primary-100 text-primary-700'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          <Icon className="h-4 w-4 mr-2" />
+                          {label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </div>
+                </CardBody>
+              </Card>
 
               {/* 实时监控内容 */}
-              {realtimeDimension === 'global-activity' && <GlobalActivityView />}
-              {realtimeDimension === 'digital-employees' && <DigitalEmployeesView />}
-              {realtimeDimension === 'human-employees' && <HumanEmployeesView />}
-            </>
+              <div>
+                {realtimeDimension === 'global-activity' && <GlobalActivityView />}
+                {realtimeDimension === 'digital-employees' && <DigitalEmployeesView />}
+                {realtimeDimension === 'human-employees' && <HumanEmployeesView />}
+              </div>
+            </div>
           ) : (
-            <>
+            <div className="space-y-8">
               {/* 历史查询模式 */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
-                <div className="space-y-4">
-                  {/* 基础搜索 */}
-                  <div className="flex items-center space-x-4">
-                    <div className="flex-1 flex items-center">
-                      <Search className="h-5 w-5 text-gray-400 mr-2" />
-                      <input
-                        type="text"
-                        placeholder="搜索Session ID、用户ID或关键词"
-                        className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
-                      />
+              <Card>
+                <CardBody>
+                  <div className="space-y-4">
+                    {/* 基础搜索 */}
+                    <div className="flex items-center space-x-4">
+                      <div className="flex-1 flex items-center">
+                        <Search className="h-5 w-5 text-gray-400 mr-2" />
+                        <input
+                          type="text"
+                          placeholder="搜索Session ID、用户姓名或关键词"
+                          className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                        />
+                      </div>
+                      <button className="flex items-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">
+                        <Filter className="h-4 w-4 mr-2" />
+                        高级筛选
+                      </button>
                     </div>
-                    <button className="flex items-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">
-                      <Filter className="h-4 w-4 mr-2" />
-                      高级筛选
-                    </button>
-                  </div>
                   
                   {/* 高级筛选器 */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
@@ -1097,15 +1107,16 @@ const SessionsEnhanced = () => {
                         <input type="number" placeholder="最大" className="w-full border-gray-300 rounded-md shadow-sm" />
                       </div>
                     </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                </CardBody>
+              </Card>
 
               {/* 历史会话列表 */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div className="p-4 border-b border-gray-200">
-                  <h3 className="font-semibold text-gray-900">历史会话 ({mockSessions.length})</h3>
-                </div>
+              <Card>
+                <CardHeader>
+                  <h3 className="card-title">历史会话 ({mockSessions.length})</h3>
+                </CardHeader>
                 <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
                   {mockSessions.map((session) => (
                     <div
@@ -1126,7 +1137,8 @@ const SessionsEnhanced = () => {
                       <div className="text-sm text-gray-500 grid grid-cols-3 gap-4">
                         <div className="flex items-center">
                           <User className="h-3 w-3 mr-1" />
-                          {session.userId}
+                          {getUserName(session.userId)}
+                          <span className="text-xs text-gray-400 ml-1">({session.userId})</span>
                         </div>
                         <div className="flex items-center">
                           <MessageSquare className="h-3 w-3 mr-1" />
@@ -1140,8 +1152,8 @@ const SessionsEnhanced = () => {
                     </div>
                   ))}
                 </div>
-              </div>
-            </>
+              </Card>
+            </div>
           )}
         </div>
 
@@ -1150,9 +1162,10 @@ const SessionsEnhanced = () => {
           {selectedSession ? (
             <div className="space-y-6">
               {/* 会话概要 */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">会话详情</h3>
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <h3 className="card-title">会话详情</h3>
                   <div className="flex items-center space-x-2">
                     {'isLive' in selectedSession && selectedSession.isLive && (
                       <span className="flex items-center text-sm text-green-600">
@@ -1162,17 +1175,19 @@ const SessionsEnhanced = () => {
                     )}
                     <StatusIndicator status={selectedSession.status} />
                   </div>
-                </div>
-                
-                <div className="space-y-3 text-sm">
+                  </div>
+                </CardHeader>
+                <CardBody>
+                  <div className="space-y-3 text-sm">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="font-medium text-gray-500">会话 ID</p>
                       <p className="text-gray-900 font-mono text-xs">{selectedSession.id}</p>
                     </div>
                     <div>
-                      <p className="font-medium text-gray-500">用户 ID</p>
-                      <p className="text-gray-900">{selectedSession.userId}</p>
+                      <p className="font-medium text-gray-500">用户信息</p>
+                      <p className="text-gray-900">{getUserName(selectedSession.userId)}</p>
+                      <p className="text-xs text-gray-500">ID: {selectedSession.userId}</p>
                     </div>
                     <div>
                       <p className="font-medium text-gray-500">消息数</p>
@@ -1201,13 +1216,17 @@ const SessionsEnhanced = () => {
                       </p>
                     </div>
                   )}
-                </div>
-              </div>
+                  </div>
+                </CardBody>
+              </Card>
 
               {/* 对话流 */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h4 className="text-lg font-semibold text-gray-900 mb-4">对话流</h4>
-                <div className="space-y-4 max-h-64 overflow-y-auto">
+              <Card>
+                <CardHeader>
+                  <h4 className="card-title">对话流</h4>
+                </CardHeader>
+                <CardBody>
+                  <div className="space-y-4 max-h-64 overflow-y-auto">
                   {selectedSession.messages.map((message) => (
                     <div
                       key={message.id}
@@ -1230,23 +1249,29 @@ const SessionsEnhanced = () => {
                       </div>
                     </div>
                   ))}
-                </div>
-              </div>
+                  </div>
+                </CardBody>
+              </Card>
 
               {/* 推理过程可视化 - 仅实时会话显示 */}
               {'reasoningSteps' in selectedSession && selectedSession.reasoningSteps.length > 0 && (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <ReasoningStepsVisualization steps={selectedSession.reasoningSteps} />
-                </div>
+                <Card>
+                  <CardBody>
+                    <ReasoningStepsVisualization steps={selectedSession.reasoningSteps} />
+                  </CardBody>
+                </Card>
               )}
 
               {/* 工具调用追溯 */}
               {selectedSession.toolTrace.length > 0 && (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <Layers className="h-5 w-5 mr-2" />
-                    工具调用追溯
-                  </h4>
+                <Card>
+                  <CardHeader>
+                    <h4 className="card-title flex items-center">
+                      <Layers className="h-5 w-5 mr-2" />
+                      工具调用追溯
+                    </h4>
+                  </CardHeader>
+                  <CardBody>
                   <div className="space-y-3">
                     {selectedSession.toolTrace.map((trace) => (
                       <div key={trace.id} className="border border-gray-200 rounded-lg">
@@ -1301,23 +1326,35 @@ const SessionsEnhanced = () => {
                       </div>
                     ))}
                   </div>
-                </div>
+                  </CardBody>
+                </Card>
               )}
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-              <Eye className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">
-                {viewMode === 'realtime' 
-                  ? '点击任意会话或员工查看实时详情' 
-                  : '请从左侧列表中选择一个会话来查看详情'
-                }
-              </p>
-            </div>
+            <Card>
+              <CardBody className="empty-state">
+                <div className="empty-icon">
+                  <Eye className="h-16 w-16 text-gray-300 mx-auto" />
+                </div>
+                <h3 className="empty-title">
+                  {viewMode === 'realtime' 
+                    ? '选择会话或员工查看实时详情' 
+                    : '选择一个会话开始查看'
+                  }
+                </h3>
+                <p className="empty-description">
+                  {viewMode === 'realtime' 
+                    ? '点击任意会话或员工查看详细的实时状态信息' 
+                    : '从左侧列表中选择一个会话来查看详细的执行过程和对话内容'
+                  }
+                </p>
+              </CardBody>
+            </Card>
           )}
         </div>
       </div>
-    </div>
+      </PageContent>
+    </PageLayout>
   );
 };
 

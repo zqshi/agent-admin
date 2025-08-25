@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   X, 
   Save, 
@@ -38,6 +39,32 @@ const CreateDigitalEmployee = ({ onClose, onSave }: CreateDigitalEmployeeProps) 
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // 防止背景滚动
+  useEffect(() => {
+    // 保存原始样式
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalBodyPosition = document.body.style.position;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    
+    // 禁用滚动并固定页面位置
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = '0';
+    document.body.style.left = '0';
+    document.body.style.width = '100%';
+    document.documentElement.style.overflow = 'hidden';
+    
+    // 清理函数：恢复原始的滚动行为
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.body.style.position = originalBodyPosition;
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.width = '';
+      document.documentElement.style.overflow = originalHtmlOverflow;
+    };
+  }, []);
 
   const steps = [
     { id: 1, title: '基础信息', icon: User },
@@ -585,18 +612,18 @@ const CreateDigitalEmployee = ({ onClose, onSave }: CreateDigitalEmployeeProps) 
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-4xl h-full max-h-[90vh] flex flex-col">
+  return createPortal(
+    <div className="modal-overlay">
+      <div className="modal flex flex-col">
         {/* 头部 */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="modal-header">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">创建数字员工</h2>
-            <p className="text-gray-600">配置新的数字员工并设定其能力</p>
+            <h2 className="modal-title">创建数字员工</h2>
+            <p className="text-gray-600 mt-1">配置新的数字员工并设定其能力</p>
           </div>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -642,12 +669,12 @@ const CreateDigitalEmployee = ({ onClose, onSave }: CreateDigitalEmployeeProps) 
         </div>
 
         {/* 内容区域 */}
-        <div className="flex-1 p-6 overflow-y-auto">
+        <div className="flex-1 modal-body overflow-y-auto">
           {renderStepContent()}
         </div>
 
         {/* 底部按钮 */}
-        <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-white">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white">
           <button
             onClick={handlePrev}
             disabled={currentStep === 1}
@@ -687,7 +714,8 @@ const CreateDigitalEmployee = ({ onClose, onSave }: CreateDigitalEmployeeProps) 
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

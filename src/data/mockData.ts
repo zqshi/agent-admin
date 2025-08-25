@@ -18,7 +18,7 @@ export const mockDashboardMetrics: DashboardMetrics = {
 export const mockSessions: Session[] = [
   {
     id: 'session_001',
-    userId: 'user_123',
+    userId: 'emp_001',
     startTime: '2024-05-21T10:30:00Z',
     endTime: '2024-05-21T10:35:22Z',
     status: 'success',
@@ -69,7 +69,7 @@ export const mockSessions: Session[] = [
   },
   {
     id: 'session_002',
-    userId: 'user_456',
+    userId: 'emp_002',
     startTime: '2024-05-21T11:15:00Z',
     endTime: '2024-05-21T11:16:30Z',
     status: 'failed',

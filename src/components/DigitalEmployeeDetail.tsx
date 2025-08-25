@@ -459,14 +459,14 @@ const DigitalEmployeeDetail = ({ employee, onClose, onSave }: DigitalEmployeeDet
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-6xl h-full max-h-[90vh] overflow-hidden">
+    <div className="modal-overlay">
+      <div className="modal max-w-6xl h-[90vh] overflow-hidden">
         {/* 头部 */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="modal-header">
           <div className="flex items-center">
             <button
               onClick={onClose}
-              className="mr-4 p-1 hover:bg-gray-100 rounded"
+              className="mr-4 p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
