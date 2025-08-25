@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Search, Filter, Settings, Play, Pause, Eye, Edit2, Trash2, TestTube } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Plus, Settings, Play, Pause, Eye, Edit2, Trash2, TestTube, X } from 'lucide-react';
 import { MCPTool, MCPToolStatus, CreateMCPToolForm } from '../types';
 import { mockMCPTools, mockToolUsageStats } from '../data/mockToolsData';
 import CreateMCPTool from '../components/CreateMCPTool';
@@ -13,9 +14,9 @@ import {
   CardHeader, 
   CardBody, 
   Button, 
-  Input,
   Badge,
-  EmptyState
+  EmptyState,
+  FilterSection
 } from '../components/ui';
 
 // 状态映射
@@ -63,6 +64,8 @@ const ToolManagement: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [selectedTool, setSelectedTool] = useState<MCPTool | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingTool, setEditingTool] = useState<MCPTool | null>(null);
   const [showTestConsole, setShowTestConsole] = useState(false);
   const [testingTool, setTestingTool] = useState<MCPTool | null>(null);
 
@@ -141,6 +144,56 @@ const ToolManagement: React.FC = () => {
     console.log('创建新工具:', newTool);
   };
 
+  // 编辑工具
+  const handleEditTool = (formData: CreateMCPToolForm) => {
+    if (!editingTool) return;
+    
+    const updatedTool: MCPTool = {
+      ...editingTool,
+      name: formData.name,
+      displayName: formData.displayName,
+      description: formData.description,
+      updatedAt: new Date().toISOString(),
+      config: {
+        connectionType: formData.connectionType,
+        stdio: formData.stdioConfig,
+        network: formData.networkConfig ? {
+          ...formData.networkConfig,
+          authentication: formData.networkConfig.authentication ? {
+            ...formData.networkConfig.authentication,
+            type: formData.networkConfig.authentication.type as 'bearer' | 'api_key' | 'oauth2'
+          } : undefined
+        } : undefined,
+        security: {
+          sandbox: formData.enableSandbox,
+          networkRestrictions: editingTool.config.security?.networkRestrictions || [],
+          resourceLimits: editingTool.config.security?.resourceLimits || {},
+          rateLimiting: formData.rateLimiting
+        }
+      },
+      permissions: {
+        allowedDepartments: formData.allowedDepartments,
+        requiresApproval: formData.requiresApproval
+      },
+      testing: {
+        ...editingTool.testing,
+        testCases: formData.testCases.map((tc, index) => ({
+          ...tc,
+          id: `test_${Date.now()}_${index}`,
+          createdAt: new Date().toISOString(),
+          createdBy: '当前用户'
+        }))
+      },
+      tags: formData.tags,
+      category: formData.category
+    };
+
+    setTools(prev => prev.map(t => t.id === editingTool.id ? updatedTool : t));
+    setShowEditModal(false);
+    setEditingTool(null);
+    console.log('编辑工具:', updatedTool);
+  };
+
   // 工具操作
   const handleToolAction = (tool: MCPTool, action: string) => {
     switch (action) {
@@ -149,8 +202,8 @@ const ToolManagement: React.FC = () => {
         setShowTestConsole(true);
         break;
       case 'edit':
-        console.log('编辑工具:', tool.name);
-        // TODO: 实现编辑功能
+        setEditingTool(tool);
+        setShowEditModal(true);
         break;
       case 'delete':
         if (confirm(`确定要删除工具 "${tool.displayName}" 吗？`)) {
@@ -250,54 +303,44 @@ const ToolManagement: React.FC = () => {
         </div>
 
         {/* 搜索和筛选 */}
-        <Card>
-          <CardBody>
-            <div className="flex flex-col lg:flex-row gap-4">
-              {/* 搜索框 */}
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="搜索工具名称、描述或标签..."
-                  className="pl-10"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              
-              {/* 状态筛选 */}
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-gray-400" />
-                <select
-                  className="input min-w-[140px]"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as MCPToolStatus | 'all')}
-                >
-                  <option value="all">全部状态</option>
-                  <option value="draft">草稿</option>
-                  <option value="configuring">配置中</option>
-                  <option value="testing">测试中</option>
-                  <option value="pending_release">待发布</option>
-                  <option value="published">已发布</option>
-                  <option value="maintenance">维护中</option>
-                  <option value="retired">已下线</option>
-                </select>
-              </div>
-              
-              {/* 分类筛选 */}
-              <select
-                className="input min-w-[120px]"
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-              >
-                <option value="all">全部分类</option>
-                {categories.map(category => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
-            </div>
-          </CardBody>
-        </Card>
+        <FilterSection
+          searchProps={{
+            value: searchTerm,
+            onChange: setSearchTerm,
+            placeholder: "搜索工具名称、描述或标签..."
+          }}
+          filters={[
+            {
+              key: 'status',
+              placeholder: '全部状态',
+              showIcon: true,
+              value: statusFilter,
+              onChange: (value) => setStatusFilter(value as MCPToolStatus | 'all'),
+              options: [
+                { value: 'draft', label: '草稿', count: tools.filter(t => t.status === 'draft').length },
+                { value: 'configuring', label: '配置中', count: tools.filter(t => t.status === 'configuring').length },
+                { value: 'testing', label: '测试中', count: tools.filter(t => t.status === 'testing').length },
+                { value: 'pending_release', label: '待发布', count: tools.filter(t => t.status === 'pending_release').length },
+                { value: 'published', label: '已发布', count: tools.filter(t => t.status === 'published').length },
+                { value: 'maintenance', label: '维护中', count: tools.filter(t => t.status === 'maintenance').length },
+                { value: 'retired', label: '已下线', count: tools.filter(t => t.status === 'retired').length }
+              ],
+              showCount: true
+            },
+            {
+              key: 'category',
+              placeholder: '全部分类',
+              value: categoryFilter,
+              onChange: setCategoryFilter,
+              options: categories.map(category => ({
+                value: category,
+                label: category,
+                count: tools.filter(t => t.category === category).length
+              })),
+              showCount: true
+            }
+          ]}
+        />
 
         {/* 工具列表 */}
         <Card>
@@ -470,21 +513,26 @@ const ToolManagement: React.FC = () => {
         </Card>
 
         {/* 工具详情模态框 */}
-        {selectedTool && (
-          <div className="modal-overlay">
-            <div className="modal">
-              <div className="modal-header">
-                <h3 className="modal-title">
-                  工具详情 - {selectedTool.displayName}
-                </h3>
+        {selectedTool && createPortal(
+          <div className="fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]" style={{margin: 0, width: '100vw', height: '100vh'}}>
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              {/* 头部 */}
+              <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    工具详情 - {selectedTool.displayName}
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">查看工具的详细信息和配置</p>
+                </div>
                 <button
                   onClick={() => setSelectedTool(null)}
-                  className="btn-ghost text-xl"
+                  className="text-gray-400 hover:text-gray-600 text-xl"
                 >
-                  ×
+                  <X className="h-6 w-6" />
                 </button>
               </div>
-              <div className="modal-body">
+              
+              <div className="p-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* 基础信息 */}
                   <div>
@@ -584,7 +632,8 @@ const ToolManagement: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
         {/* 创建工具模态框 */}
@@ -592,6 +641,17 @@ const ToolManagement: React.FC = () => {
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
           onSubmit={handleCreateTool}
+        />
+
+        {/* 编辑工具模态框 */}
+        <CreateMCPTool
+          isOpen={showEditModal}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingTool(null);
+          }}
+          onSubmit={handleEditTool}
+          editingTool={editingTool}
         />
 
         {/* 测试控制台 */}

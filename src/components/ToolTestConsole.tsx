@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Play, Square, RotateCcw, Download, Copy, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
 import { MCPTool, TestResult, ToolTestCase } from '../types';
 
@@ -344,7 +345,7 @@ const ToolTestConsole: React.FC<ToolTestConsoleProps> = ({ tool, isOpen, onClose
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="modal-overlay">
       <div className="modal max-w-6xl h-[90vh] flex flex-col">
         {/* 头部 */}
@@ -594,7 +595,8 @@ const ToolTestConsole: React.FC<ToolTestConsoleProps> = ({ tool, isOpen, onClose
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

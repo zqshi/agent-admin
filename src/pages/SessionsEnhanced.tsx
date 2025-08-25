@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { 
-  Search, Filter, Eye, CheckCircle, XCircle, Clock, User, MessageSquare, 
+  Filter, Eye, CheckCircle, XCircle, Clock, User, MessageSquare, 
   Zap, ChevronDown, ChevronRight, ExternalLink, Code, Activity, Users,
   Brain, Layers, PlayCircle, PauseCircle, AlertCircle, TrendingUp,
-  Settings, Wifi, WifiOff, Timer, MoreVertical, ChevronUp
+  Settings, Wifi, WifiOff, Timer, ChevronUp
 } from 'lucide-react';
 import { mockSessions } from '../data/mockData';
 import { digitalEmployees, humanEmployees, liveSessions, mockRealtimeUpdates } from '../data/realtimeData';
 import { Session, DigitalEmployee, HumanEmployee, LiveSession, ReasoningStep } from '../types';
 import { format } from 'date-fns';
-import { PageLayout, PageHeader, PageContent, Card, CardHeader, CardBody } from '../components/ui';
+import { PageLayout, PageHeader, PageContent, Card, CardHeader, CardBody, FilterSection, Button, Input } from '../components/ui';
 
 type ViewMode = 'realtime' | 'historical';
 type RealtimeDimension = 'digital-employees' | 'human-employees' | 'global-activity';
@@ -53,14 +53,14 @@ const SessionsEnhanced = () => {
   };
 
   // 高级查询状态
-  const [advancedFilters, setAdvancedFilters] = useState({
-    toolName: '',
-    hasErrors: false,
-    minTokens: '',
-    maxTokens: '',
-    minDuration: '',
-    maxDuration: ''
-  });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [toolFilter, setToolFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [minTokens, setMinTokens] = useState('');
+  const [maxTokens, setMaxTokens] = useState('');
+  const [minDuration, setMinDuration] = useState('');
+  const [maxDuration, setMaxDuration] = useState('');
 
   // 增强的实时数据更新 - 模拟WebSocket连接
   useEffect(() => {
@@ -1057,57 +1057,112 @@ const SessionsEnhanced = () => {
               <Card>
                 <CardBody>
                   <div className="space-y-4">
-                    {/* 基础搜索 */}
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-1 flex items-center">
-                        <Search className="h-5 w-5 text-gray-400 mr-2" />
-                        <input
-                          type="text"
-                          placeholder="搜索Session ID、用户姓名或关键词"
-                          className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
-                        />
-                      </div>
-                      <button className="flex items-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">
-                        <Filter className="h-4 w-4 mr-2" />
+                    {/* 基础搜索和筛选 */}
+                    <div className="flex items-center justify-between gap-4">
+                      <FilterSection
+                        searchProps={{
+                          value: searchQuery,
+                          onChange: setSearchQuery,
+                          placeholder: "搜索Session ID、用户姓名或关键词"
+                        }}
+                        filters={[
+                          {
+                            key: 'status',
+                            placeholder: '所有状态',
+                            value: statusFilter,
+                            onChange: setStatusFilter,
+                            showIcon: true,
+                            options: [
+                              { value: 'success', label: '成功' },
+                              { value: 'failed', label: '失败' },
+                              { value: 'has_errors', label: '包含错误' }
+                            ]
+                          }
+                        ]}
+                        layout="horizontal"
+                        showCard={false}
+                        className="flex-1"
+                      />
+                      
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                      >
+                        <Filter className="h-4 w-4" />
                         高级筛选
-                      </button>
+                      </Button>
                     </div>
                   
-                  {/* 高级筛选器 */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">调用工具</label>
-                      <select className="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500">
-                        <option value="">所有工具</option>
-                        <option value="query_sales_data">query_sales_data</option>
-                        <option value="send_email">send_email</option>
-                        <option value="generate_report">generate_report</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">状态</label>
-                      <select className="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500">
-                        <option value="">所有状态</option>
-                        <option value="success">成功</option>
-                        <option value="failed">失败</option>
-                        <option value="has_errors">包含错误</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Token范围</label>
-                      <div className="flex space-x-2">
-                        <input type="number" placeholder="最小" className="w-full border-gray-300 rounded-md shadow-sm" />
-                        <input type="number" placeholder="最大" className="w-full border-gray-300 rounded-md shadow-sm" />
+                    {/* 高级筛选器 */}
+                    {showAdvancedFilters && (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
+                        <div>
+                          <label className="label">调用工具</label>
+                          <select 
+                            className="input w-full"
+                            value={toolFilter}
+                            onChange={(e) => setToolFilter(e.target.value)}
+                          >
+                            <option value="all">所有工具</option>
+                            <option value="query_sales_data">query_sales_data</option>
+                            <option value="send_email">send_email</option>
+                            <option value="generate_report">generate_report</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="label">状态</label>
+                          <select 
+                            className="input w-full"
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                          >
+                            <option value="all">所有状态</option>
+                            <option value="success">成功</option>
+                            <option value="failed">失败</option>
+                            <option value="has_errors">包含错误</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="label">Token范围</label>
+                          <div className="flex space-x-2">
+                            <Input 
+                              type="number" 
+                              placeholder="最小" 
+                              value={minTokens}
+                              onChange={(e) => setMinTokens(e.target.value)}
+                              className="w-full"
+                            />
+                            <Input 
+                              type="number" 
+                              placeholder="最大"
+                              value={maxTokens}
+                              onChange={(e) => setMaxTokens(e.target.value)}
+                              className="w-full"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="label">持续时间(s)</label>
+                          <div className="flex space-x-2">
+                            <Input 
+                              type="number" 
+                              placeholder="最小"
+                              value={minDuration}
+                              onChange={(e) => setMinDuration(e.target.value)}
+                              className="w-full"
+                            />
+                            <Input 
+                              type="number" 
+                              placeholder="最大"
+                              value={maxDuration}
+                              onChange={(e) => setMaxDuration(e.target.value)}
+                              className="w-full"
+                            />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">持续时间(s)</label>
-                      <div className="flex space-x-2">
-                        <input type="number" placeholder="最小" className="w-full border-gray-300 rounded-md shadow-sm" />
-                        <input type="number" placeholder="最大" className="w-full border-gray-300 rounded-md shadow-sm" />
-                      </div>
-                    </div>
-                    </div>
+                    )}
                   </div>
                 </CardBody>
               </Card>

@@ -1,11 +1,11 @@
-# CogVision API 接口文档
+# KingSoft API 接口文档
 
 ## 概览
 
-CogVision 数字员工管理平台 API 提供了完整的后端接口，支持实时监控、会话查询、A/B测试管理和数据分析功能。
+KingSoft 数字员工管理平台 API 提供了完整的后端接口，支持实时监控、会话查询、A/B测试管理和数据分析功能。
 
 **API 基础信息:**
-- **Base URL:** `https://api.cogvision.com/v1`
+- **Base URL:** `https://api.kingsoft.com/v1`
 - **认证方式:** Bearer Token
 - **数据格式:** JSON
 - **字符编码:** UTF-8
@@ -543,7 +543,7 @@ GET /export/{exportId}/status
   "data": {
     "exportId": "export_123",
     "status": "completed",
-    "downloadUrl": "https://api.cogvision.com/downloads/export_123.csv",
+    "downloadUrl": "https://api.kingsoft.com/downloads/export_123.csv",
     "fileSize": 2048576,
     "expiresAt": "2024-08-22T10:00:00Z"
   }
@@ -601,10 +601,10 @@ GET /export/{exportId}/status
 
 ### JavaScript/TypeScript
 ```javascript
-import { CogVisionClient } from '@cogvision/sdk';
+import { KingSoftClient } from '@kingsoft/sdk';
 
-const client = new CogVisionClient({
-  baseURL: 'https://api.cogvision.com/v1',
+const client = new KingSoftClient({
+  baseURL: 'https://api.kingsoft.com/v1',
   token: 'your-access-token'
 });
 
@@ -628,10 +628,10 @@ const experiment = await client.experiments.create({
 
 ### Python
 ```python
-from cogvision import CogVisionClient
+from kingsoft import KingSoftClient
 
-client = CogVisionClient(
-    base_url='https://api.cogvision.com/v1',
+client = KingSoftClient(
+    base_url='https://api.kingsoft.com/v1',
     token='your-access-token'
 )
 
@@ -669,4 +669,4 @@ experiment = client.experiments.create(
 
 **文档版本:** v1.0  
 **最后更新:** 2024-08-21  
-**联系方式:** api-support@cogvision.com
+**联系方式:** api-support@kingsoft.com

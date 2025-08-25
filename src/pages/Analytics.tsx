@@ -1,9 +1,6 @@
 import { useState } from 'react';
 import {
-  Calendar,
   Download,
-  Filter,
-  BarChart3,
   TrendingUp,
   AlertTriangle,
   DollarSign,
@@ -11,7 +8,7 @@ import {
   Clock,
   RefreshCw
 } from 'lucide-react';
-import { PageLayout, PageHeader, PageContent, MetricCard, Card, CardHeader, CardBody, Button } from '../components/ui';
+import { PageLayout, PageHeader, PageContent, MetricCard, Card, CardHeader, CardBody, Button, FilterSection } from '../components/ui';
 
 const Analytics = () => {
   const [selectedTimeRange, setSelectedTimeRange] = useState('7d');
@@ -85,57 +82,69 @@ const Analytics = () => {
         {/* 筛选条和操作栏 */}
         <Card>
           <CardBody>
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-gray-500" />
-            <select
-              value={selectedTimeRange}
-              onChange={(e) => setSelectedTimeRange(e.target.value)}
-              className="border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
-            >
-              {timeRangeOptions.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-gray-500" />
-            <select
-              value={selectedDimension}
-              onChange={(e) => setSelectedDimension(e.target.value)}
-              className="border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
-            >
-              {dimensionOptions.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-gray-500" />
-            <select
-              value={selectedMetric}
-              onChange={(e) => setSelectedMetric(e.target.value)}
-              className="border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
-            >
-              {metricOptions.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="ml-auto flex items-center gap-2">
-            <button className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              刷新
-            </button>
-            <button className="flex items-center px-3 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-700">
-              <Download className="h-4 w-4 mr-2" />
-              导出
-            </button>
-          </div>
-        </div>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              {/* 筛选器组 */}
+              <FilterSection
+                searchProps={{
+                  value: '',
+                  onChange: () => {},
+                  placeholder: "搜索数据..."
+                }}
+                filters={[
+                  {
+                    key: 'timeRange',
+                    placeholder: '选择时间范围',
+                    value: selectedTimeRange,
+                    onChange: setSelectedTimeRange,
+                    showIcon: true,
+                    options: timeRangeOptions.map(opt => ({
+                      value: opt.value,
+                      label: opt.label
+                    })),
+                    className: 'min-w-[120px]'
+                  },
+                  {
+                    key: 'dimension', 
+                    placeholder: '选择分析维度',
+                    value: selectedDimension,
+                    onChange: setSelectedDimension,
+                    showIcon: true,
+                    options: dimensionOptions.map(opt => ({
+                      value: opt.value,
+                      label: opt.label
+                    })),
+                    className: 'min-w-[100px]'
+                  },
+                  {
+                    key: 'metric',
+                    placeholder: '选择指标',
+                    value: selectedMetric,
+                    onChange: setSelectedMetric,
+                    showIcon: true,
+                    options: metricOptions.map(opt => ({
+                      value: opt.value,
+                      label: opt.label
+                    })),
+                    className: 'min-w-[120px]'
+                  }
+                ]}
+                layout="horizontal"
+                showCard={false}
+                className="flex-1"
+              />
+              
+              {/* 操作按钮组 */}
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm">
+                  <RefreshCw className="h-4 w-4" />
+                  刷新
+                </Button>
+                <Button variant="secondary" size="sm">
+                  <Download className="h-4 w-4" />
+                  导出
+                </Button>
+              </div>
+            </div>
           </CardBody>
         </Card>
 

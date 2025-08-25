@@ -2,7 +2,7 @@
   "name": "cogvision-admin",
   "version": "1.0.0",
   "type": "module",
-  "description": "CogVision - 数字员工智能管理平台演示界面",
+  "description": "KingSoft - 数字员工智能管理平台演示界面",
   "main": "index.js",
   "scripts": {
     "dev": "vite",

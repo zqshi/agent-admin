@@ -8,3 +8,6 @@ export { MetricCard, type MetricCardProps } from './MetricCard';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { Tooltip, type TooltipProps } from './Tooltip';
 export { MetricTooltip } from './MetricTooltip';
+export { SearchInput, type SearchInputProps } from './SearchInput';
+export { FilterSelect, type FilterSelectProps, type FilterOption } from './FilterSelect';
+export { FilterSection, type FilterSectionProps, type FilterConfig } from './FilterSection';

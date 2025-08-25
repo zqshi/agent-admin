@@ -1,18 +1,29 @@
 import { useState } from 'react';
-import { Search, Filter, Eye } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { mockSessions } from '../data/mockData';
 import { humanEmployees } from '../data/realtimeData';
 import { Session } from '../types';
-import { PageLayout, PageHeader, PageContent, Card, CardHeader, CardBody } from '../components/ui';
+import { PageLayout, PageHeader, PageContent, Card, CardHeader, CardBody, FilterSection } from '../components/ui';
 
 const Sessions = () => {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'success' | 'failed'>('all');
 
   // Helper function to get user name by user ID
   const getUserName = (userId: string) => {
     const user = humanEmployees.find(emp => emp.id === userId);
     return user ? user.name : userId; // Fallback to ID if name not found
   };
+
+  // 筛选会话
+  const filteredSessions = mockSessions.filter(session => {
+    const matchesSearch = session.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         getUserName(session.userId).toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || session.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <PageLayout>
@@ -31,33 +42,39 @@ const Sessions = () => {
                 <h3 className="card-title">搜索和筛选</h3>
               </CardHeader>
               <CardBody>
-                <div className="space-y-4">
-                  <div className="search-input">
-                    <Search className="search-icon" />
-                    <input
-                      type="text"
-                      placeholder="搜索Session ID或用户姓名"
-                      className="input pl-10"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                    <select className="input flex-1">
-                      <option value="all">所有状态</option>
-                      <option value="success">成功</option>
-                      <option value="failed">失败</option>
-                    </select>
-                  </div>
-                </div>
+                <FilterSection
+                  searchProps={{
+                    value: searchQuery,
+                    onChange: setSearchQuery,
+                    placeholder: "搜索Session ID或用户姓名"
+                  }}
+                  filters={[
+                    {
+                      key: 'status',
+                      placeholder: '所有状态',
+                      showIcon: true,
+                      value: statusFilter,
+                      onChange: (value) => setStatusFilter(value as 'all' | 'success' | 'failed'),
+                      options: [
+                        { value: 'success', label: '成功', count: mockSessions.filter(s => s.status === 'success').length },
+                        { value: 'failed', label: '失败', count: mockSessions.filter(s => s.status === 'failed').length }
+                      ],
+                      showCount: true,
+                      className: 'w-full'
+                    }
+                  ]}
+                  layout="vertical"
+                  showCard={false}
+                />
               </CardBody>
             </Card>
 
           <Card>
             <CardHeader>
-              <h3 className="card-title">会话列表 ({mockSessions.length})</h3>
+              <h3 className="card-title">会话列表 ({filteredSessions.length})</h3>
             </CardHeader>
             <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto scrollbar-thin">
-              {mockSessions.map((session) => (
+              {filteredSessions.map((session) => (
                 <div
                   key={session.id}
                   className={`p-8 cursor-pointer hover:bg-gray-50 transition-all duration-300 hover:shadow-apple-lg ${

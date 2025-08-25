@@ -1,7 +1,7 @@
-# CogVision - 数字员工智能管理平台
+# KingSoft - 数字员工智能管理平台
 
 <div align="center">
-  <img src="./docs/images/logo.png" alt="CogVision Logo" width="200"/>
+  <img src="./docs/images/logo.png" alt="KingSoft Logo" width="200"/>
   
   ![React](https://img.shields.io/badge/React-18.2.0-61DAFB?style=flat-square&logo=react)
   ![TypeScript](https://img.shields.io/badge/TypeScript-5.0.2-3178C6?style=flat-square&logo=typescript)
@@ -12,7 +12,7 @@
 
 ## 📋 项目简介
 
-CogVision 是一个为基于 LLM+MCP 架构的数字员工提供全面管理能力的智能平台。平台提供实时监控、深入分析和 A/B 实验功能，帮助团队确保数字员工的可靠性、可控性和持续优化。
+KingSoft 是一个为基于 LLM+MCP 架构的数字员工提供全面管理能力的智能平台。平台提供实时监控、深入分析和 A/B 实验功能，帮助团队确保数字员工的可靠性、可控性和持续优化。
 
 ### 🌟 核心特性
 
@@ -170,7 +170,7 @@ cogvision-admin/
 ## 📚 文档与支持
 
 ### 完整文档
-- [🎯 产品需求文档](./docs/产品需求文档-CogVision数字员工管理平台.md) - 详细功能需求和业务逻辑
+- [🎯 产品需求文档](./docs/产品需求文档-KingSoft数字员工管理平台.md) - 详细功能需求和业务逻辑
 - [🏗️ 技术架构设计](./docs/技术架构设计.md) - 系统架构和技术选型详述
 - [🔌 API接口文档](./docs/API接口文档.md) - RESTful API规范和接口详情
 - [📖 用户操作手册](./docs/用户操作手册.md) - 详细的用户使用指南
@@ -282,7 +282,7 @@ kubectl apply -f k8s/
 ---
 
 <div align="center">
-  <p>由 ❤️ 制作 | © 2024 CogVision Team</p>
+  <p>由 ❤️ 制作 | © 2024 KingSoft Team</p>
   
   [![Star History Chart](https://api.star-history.com/svg?repos=your-org/cogvision-admin&type=Date)](https://star-history.com/#your-org/cogvision-admin&Date)
 </div>

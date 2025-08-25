@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   ArrowLeft,
   Edit3,
@@ -458,7 +459,7 @@ const DigitalEmployeeDetail = ({ employee, onClose, onSave }: DigitalEmployeeDet
     );
   };
 
-  return (
+  return createPortal(
     <div className="modal-overlay">
       <div className="modal max-w-6xl h-[90vh] overflow-hidden">
         {/* 头部 */}
@@ -515,7 +516,8 @@ const DigitalEmployeeDetail = ({ employee, onClose, onSave }: DigitalEmployeeDet
           {activeTab === 'memory' && renderMemoryTab()}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

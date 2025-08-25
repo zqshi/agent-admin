@@ -62,7 +62,7 @@ const Layout = ({ children }: LayoutProps) => {
               <Brain className="h-7 w-7 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-gray-900" style={{fontWeight: 600, letterSpacing: '-0.01em'}}>CogVision</h1>
+              <h1 className="text-lg font-semibold text-gray-900" style={{fontWeight: 600, letterSpacing: '-0.01em'}}>KingSoft</h1>
               <p className="text-xs text-gray-500" style={{fontWeight: 400, letterSpacing: '-0.005em'}}>数字员工管理平台</p>
             </div>
           </div>

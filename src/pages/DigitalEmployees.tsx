@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Plus, 
-  Search, 
-  Filter, 
   MoreHorizontal,
   User,
   Settings,
@@ -16,7 +14,7 @@ import {
 } from 'lucide-react';
 import { DigitalEmployeeManagement } from '../types';
 import { mockDigitalEmployees } from '../data/mockDigitalEmployees';
-import { PageLayout, PageHeader, PageContent, MetricCard, Card, CardHeader, CardBody, Button } from '../components/ui';
+import { PageLayout, PageHeader, PageContent, MetricCard, Card, CardHeader, Button, FilterSection } from '../components/ui';
 import CreateDigitalEmployee from '../components/CreateDigitalEmployee';
 
 const DigitalEmployees = () => {
@@ -96,52 +94,40 @@ const DigitalEmployees = () => {
 
       <PageContent>
         {/* 搜索和筛选 */}
-        <Card>
-          <CardBody>
-            <div className="flex gap-4 items-center">
-              {/* 搜索框 */}
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <input
-                  type="text"
-                  placeholder="搜索数字员工姓名或编号..."
-                  className="input"
-                  style={{paddingLeft: '2.5rem'}}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-
-              {/* 状态筛选 */}
-              <select 
-                className="input"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as any)}
-              >
-                <option value="all">全部状态</option>
-                <option value="active">启用</option>
-                <option value="disabled">禁用</option>
-                <option value="retired">停用</option>
-              </select>
-
-              {/* 部门筛选 */}
-              <select 
-                className="input"
-                value={departmentFilter}
-                onChange={(e) => setDepartmentFilter(e.target.value)}
-              >
-                <option value="all">全部部门</option>
-                {departments.map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
-                ))}
-              </select>
-
-              <Button variant="ghost" size="sm">
-                <Filter className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardBody>
-        </Card>
+        <FilterSection
+          searchProps={{
+            value: searchQuery,
+            onChange: setSearchQuery,
+            placeholder: "搜索数字员工姓名或编号..."
+          }}
+          filters={[
+            {
+              key: 'status',
+              placeholder: '全部状态',
+              showIcon: true,
+              value: statusFilter,
+              onChange: (value) => setStatusFilter(value as any),
+              options: [
+                { value: 'active', label: '启用', count: employees.filter(e => e.status === 'active').length },
+                { value: 'disabled', label: '禁用', count: employees.filter(e => e.status === 'disabled').length },
+                { value: 'retired', label: '停用', count: employees.filter(e => e.status === 'retired').length }
+              ],
+              showCount: true
+            },
+            {
+              key: 'department',
+              placeholder: '全部部门',
+              value: departmentFilter,
+              onChange: setDepartmentFilter,
+              options: departments.map(dept => ({
+                value: dept,
+                label: dept,
+                count: employees.filter(e => e.department === dept).length
+              })),
+              showCount: true
+            }
+          ]}
+        />
 
         {/* 统计指标 */}
         <div className="grid-responsive">

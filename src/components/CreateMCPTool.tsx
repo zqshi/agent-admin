@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Plus, Trash2, TestTube, Info, AlertTriangle } from 'lucide-react';
-import { CreateMCPToolForm, MCPConnectionType, ToolTestCase } from '../types';
+import { CreateMCPToolForm, MCPConnectionType, ToolTestCase, MCPTool } from '../types';
 
 interface CreateMCPToolProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: CreateMCPToolForm) => void;
+  editingTool?: MCPTool | null;
 }
 
-const CreateMCPTool: React.FC<CreateMCPToolProps> = ({ isOpen, onClose, onSubmit }) => {
+const CreateMCPTool: React.FC<CreateMCPToolProps> = ({ isOpen, onClose, onSubmit, editingTool }) => {
   const [formData, setFormData] = useState<CreateMCPToolForm>({
     name: '',
     displayName: '',
@@ -31,6 +33,53 @@ const CreateMCPTool: React.FC<CreateMCPToolProps> = ({ isOpen, onClose, onSubmit
   const [newDepartment, setNewDepartment] = useState('');
   const [isDiscovering, setIsDiscovering] = useState(false);
   const [discoveryResult, setDiscoveryResult] = useState<any>(null);
+
+  // 编辑模式下初始化表单数据
+  useEffect(() => {
+    if (editingTool) {
+      setFormData({
+        name: editingTool.name,
+        displayName: editingTool.displayName,
+        description: editingTool.description,
+        category: editingTool.category,
+        tags: editingTool.tags,
+        connectionType: editingTool.config.connectionType,
+        enableSandbox: editingTool.config.security?.sandbox || false,
+        rateLimiting: editingTool.config.security?.rateLimiting || { globalQPS: 10, perUserQPS: 1 },
+        allowedDepartments: editingTool.permissions.allowedDepartments,
+        requiresApproval: editingTool.permissions.requiresApproval,
+        testCases: editingTool.testing?.testCases?.map(tc => ({
+          name: tc.name,
+          description: tc.description,
+          toolName: tc.toolName,
+          parameters: tc.parameters,
+          tags: tc.tags
+        })) || [],
+        stdioConfig: editingTool.config.stdio,
+        networkConfig: editingTool.config.network
+      });
+      setCurrentStep(1);
+    } else {
+      // 重置为初始状态
+      setFormData({
+        name: '',
+        displayName: '',
+        description: '',
+        category: '',
+        tags: [],
+        connectionType: 'http',
+        enableSandbox: true,
+        rateLimiting: {
+          globalQPS: 10,
+          perUserQPS: 1
+        },
+        allowedDepartments: [],
+        requiresApproval: false,
+        testCases: []
+      });
+      setCurrentStep(1);
+    }
+  }, [editingTool]);
 
   // 预定义选项
   const categories = ['数据服务', '通信服务', '开发工具', '分析工具', '安全工具', '其他'];
@@ -152,13 +201,15 @@ const CreateMCPTool: React.FC<CreateMCPToolProps> = ({ isOpen, onClose, onSubmit
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]" style={{margin: 0, width: '100vw', height: '100vh'}}>
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* 头部 */}
         <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">注册新工具</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              {editingTool ? '编辑工具' : '注册新工具'}
+            </h3>
             <p className="text-sm text-gray-500 mt-1">
               步骤 {currentStep} / 4 - {
                 currentStep === 1 ? '基础信息' :
@@ -765,13 +816,14 @@ const CreateMCPTool: React.FC<CreateMCPToolProps> = ({ isOpen, onClose, onSubmit
                 disabled={currentStep === 3 && formData.allowedDepartments.length === 0}
                 className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {currentStep < 4 ? '下一步' : '创建工具'}
+                {currentStep < 4 ? '下一步' : (editingTool ? '保存修改' : '创建工具')}
               </button>
             </div>
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
