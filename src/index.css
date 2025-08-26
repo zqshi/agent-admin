@@ -110,53 +110,87 @@
     font-weight: 500;
   }
   
-  /* 苹果风格按钮样式 */
+  /* 简约按钮样式 - 去色彩化，基于阴影层次 */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-medium transition-all duration-300
-           disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2;
-    border-radius: 12px;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all duration-200
+           disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none;
+    border-radius: 8px;
     font-weight: 500;
-    letter-spacing: -0.01em;
-    backdrop-filter: blur(20px);
-    transform: translateZ(0);
-  }
-  
-  .btn:active {
-    transform: scale(0.98) translateZ(0);
+    background: white;
+    border: 1px solid rgb(229 231 235);
   }
   
   .btn-primary {
-    @apply btn bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
-    box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.2);
+    @apply btn text-gray-900;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgb(229 231 235);
   }
   
   .btn-primary:hover {
-    box-shadow: 0 6px 20px 0 rgba(59, 130, 246, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
   }
   
   .btn-secondary {
-    @apply btn bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-400;
-    background-color: rgba(245, 245, 247, 0.8);
+    @apply btn text-gray-600;
+    background: rgb(249 250 251);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgb(229 231 235);
+  }
+  
+  .btn-secondary:hover {
+    background: rgb(243 244 246);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
   }
   
   .btn-success {
-    @apply btn bg-success-600 text-white hover:bg-success-700 focus:ring-success-500;
-    box-shadow: 0 4px 14px 0 rgba(34, 197, 94, 0.2);
+    @apply btn text-gray-700;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    border: 1px solid rgb(209 213 219);
+  }
+  
+  .btn-success:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    transform: translateY(-1px);
   }
   
   .btn-warning {
-    @apply btn bg-warning-600 text-white hover:bg-warning-700 focus:ring-warning-500;
-    box-shadow: 0 4px 14px 0 rgba(245, 158, 11, 0.2);
+    @apply btn text-gray-700;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    border: 1px solid rgb(203 213 225);
+  }
+  
+  .btn-warning:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transform: translateY(-1px);
   }
   
   .btn-error {
-    @apply btn bg-error-600 text-white hover:bg-error-700 focus:ring-error-500;
-    box-shadow: 0 4px 14px 0 rgba(239, 68, 68, 0.2);
+    @apply btn text-gray-800;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    border: 1px solid rgb(185 187 190);
+  }
+  
+  .btn-error:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    transform: translateY(-1px);
   }
   
   .btn-ghost {
-    @apply btn text-gray-700 hover:bg-gray-100 focus:ring-gray-400;
-    background-color: rgba(255, 255, 255, 0.1);
+    @apply btn text-gray-600;
+    background: transparent;
+    border: 1px solid transparent;
+    box-shadow: none;
+  }
+  
+  .btn-ghost:hover {
+    background: rgb(249 250 251);
+    border: 1px solid rgb(229 231 235);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   }
   
   .btn-sm {
@@ -169,21 +203,13 @@
     border-radius: 16px;
   }
   
-  /* 苹果风格输入框样式 */
+  /* 简化输入框样式 */
   .input {
-    @apply w-full px-4 py-3 text-sm border border-gray-200 rounded-lg 
+    @apply w-full px-3 py-2 text-sm border border-gray-200 rounded-md 
            focus:ring-2 focus:ring-primary-500 focus:border-transparent
            placeholder:text-gray-400 disabled:bg-gray-50 disabled:text-gray-500;
-    background-color: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(20px);
-    font-weight: 400;
-    letter-spacing: -0.01em;
-    transition: all 0.3s ease;
-  }
-  
-  .input:focus {
-    background-color: rgba(255, 255, 255, 1);
-    transform: translateZ(0);
+    background-color: white;
+    transition: border-color 0.2s ease;
   }
   
   .input-error {
@@ -202,31 +228,45 @@
     content: ' *';
   }
   
-  /* 苹果风格状态徽章 */
+  /* 简约状态徽章 - 基于阴影和层次的设计 */
   .badge {
     @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
     font-weight: 500;
     letter-spacing: -0.005em;
+    background: white;
+    border: 1px solid rgb(229 231 235);
   }
   
   .badge-success {
-    @apply badge bg-success-100 text-success-800;
+    @apply badge text-gray-700;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    border: 1px solid rgb(209 213 219);
   }
   
   .badge-warning {
-    @apply badge bg-warning-100 text-warning-800;
+    @apply badge text-gray-700;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    border: 1px solid rgb(203 213 225);
   }
   
   .badge-error {
-    @apply badge bg-error-100 text-error-800;
+    @apply badge text-gray-800;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    border: 1px solid rgb(185 187 190);
+    font-weight: 600;
   }
   
   .badge-info {
-    @apply badge bg-primary-100 text-primary-800;
+    @apply badge text-gray-700;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    border: 1px solid rgb(219 234 254);
   }
   
   .badge-gray {
-    @apply badge bg-gray-100 text-gray-800;
+    @apply badge text-gray-600;
+    background: rgb(249 250 251);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgb(229 231 235);
   }
   
   /* 表格样式 */
@@ -280,7 +320,7 @@
   }
   
   .modal {
-    @apply bg-white rounded-xl shadow-xl;
+    @apply bg-white rounded-xl;
     max-width: 64rem !important; /* 4xl */
     width: calc(100vw - 2rem) !important;
     max-height: 90vh !important;
@@ -290,6 +330,9 @@
     margin: auto !important;
     /* 防止内容溢出 */
     box-sizing: border-box !important;
+    /* 强化阴影效果 */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgb(229 231 235);
     /* 添加滚动条样式 */
     scrollbar-width: thin;
     scrollbar-color: rgb(156 163 175) transparent;
@@ -326,7 +369,9 @@
   
   /* 搜索和筛选区域 */
   .filter-section {
-    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
+    @apply bg-white rounded-xl p-6;
+    border: 1px solid rgb(229 231 235);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
   }
   
   .search-input {

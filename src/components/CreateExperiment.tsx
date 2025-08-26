@@ -293,6 +293,105 @@ const CreateExperiment = ({ onClose, onSave, initialConfig }: CreateExperimentPr
     onSave(experiment);
   };
 
+  // 生成mock数据并保存实验
+  const handleGenerateMockData = () => {
+    if (!validateExperiment()) {
+      return;
+    }
+
+    // 生成模拟的实验数据
+    const mockMetrics = {
+      businessMetrics: {
+        taskSuccessRate: Math.random() * 20 + 70, // 70-90%
+        userValueDensity: Math.random() * 2 + 1, // 1-3
+        retentionRate7d: Math.random() * 0.3 + 0.5, // 0.5-0.8
+        retentionRate30d: Math.random() * 0.2 + 0.3, // 0.3-0.5
+        userActivation: Math.random() * 0.3 + 0.6 // 0.6-0.9
+      },
+      supportMetrics: {
+        effectiveInteractionDepth: Math.random() * 2 + 2, // 2-4
+        clarificationRequestRatio: Math.random() * 0.15 + 0.05, // 0.05-0.2
+        firstResponseHitRate: Math.random() * 0.2 + 0.7, // 0.7-0.9
+        timeToResolution: Math.random() * 100 + 100, // 100-200秒
+        knowledgeCoverage: Math.random() * 0.2 + 0.8 // 0.8-1.0
+      },
+      technicalMetrics: {
+        totalSessions: Math.floor(Math.random() * 5000 + 5000), // 5000-10000
+        successRate: Math.random() * 20 + 70, // 70-90%
+        avgResponseTime: Math.random() * 2 + 1.5, // 1.5-3.5秒
+        p95ResponseTime: Math.random() * 3 + 3, // 3-6秒
+        avgTokenCost: Math.random() * 0.02 + 0.01, // 0.01-0.03
+        tokenCostPerSession: Math.random() * 0.3 + 0.2, // 0.2-0.5
+        retryRate: Math.random() * 0.1 + 0.05, // 0.05-0.15
+        earlyExitRate: Math.random() * 0.15 + 0.05, // 0.05-0.2
+        toolCallSuccessRate: Math.random() * 0.1 + 0.9, // 0.9-1.0
+        modelFailureRate: Math.random() * 0.03 + 0.01 // 0.01-0.04
+      }
+    };
+
+    const mockStatisticalAnalysis = {
+      pValue: Math.random() * 0.08 + 0.01, // 0.01-0.09
+      effectSize: Math.random() * 0.5 + 0.1, // 0.1-0.6
+      confidenceInterval: [0.05, 0.35],
+      practicalSignificance: Math.random() > 0.3,
+      statisticalSignificance: Math.random() > 0.5,
+      bayesianResults: {
+        probabilityABeatsB: Math.random() * 0.3 + 0.6, // 0.6-0.9
+        expectedLift: Math.random() * 0.2 + 0.05, // 0.05-0.25
+        credibleInterval: [0.03, 0.18],
+        shouldStop: false,
+        recommendation: '继续观察，需要更多数据'
+      },
+      recommendation: 'continue' as const
+    };
+
+    const mockExplainability = {
+      featureImportance: {
+        'response_quality': Math.random() * 0.3 + 0.3, // 0.3-0.6
+        'response_speed': Math.random() * 0.3 + 0.2, // 0.2-0.5
+        'tool_usage': Math.random() * 0.2 + 0.1, // 0.1-0.3
+        'context_understanding': Math.random() * 0.15 + 0.05 // 0.05-0.2
+      },
+      successfulPaths: [],
+      failurePaths: [],
+      causalEffects: []
+    };
+
+    // 为每个组生成实时指标
+    const groupsWithMockData = groups.map(group => ({
+      ...group,
+      realTimeMetrics: {
+        currentSessions: Math.floor(Math.random() * 800 + 800), // 800-1600
+        totalSessions: Math.floor(Math.random() * 3000 + 3000), // 3000-6000
+        conversionRate: Math.random() * 20 + 70, // 70-90%
+        avgMetricValues: {
+          taskSuccessRate: Math.random() * 20 + 70,
+          avgResponseTime: Math.random() * 2 + 1.5,
+          userSatisfaction: Math.random() * 1.5 + 3.5
+        },
+        costSpent: Math.random() * 200 + 100, // 100-300
+        sampleDistribution: []
+      }
+    }));
+
+    const experiment = {
+      id: Date.now().toString(),
+      name: experimentName || '未命名实验 (含Mock数据)',
+      description: experimentDescription + ' - 已生成模拟数据',
+      status: 'running',
+      startDate: new Date().toISOString().split('T')[0],
+      groups: groupsWithMockData,
+      config: experimentConfig,
+      metrics: mockMetrics,
+      statisticalAnalysis: mockStatisticalAnalysis,
+      explainability: mockExplainability,
+      estimatedCost: estimateCost(),
+      createdAt: new Date().toISOString()
+    };
+
+    onSave(experiment);
+  };
+
   return createPortal(
     <div className="modal-overlay">
       <div className="modal max-w-6xl max-h-[95vh] overflow-hidden">

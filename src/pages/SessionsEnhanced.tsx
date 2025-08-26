@@ -3,7 +3,8 @@ import {
   Filter, Eye, CheckCircle, XCircle, Clock, User, MessageSquare, 
   Zap, ChevronDown, ChevronRight, ExternalLink, Code, Activity, Users,
   Brain, Layers, PlayCircle, PauseCircle, AlertCircle, TrendingUp,
-  Settings, Wifi, WifiOff, Timer, ChevronUp
+  Settings, Wifi, WifiOff, Timer, ChevronUp, BarChart3, GitBranch,
+  Search, Maximize2, Minimize2
 } from 'lucide-react';
 import { mockSessions } from '../data/mockData';
 import { digitalEmployees, humanEmployees, liveSessions, mockRealtimeUpdates } from '../data/realtimeData';
@@ -13,6 +14,275 @@ import { PageLayout, PageHeader, PageContent, Card, CardHeader, CardBody, Filter
 
 type ViewMode = 'realtime' | 'historical';
 type RealtimeDimension = 'digital-employees' | 'human-employees' | 'global-activity';
+type TraceViewMode = 'list' | 'waterfall' | 'timeline';
+
+// 链路追踪可视化组件
+const ChainTraceVisualization = ({ 
+  traces, 
+  viewMode, 
+  searchQuery, 
+  selectedSpanId, 
+  onSpanSelect, 
+  showAnalysis 
+}: {
+  traces: any[];
+  viewMode: TraceViewMode;
+  searchQuery: string;
+  selectedSpanId: string | null;
+  onSpanSelect: (spanId: string | null) => void;
+  showAnalysis: boolean;
+}) => {
+  // 过滤追踪数据
+  const filteredTraces = traces.filter(trace => 
+    !searchQuery || 
+    trace.toolName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    trace.id.includes(searchQuery)
+  );
+
+  // 计算性能统计
+  const totalDuration = traces.reduce((sum, trace) => sum + trace.responseTime, 0);
+  const avgDuration = totalDuration / traces.length;
+  const maxDuration = Math.max(...traces.map(trace => trace.responseTime));
+  const successRate = (traces.filter(trace => trace.status === 'success').length / traces.length) * 100;
+
+  if (viewMode === 'waterfall') {
+    return (
+      <div className="space-y-4">
+        {/* 性能摘要 */}
+        {showAnalysis && (
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border border-blue-200">
+            <h5 className="font-semibold text-blue-900 mb-3 flex items-center">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              性能分析
+            </h5>
+            <div className="grid grid-cols-4 gap-4 text-sm">
+              <div className="text-center">
+                <div className="text-lg font-bold text-blue-600">{totalDuration.toFixed(1)}s</div>
+                <div className="text-blue-600">总耗时</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-green-600">{avgDuration.toFixed(1)}s</div>
+                <div className="text-green-600">平均耗时</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-orange-600">{maxDuration.toFixed(1)}s</div>
+                <div className="text-orange-600">最大耗时</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-purple-600">{successRate.toFixed(1)}%</div>
+                <div className="text-purple-600">成功率</div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* 瀑布图 */}
+        <div className="space-y-2">
+          {filteredTraces.map((trace, index) => {
+            const startTime = traces.slice(0, index).reduce((sum, t) => sum + t.responseTime, 0);
+            const duration = trace.responseTime;
+            const widthPercent = (duration / totalDuration) * 100;
+            const leftPercent = (startTime / totalDuration) * 100;
+            
+            return (
+              <div 
+                key={trace.id} 
+                className={`p-3 border rounded-lg cursor-pointer transition-all duration-200 ${
+                  selectedSpanId === trace.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                }`}
+                onClick={() => onSpanSelect(selectedSpanId === trace.id ? null : trace.id)}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center">
+                    <div className={`h-3 w-3 rounded-full mr-3 ${
+                      trace.status === 'success' ? 'bg-green-500' : 'bg-red-500'
+                    }`}></div>
+                    <span className="font-medium text-gray-900">{trace.toolName}</span>
+                    <span className="ml-2 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                      Span {index + 1}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {duration.toFixed(2)}s
+                  </div>
+                </div>
+                
+                {/* 时间轴可视化 */}
+                <div className="relative h-6 bg-gray-100 rounded-full overflow-hidden">
+                  <div 
+                    className={`absolute top-0 h-full rounded-full ${
+                      trace.status === 'success' ? 'bg-green-400' : 'bg-red-400'
+                    }`}
+                    style={{ 
+                      left: `${leftPercent}%`, 
+                      width: `${Math.max(widthPercent, 2)}%` 
+                    }}
+                  ></div>
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full text-xs text-center text-gray-600 font-medium">
+                      {startTime.toFixed(1)}s → {(startTime + duration).toFixed(1)}s
+                    </div>
+                  </div>
+                </div>
+                
+                {/* 展开的详细信息 */}
+                {selectedSpanId === trace.id && (
+                  <div className="mt-3 pt-3 border-t border-gray-200 space-y-2">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-600">Span ID:</span>
+                        <span className="ml-2 font-mono text-blue-600">{trace.id}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">状态:</span>
+                        <span className={`ml-2 font-medium ${
+                          trace.status === 'success' ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {trace.status === 'success' ? '成功' : '失败'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {trace.parameters && (
+                      <div>
+                        <h6 className="font-medium text-gray-700 mb-1">请求参数</h6>
+                        <div className="bg-gray-50 p-2 rounded text-xs">
+                          <pre className="text-gray-700 overflow-x-auto">
+                            {JSON.stringify(trace.parameters, null, 2)}
+                          </pre>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {trace.result && (
+                      <div>
+                        <h6 className="font-medium text-gray-700 mb-1">返回结果</h6>
+                        <div className="bg-green-50 p-2 rounded text-xs">
+                          <pre className="text-gray-700 overflow-x-auto">
+                            {JSON.stringify(trace.result, null, 2)}
+                          </pre>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  if (viewMode === 'timeline') {
+    return (
+      <div className="space-y-4">
+        {/* 时间线视图 */}
+        <div className="relative">
+          {/* 时间轴 */}
+          <div className="flex items-center text-xs text-gray-500 mb-4">
+            <span>0s</span>
+            <div className="flex-1 mx-4 h-px bg-gray-300"></div>
+            <span>{totalDuration.toFixed(1)}s</span>
+          </div>
+          
+          {/* Span时间线 */}
+          <div className="space-y-3">
+            {filteredTraces.map((trace, index) => {
+              const startTime = traces.slice(0, index).reduce((sum, t) => sum + t.responseTime, 0);
+              const duration = trace.responseTime;
+              
+              return (
+                <div key={trace.id} className="flex items-center space-x-4">
+                  <div className="w-32 text-right text-sm font-medium text-gray-700">
+                    {trace.toolName}
+                  </div>
+                  <div className="flex-1 relative h-8">
+                    <div 
+                      className={`absolute top-1 h-6 rounded ${
+                        trace.status === 'success' ? 'bg-green-400' : 'bg-red-400'
+                      } ${selectedSpanId === trace.id ? 'ring-2 ring-blue-500' : ''}`}
+                      style={{ 
+                        left: `${(startTime / totalDuration) * 100}%`, 
+                        width: `${Math.max((duration / totalDuration) * 100, 2)}%` 
+                      }}
+                      onClick={() => onSpanSelect(selectedSpanId === trace.id ? null : trace.id)}
+                      className="cursor-pointer"
+                    ></div>
+                    <div 
+                      className="absolute top-0 text-xs text-gray-600"
+                      style={{ left: `${(startTime / totalDuration) * 100}%` }}
+                    >
+                      {duration.toFixed(2)}s
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 默认列表视图
+  return (
+    <div className="space-y-3">
+      {filteredTraces.map((trace) => (
+        <div key={trace.id} className="border border-gray-200 rounded-lg">
+          <button
+            onClick={() => onSpanSelect(selectedSpanId === trace.id ? null : trace.id)}
+            className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
+          >
+            <div className="flex items-center">
+              {selectedSpanId === trace.id ? 
+                <ChevronDown className="h-4 w-4 mr-2" /> : 
+                <ChevronRight className="h-4 w-4 mr-2" />
+              }
+              <div className={`h-3 w-3 rounded-full mr-3 ${
+                trace.status === 'success' ? 'bg-green-500' : 'bg-red-500'
+              }`}></div>
+              <span className="font-medium">{trace.toolName}</span>
+              <span className="ml-2 text-sm text-gray-500">
+                {trace.responseTime}s
+              </span>
+            </div>
+          </button>
+          {selectedSpanId === trace.id && (
+            <div className="px-4 pb-4 space-y-3">
+              <div>
+                <h5 className="font-medium text-gray-700 mb-2">请求参数</h5>
+                <div className="bg-gray-50 p-3 rounded-md">
+                  <pre className="text-sm text-gray-700 whitespace-pre-wrap">
+                    {JSON.stringify(trace.parameters, null, 2)}
+                  </pre>
+                </div>
+              </div>
+              {trace.result && (
+                <div>
+                  <h5 className="font-medium text-gray-700 mb-2">返回结果</h5>
+                  <div className="bg-green-50 p-3 rounded-md">
+                    <pre className="text-sm text-gray-700 whitespace-pre-wrap">
+                      {JSON.stringify(trace.result, null, 2)}
+                    </pre>
+                  </div>
+                </div>
+              )}
+              {trace.error && (
+                <div>
+                  <h5 className="font-medium text-red-700 mb-2">错误信息</h5>
+                  <div className="bg-red-50 p-3 rounded-md">
+                    <p className="text-sm text-red-700">{trace.error}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const SessionsEnhanced = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('realtime');
@@ -21,6 +291,12 @@ const SessionsEnhanced = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<DigitalEmployee | null>(null);
   const [expandedTraces, setExpandedTraces] = useState<Set<string>>(new Set());
   const [expandedReasoningSteps, setExpandedReasoningSteps] = useState<Set<string>>(new Set());
+  
+  // 链路追踪可视化状态
+  const [traceViewMode, setTraceViewMode] = useState<'list' | 'waterfall' | 'timeline'>('list');
+  const [selectedSpanId, setSelectedSpanId] = useState<string | null>(null);
+  const [showTraceAnalysis, setShowTraceAnalysis] = useState(false);
+  const [traceSearchQuery, setTraceSearchQuery] = useState('');
   
   // Helper function to get user name by user ID
   const getUserName = (userId: string) => {
@@ -1317,70 +1593,67 @@ const SessionsEnhanced = () => {
                 </Card>
               )}
 
-              {/* 工具调用追溯 */}
+              {/* 分布式链路追踪 */}
               {selectedSession.toolTrace.length > 0 && (
                 <Card>
                   <CardHeader>
-                    <h4 className="card-title flex items-center">
-                      <Layers className="h-5 w-5 mr-2" />
-                      工具调用追溯
-                    </h4>
+                    <div className="flex items-center justify-between">
+                      <h4 className="card-title flex items-center">
+                        <GitBranch className="h-5 w-5 mr-2" />
+                        分布式链路追踪
+                      </h4>
+                      <div className="flex items-center space-x-2">
+                        {/* 搜索框 */}
+                        <div className="relative">
+                          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <input
+                            type="text"
+                            placeholder="搜索Span..."
+                            value={traceSearchQuery}
+                            onChange={(e) => setTraceSearchQuery(e.target.value)}
+                            className="pl-8 pr-3 py-1 w-32 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                        {/* 视图模式切换 */}
+                        <div className="flex border rounded-lg">
+                          {[
+                            { mode: 'list', icon: Layers, label: '列表' },
+                            { mode: 'waterfall', icon: BarChart3, label: '瀑布' },
+                            { mode: 'timeline', icon: Activity, label: '时间线' }
+                          ].map(({ mode, icon: Icon, label }) => (
+                            <button
+                              key={mode}
+                              onClick={() => setTraceViewMode(mode as any)}
+                              className={`px-3 py-1 text-xs font-medium flex items-center ${
+                                traceViewMode === mode
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : 'text-gray-500 hover:text-gray-700'
+                              }`}
+                              title={label}
+                            >
+                              <Icon className="h-4 w-4" />
+                            </button>
+                          ))}
+                        </div>
+                        <button
+                          onClick={() => setShowTraceAnalysis(!showTraceAnalysis)}
+                          className={`p-1 rounded ${showTraceAnalysis ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:text-gray-700'}`}
+                          title="性能分析"
+                        >
+                          {showTraceAnalysis ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardBody>
-                  <div className="space-y-3">
-                    {selectedSession.toolTrace.map((trace) => (
-                      <div key={trace.id} className="border border-gray-200 rounded-lg">
-                        <button
-                          onClick={() => toggleTraceExpanded(trace.id)}
-                          className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
-                        >
-                          <div className="flex items-center">
-                            {expandedTraces.has(trace.id) ? 
-                              <ChevronDown className="h-4 w-4 mr-2" /> : 
-                              <ChevronRight className="h-4 w-4 mr-2" />
-                            }
-                            <div className={`h-3 w-3 rounded-full mr-3 ${
-                              trace.status === 'success' ? 'bg-green-500' : 'bg-red-500'
-                            }`}></div>
-                            <span className="font-medium">{trace.toolName}</span>
-                            <span className="ml-2 text-sm text-gray-500">
-                              {trace.responseTime}s
-                            </span>
-                          </div>
-                        </button>
-                        {expandedTraces.has(trace.id) && (
-                          <div className="px-4 pb-4 space-y-3">
-                            <div>
-                              <h5 className="font-medium text-gray-700 mb-2">请求参数</h5>
-                              <div className="bg-gray-50 p-3 rounded-md">
-                                <pre className="text-sm text-gray-700 whitespace-pre-wrap">
-                                  {JSON.stringify(trace.parameters, null, 2)}
-                                </pre>
-                              </div>
-                            </div>
-                            {trace.result && (
-                              <div>
-                                <h5 className="font-medium text-gray-700 mb-2">返回结果</h5>
-                                <div className="bg-green-50 p-3 rounded-md">
-                                  <pre className="text-sm text-gray-700 whitespace-pre-wrap">
-                                    {JSON.stringify(trace.result, null, 2)}
-                                  </pre>
-                                </div>
-                              </div>
-                            )}
-                            {trace.error && (
-                              <div>
-                                <h5 className="font-medium text-red-700 mb-2">错误信息</h5>
-                                <div className="bg-red-50 p-3 rounded-md">
-                                  <p className="text-sm text-red-700">{trace.error}</p>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                    <ChainTraceVisualization 
+                      traces={selectedSession.toolTrace}
+                      viewMode={traceViewMode}
+                      searchQuery={traceSearchQuery}
+                      selectedSpanId={selectedSpanId}
+                      onSpanSelect={setSelectedSpanId}
+                      showAnalysis={showTraceAnalysis}
+                    />
                   </CardBody>
                 </Card>
               )}

@@ -11,3 +11,4 @@ export { MetricTooltip } from './MetricTooltip';
 export { SearchInput, type SearchInputProps } from './SearchInput';
 export { FilterSelect, type FilterSelectProps, type FilterOption } from './FilterSelect';
 export { FilterSection, type FilterSectionProps, type FilterConfig } from './FilterSection';
+export { default as Modal, type ModalProps } from './Modal';

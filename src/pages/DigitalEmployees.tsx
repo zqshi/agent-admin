@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { DigitalEmployeeManagement } from '../types';
 import { mockDigitalEmployees } from '../data/mockDigitalEmployees';
-import { PageLayout, PageHeader, PageContent, MetricCard, Card, CardHeader, Button, FilterSection } from '../components/ui';
+import { PageLayout, PageHeader, PageContent, MetricCard, Card, CardHeader, CardBody, Button, FilterSection } from '../components/ui';
 import CreateDigitalEmployee from '../components/CreateDigitalEmployee';
 
 const DigitalEmployees = () => {
@@ -165,9 +165,9 @@ const DigitalEmployees = () => {
           <CardHeader>
             <h2 className="card-title">数字员工列表</h2>
           </CardHeader>
-          
-          <div className="overflow-x-auto">
-            <table className="table">
+          <CardBody>
+            <div className="overflow-x-auto">
+              <table className="table">
               <thead className="table-header">
                 <tr>
                   <th className="table-header-cell">
@@ -232,58 +232,70 @@ const DigitalEmployees = () => {
                       </div>
                     </td>
                     <td className="table-cell">
-                      <div className="flex items-center gap-2">
-                        <button
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleToggleStatus(employee.id, employee.status)}
-                          className={`p-1 rounded ${
+                          className={
                             employee.status === 'active' 
-                              ? 'text-yellow-600 hover:bg-yellow-50' 
-                              : 'text-green-600 hover:bg-green-50'
-                          }`}
+                              ? 'text-warning-600 hover:text-warning-700 hover:bg-warning-50' 
+                              : 'text-success-600 hover:text-success-700 hover:bg-success-50'
+                          }
                           title={employee.status === 'active' ? '禁用' : '启用'}
                         >
                           {employee.status === 'active' ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                        </button>
+                        </Button>
                         
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleViewDetail(employee)}
-                          className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                          className="text-primary-600 hover:text-primary-700 hover:bg-primary-50"
                           title="查看详情"
                         >
                           <Settings className="h-4 w-4" />
-                        </button>
+                        </Button>
                         
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleDelete(employee.id)}
-                          className="p-1 text-red-600 hover:bg-red-50 rounded"
+                          className="text-error-600 hover:text-error-700 hover:bg-error-50"
                           title="删除"
                         >
                           <Trash2 className="h-4 w-4" />
-                        </button>
+                        </Button>
                         
-                        <button className="p-1 text-gray-400 hover:bg-gray-50 rounded">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                          title="更多操作"
+                        >
                           <MoreHorizontal className="h-4 w-4" />
-                        </button>
+                        </Button>
                       </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
-          
-          {filteredEmployees.length === 0 && (
-            <div className="empty-state">
-              <Brain className="empty-icon" />
-              <h3 className="empty-title">暂无数字员工</h3>
-              <p className="empty-description">
-                {searchQuery || statusFilter !== 'all' || departmentFilter !== 'all' 
-                  ? '没有符合条件的数字员工' 
-                  : '开始创建您的第一个数字员工'
-                }
-              </p>
+              </table>
+              
+              {filteredEmployees.length === 0 && (
+                <div className="empty-state">
+                  <Brain className="empty-icon" />
+                  <h3 className="empty-title">暂无数字员工</h3>
+                  <p className="empty-description">
+                    {searchQuery || statusFilter !== 'all' || departmentFilter !== 'all' 
+                      ? '没有符合条件的数字员工' 
+                      : '开始创建您的第一个数字员工'
+                    }
+                  </p>
+                </div>
+              )}
             </div>
-          )}
+          </CardBody>
         </Card>
 
         {/* 创建表单弹窗 */}
