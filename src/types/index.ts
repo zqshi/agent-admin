@@ -326,6 +326,23 @@ export interface ABTest {
     id: string;
   };
   
+  // AI创建的额外元数据
+  aiMetadata?: {
+    originalInput?: string;
+    confidence?: number;
+    complexity?: any;
+    creationTimestamp?: string;
+  };
+  
+  // 自然语言创建上下文
+  nlContext?: {
+    originalInput?: string;
+    parseResult?: any;
+    template?: string;
+    confidence?: number;
+    complexity?: any;
+  };
+  
   // 实验配置
   config: {
     splittingStrategy: 'session' | 'user' | 'hybrid';  // 分流策略

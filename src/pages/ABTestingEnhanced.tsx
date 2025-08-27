@@ -3,7 +3,7 @@ import {
   Plus, Settings, Filter, Search, RotateCcw, Eye, EyeOff,
   TrendingUp, Users, DollarSign, Clock, Bot, User, Bell,
   CheckCircle, AlertTriangle, BarChart3, Target, Activity,
-  Brain, Lightbulb
+  Brain, Lightbulb, Wand2, Sparkles
 } from 'lucide-react';
 
 // 导入我们新开发的组件
@@ -11,6 +11,9 @@ import EnhancedExperimentOverview from '../components/EnhancedExperimentOverview
 import SystemConfigPanel from '../components/SystemConfigPanel';
 import ExperimentStatusFlow from '../components/ExperimentStatusFlow';
 import CreateExperiment from '../components/CreateExperiment';
+import EnhancedNLExperimentCreator from '../components/EnhancedNLExperimentCreator';
+import UserFeedbackModal from '../components/UserFeedbackModal';
+import { errorHandler, generateSessionId, getUserAgent } from '../services/errorHandling';
 
 // 导入类型定义
 import { ABTest } from '../types';
@@ -249,10 +252,24 @@ const ABTestingEnhancedUpdated: React.FC = () => {
   
   // UI 状态
   const [showCreateExperiment, setShowCreateExperiment] = useState(false);
+  const [showNLExperimentCreator, setShowNLExperimentCreator] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [creationTypeFilter, setCreationTypeFilter] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(false);
+  
+  // 反馈模态框状态
+  const [feedbackModalConfig, setFeedbackModalConfig] = useState<{
+    isOpen: boolean;
+    trigger: 'error' | 'success' | 'manual';
+    context: any;
+    title?: string;
+    message?: string;
+  }>({
+    isOpen: false,
+    trigger: 'manual',
+    context: null
+  });
 
   // Mock当前用户
   const currentUser = {
@@ -395,6 +412,15 @@ const ABTestingEnhancedUpdated: React.FC = () => {
               >
                 <Plus className="h-4 w-4" />
                 创建实验
+              </button>
+              
+              <button
+                onClick={() => setShowNLExperimentCreator(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg"
+              >
+                <Wand2 className="h-4 w-4" />
+                <Sparkles className="h-3 w-3" />
+                智能创建
               </button>
               
               {!systemConfig.experimentCreation.requiresHumanCreation && (
@@ -1511,6 +1537,59 @@ const ABTestingEnhancedUpdated: React.FC = () => {
             setShowCreateExperiment(false);
             setSelectedExperiment(newExperiment);
           }}
+        />
+      )}
+
+      {/* 智能实验创建弹窗（升级版） */}
+      {showNLExperimentCreator && (
+        <EnhancedNLExperimentCreator
+          onClose={() => setShowNLExperimentCreator(false)}
+          onExperimentCreate={(newExperiment) => {
+            // 添加AI创建标识和增强信息
+            const aiExperiment = {
+              ...newExperiment,
+              creationType: 'ai_created' as const,
+              creator: {
+                type: 'ai' as const,
+                name: 'AI实验助手',
+                id: 'ai_assistant'
+              },
+              aiMetadata: {
+                originalInput: newExperiment.nlContext?.originalInput,
+                confidence: newExperiment.nlContext?.confidence,
+                complexity: newExperiment.nlContext?.complexity,
+                creationTimestamp: new Date().toISOString()
+              }
+            };
+            setExperiments(prev => [...prev, aiExperiment]);
+            setShowNLExperimentCreator(false);
+            setSelectedExperiment(aiExperiment);
+            
+            // 显示成功反馈
+            setFeedbackModalConfig({
+              isOpen: true,
+              trigger: 'success',
+              context: {
+                userInput: newExperiment.nlContext?.originalInput || '',
+                parseResult: newExperiment.nlContext?.parseResult,
+                timestamp: new Date(),
+                sessionId: generateSessionId(),
+                userAgent: getUserAgent()
+              }
+            });
+          }}
+        />
+      )}
+
+      {/* 用户反馈模态框 */}
+      {feedbackModalConfig.isOpen && (
+        <UserFeedbackModal
+          isOpen={feedbackModalConfig.isOpen}
+          onClose={() => setFeedbackModalConfig(prev => ({ ...prev, isOpen: false }))}
+          context={feedbackModalConfig.context}
+          trigger={feedbackModalConfig.trigger}
+          title={feedbackModalConfig.title}
+          message={feedbackModalConfig.message}
         />
       )}
     </div>
