@@ -311,12 +311,20 @@ export interface ABTest {
   id: string;
   name: string;
   description: string;
-  status: 'draft' | 'running' | 'paused' | 'completed';
+  status: 'draft' | 'pending_experiment' | 'experimenting' | 'experiment_ended' | 'deploying' | 'deployed' | 'offline' | 'archived';
   startDate: string;
   endDate?: string;
   groups: ABTestGroup[];
   metrics: ABTestMetrics;
   winnerGroup?: string;
+  
+  // 实验创建方式标识
+  creationType: 'human_created' | 'ai_created';
+  creator?: {
+    type: 'human' | 'ai';
+    name: string;
+    id: string;
+  };
   
   // 实验配置
   config: {
@@ -506,6 +514,39 @@ export interface ComplexityAssessment {
 
 // MCP工具状态枚举
 export type MCPToolStatus = 'draft' | 'configuring' | 'testing' | 'pending_release' | 'published' | 'maintenance' | 'retired';
+
+// A/B实验系统配置
+export interface ABTestSystemConfig {
+  // 人工创建实验开关：false=AI自动创建，true=需要人工创建
+  manualExperimentCreation: boolean;
+  // 上线发布审核开关：false=AI自动上线，true=需要人工审核
+  deploymentApprovalRequired: boolean;
+  
+  // 配置更新记录
+  lastUpdated: Date;
+  updatedBy: {
+    userId: string;
+    userName: string;
+  };
+}
+
+// 实验状态中文映射
+export const AB_TEST_STATUS_LABELS = {
+  'draft': '草稿',
+  'pending_experiment': '待实验',
+  'experimenting': '实验中', 
+  'experiment_ended': '已结束',
+  'deploying': '上线中',
+  'deployed': '已上线',
+  'offline': '已下线',
+  'archived': '归档'
+} as const;
+
+// 实验创建类型中文映射
+export const CREATION_TYPE_LABELS = {
+  'human_created': '人工创建',
+  'ai_created': 'AI创建'
+} as const;
 
 // MCP连接类型
 export type MCPConnectionType = 'stdio' | 'sse' | 'http';

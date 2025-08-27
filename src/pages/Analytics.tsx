@@ -69,12 +69,28 @@ const Analytics = () => {
         changePercent: -12.5,
         status: 'good'
       },
-      'mcp_tool_success_rate': {
-        metricId: 'mcp_tool_success_rate',
+      'tool_call_success_rate': {
+        metricId: 'tool_call_success_rate',
         value: 94.3,
         timestamp: new Date(),
         trend: 'down',
         changePercent: -2.1,
+        status: 'needs-improvement'
+      },
+      'avg_conversation_rounds': {
+        metricId: 'avg_conversation_rounds',
+        value: 4.2,
+        timestamp: new Date(),
+        trend: 'down',
+        changePercent: -8.5,
+        status: 'good'
+      },
+      'avg_token_consumption': {
+        metricId: 'avg_token_consumption',
+        value: 2850,
+        timestamp: new Date(),
+        trend: 'up',
+        changePercent: 12.3,
         status: 'needs-improvement'
       },
       'session_completion_rate': {
@@ -143,9 +159,10 @@ const Analytics = () => {
 
   const metricLevelOptions = [
     { value: 'all', label: '全部指标' },
-    { value: 'L1', label: 'L1 核心业务指标' },
-    { value: 'L2', label: 'L2 支撑分析指标' },
-    { value: 'L3', label: 'L3 技术监控指标' }
+    { value: 'L1', label: 'L1 核心业务指标 - "The What"' },
+    { value: 'L2', label: 'L2 对话体验指标 - "The How"' },
+    { value: 'L3', label: 'L3 成本性能指标 - "The Cost"' },
+    { value: 'L4', label: 'L4 运维安全指标 - "The Reliability"' }
   ];
 
   // 获取指标级别图标
@@ -160,12 +177,18 @@ const Analytics = () => {
   // 获取分类图标
   const getCategoryIcon = (category: string) => {
     const iconMap: Record<string, any> = {
+      // 新的四层指标分类
+      'core_business': <Target className="h-5 w-5" />,
+      'conversation_efficiency': <BarChart3 className="h-5 w-5" />,
+      'cost_efficiency': <DollarSign className="h-5 w-5" />,
+      'system_performance': <Activity className="h-5 w-5" />,
+      'system_reliability': <Settings className="h-5 w-5" />,
+      'security_compliance': <AlertTriangle className="h-5 w-5" />,
+      // 保留原有分类
       'business_insight': <Brain className="h-5 w-5" />,
       'business_impact': <Target className="h-5 w-5" />,
-      'cost_efficiency': <DollarSign className="h-5 w-5" />,
       'risk_management': <AlertTriangle className="h-5 w-5" />,
       'data_foundation': <Database className="h-5 w-5" />,
-      'system_performance': <Activity className="h-5 w-5" />,
       'llm_performance': <Brain className="h-5 w-5" />,
       'mcp_performance': <Zap className="h-5 w-5" />
     };

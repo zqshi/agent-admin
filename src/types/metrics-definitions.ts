@@ -30,152 +30,296 @@ export interface MetricValue {
   metadata?: Record<string, any>;
 }
 
-// L1 核心业务指标
+// L1 核心业务指标 - "The What" - 是否创造了价值？
 export const L1_BUSINESS_METRICS: MetricDefinition[] = [
   {
-    id: 'analysis_insight_accuracy',
-    name: '分析洞察准确性',
-    description: '数据分析系统提供的洞察与实际业务情况吻合的准确程度',
+    id: 'task_success_rate',
+    name: '任务成功率',
+    description: '数字员工成功完成用户任务的比例，这是最重要的指标，直接回答了"数字员工是否解决了问题？"',
     unit: '%',
     level: 'L1',
-    category: 'business_insight',
-    calculation: '(准确洞察数量 × 权重 + 部分准确洞察数量 × 0.6 + 有价值但不完全准确洞察数量 × 0.3) / 总洞察数量 × 100',
-    dataSource: 'business_events',
-    updateFrequency: '1h',
-    targets: {
-      excellent: 90,
-      good: 75,
-      needsImprovement: 60,
-      poor: 0
-    },
-    dependencies: ['insight_validation', 'expert_feedback']
-  },
-  {
-    id: 'business_decision_support',
-    name: '业务决策支撑度',
-    description: '分析结果对实际业务决策制定的支撑和指导价值',
-    unit: '%',
-    level: 'L1',
-    category: 'business_impact',
-    calculation: '(可执行建议数量 × 4.0 + 战略洞察数量 × 3.5 + 风险预警数量 × 3.0 + 趋势预测数量 × 2.5 + 描述性统计数量 × 1.0) / (总分析输出数量 × 4.0) × 100',
-    dataSource: 'analysis_outputs',
-    updateFrequency: '1h',
+    category: 'core_business',
+    calculation: '(成功完成任务的会话数 / 总会话数) × 100',
+    dataSource: 'session_metrics',
+    updateFrequency: '1m',
     targets: {
       excellent: 85,
-      good: 70,
-      needsImprovement: 55,
+      good: 75,
+      needsImprovement: 65,
       poor: 0
-    }
+    },
+    dependencies: ['session_completion', 'user_goals']
   },
   {
-    id: 'cost_optimization_effectiveness',
-    name: '成本优化效果',
-    description: '通过数据分析识别和实现的成本优化成果',
+    id: 'user_satisfaction_csat',
+    name: '用户满意度 (CSAT)',
+    description: '用户对数字员工服务的主观满意度评价，衡量用户的主观感受和服务质量',
     unit: '%',
     level: 'L1',
-    category: 'cost_efficiency',
-    calculation: '(实际节省成本 / 识别出的潜在节省成本) × (识别准确率) × 100',
-    dataSource: 'cost_analytics',
-    updateFrequency: '1d',
-    targets: {
-      excellent: 80,
-      good: 60,
-      needsImprovement: 40,
-      poor: 0
-    }
-  },
-  {
-    id: 'issue_early_warning_effectiveness',
-    name: '问题预警有效性',
-    description: '系统提前识别和预警潜在问题的准确性和及时性',
-    unit: '%',
-    level: 'L1',
-    category: 'risk_management',
-    calculation: '(提前预警成功次数 × 预警提前时间权重 × 严重性权重) / 总预警次数',
-    dataSource: 'alerts',
-    updateFrequency: '15m',
+    category: 'core_business',
+    calculation: '(满意或好评的会话数 / 总收集反馈的会话数) × 100',
+    dataSource: 'user_feedback',
+    updateFrequency: '5m',
     targets: {
       excellent: 90,
-      good: 75,
-      needsImprovement: 60,
-      poor: 0
-    }
-  }
-];
-
-// L2 支撑分析指标
-export const L2_SUPPORTING_METRICS: MetricDefinition[] = [
-  {
-    id: 'data_quality_index',
-    name: '数据质量指数',
-    description: '分析系统使用数据的完整性、准确性、一致性和时效性综合评估',
-    unit: '%',
-    level: 'L2',
-    category: 'data_foundation',
-    calculation: '数据完整性 × 0.3 + 数据准确性 × 0.3 + 数据一致性 × 0.2 + 数据时效性 × 0.2',
-    dataSource: 'data_quality_checks',
-    updateFrequency: '30m',
-    targets: {
-      excellent: 95,
-      good: 85,
+      good: 80,
       needsImprovement: 70,
       poor: 0
     }
   },
   {
-    id: 'analysis_coverage_breadth',
-    name: '分析覆盖广度',
-    description: '分析系统覆盖的业务领域、指标维度和分析深度的广泛程度',
+    id: 'conversion_rate',
+    name: '转化率',
+    description: '用户完成特定目标行为（如购买、注册、下载）的比例，对营销、销售类数字员工至关重要',
     unit: '%',
-    level: 'L2',
-    category: 'capability_coverage',
-    calculation: '(已覆盖业务域数 / 总业务域数 × 0.4 + 已覆盖指标数 / 目标指标总数 × 0.3 + 分析深度层级数 / 最大深度层级数 × 0.3) × 100',
-    dataSource: 'coverage_metrics',
-    updateFrequency: '1h',
+    level: 'L1',
+    category: 'core_business',
+    calculation: '(完成目标行为的会话数 / 总会话数) × 100',
+    dataSource: 'conversion_events',
+    updateFrequency: '5m',
     targets: {
-      excellent: 85,
+      excellent: 15,
+      good: 10,
+      needsImprovement: 5,
+      poor: 0
+    }
+  },
+  {
+    id: 'self_service_rate',
+    name: '自助服务率',
+    description: '数字员工独立完成服务的比例，衡量其消化流量、降低人工成本的能力',
+    unit: '%',
+    level: 'L1',
+    category: 'core_business',
+    calculation: '(由数字员工独立完成服务的会话数 / 总会话数) × 100',
+    dataSource: 'service_metrics',
+    updateFrequency: '5m',
+    targets: {
+      excellent: 80,
       good: 70,
-      needsImprovement: 55,
-      poor: 0
-    }
-  },
-  {
-    id: 'insight_discovery_depth',
-    name: '洞察发现深度',
-    description: '分析系统能够发现隐藏模式、关联关系和深层洞察的能力',
-    unit: '%',
-    level: 'L2',
-    category: 'analytical_capability',
-    calculation: '(深层关联发现数量 × 3.0 + 隐藏模式识别数量 × 2.5 + 异常检测准确数量 × 2.0 + 趋势识别数量 × 1.5 + 基础统计数量 × 1.0) / (总分析输出数量 × 3.0) × 100',
-    dataSource: 'insight_analysis',
-    updateFrequency: '1h',
-    targets: {
-      excellent: 75,
-      good: 60,
-      needsImprovement: 45,
-      poor: 0
-    }
-  },
-  {
-    id: 'user_satisfaction_index',
-    name: '用户满意度指数',
-    description: '用户对分析结果和系统体验的综合满意度评价',
-    unit: '分',
-    level: 'L2',
-    category: 'user_experience',
-    calculation: '(功能满意度 × 0.3 + 性能满意度 × 0.25 + 准确性满意度 × 0.25 + 易用性满意度 × 0.2) × 10',
-    dataSource: 'user_feedback',
-    updateFrequency: '1d',
-    targets: {
-      excellent: 8.5,
-      good: 7.5,
-      needsImprovement: 6.0,
+      needsImprovement: 60,
       poor: 0
     }
   }
 ];
 
-// L3 技术监控指标
+// L2 对话与体验指标 - "The How" - 体验是否高效顺畅？
+export const L2_CONVERSATION_METRICS: MetricDefinition[] = [
+  {
+    id: 'avg_conversation_rounds',
+    name: '平均会话轮数',
+    description: '每个会话的平均对话轮数，衡量效率。轮数过多可能意味着理解能力差，轮数过少可能意味着用户意图被过早切断',
+    unit: '轮',
+    level: 'L2',
+    category: 'conversation_efficiency',
+    calculation: '总对话轮数 / 总会话数',
+    dataSource: 'conversation_metrics',
+    updateFrequency: '1m',
+    targets: {
+      excellent: 3.5,
+      good: 5.0,
+      needsImprovement: 7.0,
+      poor: 99
+    }
+  },
+  {
+    id: 'first_round_hit_rate',
+    name: '单轮命中率',
+    description: '首轮即提供准确回答的会话比例，衡量精准度和理解能力，高命中率代表强大的首次交互解决能力',
+    unit: '%',
+    level: 'L2',
+    category: 'conversation_efficiency',
+    calculation: '(首轮即提供准确回答的会话数 / 总会话数) × 100',
+    dataSource: 'conversation_metrics',
+    updateFrequency: '1m',
+    targets: {
+      excellent: 70,
+      good: 60,
+      needsImprovement: 50,
+      poor: 0
+    }
+  },
+  {
+    id: 'clarification_request_ratio',
+    name: '澄清问题比率',
+    description: '包含澄清提问的会话比例。比率过高说明理解能力不足，适中比率表明积极确认需求',
+    unit: '%',
+    level: 'L2',
+    category: 'conversation_efficiency',
+    calculation: '(包含澄清提问的会话数 / 总会话数) × 100',
+    dataSource: 'conversation_metrics',
+    updateFrequency: '1m',
+    targets: {
+      excellent: 15,
+      good: 25,
+      needsImprovement: 35,
+      poor: 99
+    }
+  },
+  {
+    id: 'proactive_transfer_rate',
+    name: '主动转移率',
+    description: '数字员工主动建议转人工的会话比例，衡量对自身能力边界的认知。适度主动转移是良好的',
+    unit: '%',
+    level: 'L2',
+    category: 'conversation_efficiency',
+    calculation: '(数字员工主动建议转人工的会话数 / 总会话数) × 100',
+    dataSource: 'transfer_metrics',
+    updateFrequency: '5m',
+    targets: {
+      excellent: 8,
+      good: 12,
+      needsImprovement: 20,
+      poor: 99
+    }
+  }
+];
+
+// L3 成本与性能指标 - "The Cost" - 付出的代价是多少？
+export const L3_COST_PERFORMANCE_METRICS: MetricDefinition[] = [
+  {
+    id: 'avg_token_consumption',
+    name: '平均Token消耗',
+    description: 'LLM应用的核心成本指标，每次会话平均消耗的Token数量，直接转化为现金成本',
+    unit: 'tokens',
+    level: 'L3',
+    category: 'cost_efficiency',
+    calculation: '总消耗Token数 / 总会话数',
+    dataSource: 'llm_metrics',
+    updateFrequency: '1m',
+    targets: {
+      excellent: 2000,
+      good: 3500,
+      needsImprovement: 5000,
+      poor: Infinity
+    }
+  },
+  {
+    id: 'cost_per_session',
+    name: '每次会话成本',
+    description: '综合成本视图，包含LLM调用成本、工具调用成本、基础设施成本等，用于计算数字员工的单位经济效益',
+    unit: 'USD',
+    level: 'L3',
+    category: 'cost_efficiency',
+    calculation: '总成本 / 总会话数',
+    dataSource: 'cost_metrics',
+    updateFrequency: '5m',
+    targets: {
+      excellent: 0.30,
+      good: 0.50,
+      needsImprovement: 0.80,
+      poor: Infinity
+    }
+  },
+  {
+    id: 'avg_response_latency_p95',
+    name: '平均响应延迟 (P95)',
+    description: '从用户发送消息到收到完整回复的95分位数时间，衡量性能。延迟直接影响用户体验',
+    unit: 'ms',
+    level: 'L3',
+    category: 'system_performance',
+    calculation: '所有会话响应时间的P95值',
+    dataSource: 'performance_metrics',
+    updateFrequency: '1m',
+    targets: {
+      excellent: 3000,
+      good: 5000,
+      needsImprovement: 8000,
+      poor: Infinity
+    }
+  },
+  {
+    id: 'tool_call_avg_latency',
+    name: '工具调用耗时',
+    description: '每次调用外部工具（通过MCP）的平均耗时，帮助定位性能瓶颈',
+    unit: 'ms',
+    level: 'L3',
+    category: 'system_performance',
+    calculation: '所有工具调用时间总和 / 工具调用总次数',
+    dataSource: 'mcp_metrics',
+    updateFrequency: '1m',
+    targets: {
+      excellent: 1000,
+      good: 2000,
+      needsImprovement: 4000,
+      poor: Infinity
+    }
+  }
+];
+
+// L4 运维与安全指标 - "The Reliability" - 是否稳定可靠？
+export const L4_OPERATIONS_SECURITY_METRICS: MetricDefinition[] = [
+  {
+    id: 'tool_call_success_rate',
+    name: '工具调用成功率',
+    description: '数字员工所依赖的外部服务的健康度，成功率低会直接导致任务失败',
+    unit: '%',
+    level: 'L3',
+    category: 'system_reliability',
+    calculation: '(工具调用成功的次数 / 工具调用总次数) × 100',
+    dataSource: 'mcp_metrics',
+    updateFrequency: '1m',
+    targets: {
+      excellent: 98,
+      good: 95,
+      needsImprovement: 90,
+      poor: 0
+    }
+  },
+  {
+    id: 'error_exception_rate',
+    name: '错误率 / 异常率',
+    description: '综合稳定性指标，监控各种错误（LLM异常、程序bug、网络错误等）',
+    unit: '%',
+    level: 'L3',
+    category: 'system_reliability',
+    calculation: '(抛出错误的会话数 / 总会话数) × 100',
+    dataSource: 'error_metrics',
+    updateFrequency: '1m',
+    targets: {
+      excellent: 2,
+      good: 5,
+      needsImprovement: 10,
+      poor: 100
+    }
+  },
+  {
+    id: 'sensitive_info_leakage_events',
+    name: '敏感信息泄露事件',
+    description: '最高优先级的安全指标，通过日志分析和关键字检测，确保数字员工不会意外泄露用户隐私或公司机密',
+    unit: '次',
+    level: 'L3',
+    category: 'security_compliance',
+    calculation: '统计期内发现的潜在泄露次数',
+    dataSource: 'security_metrics',
+    updateFrequency: '1m',
+    targets: {
+      excellent: 0,
+      good: 0,
+      needsImprovement: 1,
+      poor: Infinity
+    }
+  },
+  {
+    id: 'harmful_content_generation_rate',
+    name: '有害内容生成率',
+    description: '生成有害或不合规内容的会话比例，衡量内容安全风险',
+    unit: '%',
+    level: 'L3',
+    category: 'security_compliance',
+    calculation: '(生成有害或不合规内容的会话数 / 总会话数) × 100',
+    dataSource: 'content_safety_metrics',
+    updateFrequency: '1m',
+    targets: {
+      excellent: 0.1,
+      good: 0.5,
+      needsImprovement: 1.0,
+      poor: 100
+    }
+  }
+];
+
+// L3 技术监控指标 (保留原有内容)
 export const L3_TECHNICAL_METRICS: MetricDefinition[] = [
   {
     id: 'computing_performance_efficiency',
@@ -336,21 +480,36 @@ export const L3_TECHNICAL_METRICS: MetricDefinition[] = [
 // 所有指标的完整定义
 export const ALL_METRICS: MetricDefinition[] = [
   ...L1_BUSINESS_METRICS,
-  ...L2_SUPPORTING_METRICS,
+  ...L2_CONVERSATION_METRICS,
+  ...L3_COST_PERFORMANCE_METRICS,
+  ...L4_OPERATIONS_SECURITY_METRICS,
   ...L3_TECHNICAL_METRICS
 ];
 
 // 指标分类映射
 export const METRIC_CATEGORIES = {
+  // L1 核心业务指标分类
+  core_business: '核心业务',
+  
+  // L2 对话与体验指标分类
+  conversation_efficiency: '对话效率',
+  
+  // L3 成本与性能指标分类
+  cost_efficiency: '成本效率',
+  system_performance: '系统性能',
+  
+  // L4 运维与安全指标分类
+  system_reliability: '系统可靠性',
+  security_compliance: '安全合规',
+  
+  // 保留原有分类
   business_insight: '业务洞察',
   business_impact: '业务影响',
-  cost_efficiency: '成本效率',
   risk_management: '风险管理',
   data_foundation: '数据基础',
   capability_coverage: '能力覆盖',
   analytical_capability: '分析能力',
   user_experience: '用户体验',
-  system_performance: '系统性能',
   system_capacity: '系统容量',
   algorithm_quality: '算法质量',
   infrastructure_efficiency: '基础设施效率',
