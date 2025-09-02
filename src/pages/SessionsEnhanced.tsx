@@ -199,7 +199,7 @@ const ChainTraceVisualization = ({
                   </div>
                   <div className="flex-1 relative h-8">
                     <div 
-                      className={`absolute top-1 h-6 rounded ${
+                      className={`absolute top-1 h-6 rounded cursor-pointer ${
                         trace.status === 'success' ? 'bg-green-400' : 'bg-red-400'
                       } ${selectedSpanId === trace.id ? 'ring-2 ring-blue-500' : ''}`}
                       style={{ 
@@ -207,7 +207,6 @@ const ChainTraceVisualization = ({
                         width: `${Math.max((duration / totalDuration) * 100, 2)}%` 
                       }}
                       onClick={() => onSpanSelect(selectedSpanId === trace.id ? null : trace.id)}
-                      className="cursor-pointer"
                     ></div>
                     <div 
                       className="absolute top-0 text-xs text-gray-600"
@@ -337,6 +336,7 @@ const SessionsEnhanced = () => {
   const [maxTokens, setMaxTokens] = useState('');
   const [minDuration, setMinDuration] = useState('');
   const [maxDuration, setMaxDuration] = useState('');
+
 
   // 增强的实时数据更新 - 模拟WebSocket连接
   useEffect(() => {
@@ -1455,7 +1455,15 @@ const SessionsEnhanced = () => {
                       className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
                         selectedSession?.id === session.id ? 'bg-primary-50 border-l-4 border-primary-500' : ''
                       }`}
-                      onClick={() => setSelectedSession(session)}
+                      onClick={() => {
+                        console.log('Selected session:', session.id, {
+                          hasReasoningSteps: !!session.reasoningSteps,
+                          reasoningStepsCount: session.reasoningSteps?.length || 0,
+                          hasToolTrace: !!session.toolTrace,
+                          toolTraceCount: session.toolTrace?.length || 0
+                        });
+                        setSelectedSession(session);
+                      }}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium text-gray-900">{session.id}</span>
@@ -1585,16 +1593,32 @@ const SessionsEnhanced = () => {
               </Card>
 
               {/* 推理过程可视化 - 支持历史和实时会话 */}
-              {selectedSession.reasoningSteps && selectedSession.reasoningSteps.length > 0 && (
+              {selectedSession && selectedSession.reasoningSteps && selectedSession.reasoningSteps.length > 0 ? (
                 <Card>
                   <CardBody>
                     <ReasoningStepsVisualization steps={selectedSession.reasoningSteps} />
                   </CardBody>
                 </Card>
+              ) : selectedSession && (
+                <Card>
+                  <CardHeader>
+                    <h4 className="card-title flex items-center">
+                      <Brain className="h-5 w-5 mr-2" />
+                      推理过程
+                    </h4>
+                  </CardHeader>
+                  <CardBody>
+                    <div className="text-center text-gray-500 py-4">
+                      <Brain className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                      <p className="text-sm">暂无推理过程数据</p>
+                      <p className="text-xs text-gray-400 mt-1">该会话可能未记录推理步骤</p>
+                    </div>
+                  </CardBody>
+                </Card>
               )}
 
               {/* 分布式链路追踪 */}
-              {selectedSession.toolTrace.length > 0 && (
+              {selectedSession && selectedSession.toolTrace && selectedSession.toolTrace.length > 0 ? (
                 <Card>
                   <CardHeader>
                     <div className="flex items-center justify-between">
@@ -1654,6 +1678,22 @@ const SessionsEnhanced = () => {
                       onSpanSelect={setSelectedSpanId}
                       showAnalysis={showTraceAnalysis}
                     />
+                  </CardBody>
+                </Card>
+              ) : selectedSession && (
+                <Card>
+                  <CardHeader>
+                    <h4 className="card-title flex items-center">
+                      <GitBranch className="h-5 w-5 mr-2" />
+                      工具调用链路
+                    </h4>
+                  </CardHeader>
+                  <CardBody>
+                    <div className="text-center text-gray-500 py-4">
+                      <GitBranch className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                      <p className="text-sm">暂无工具调用数据</p>
+                      <p className="text-xs text-gray-400 mt-1">该会话可能未使用工具</p>
+                    </div>
                   </CardBody>
                 </Card>
               )}
