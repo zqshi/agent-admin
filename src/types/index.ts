@@ -12,6 +12,7 @@ export interface Session {
   messages: ChatMessage[];
   llmTrace: LLMTrace[];
   toolTrace: ToolTrace[];
+  reasoningSteps?: ReasoningStep[]; // 添加推理步骤支持
 }
 
 // 数字员工实例（基础版本）

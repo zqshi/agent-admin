@@ -1584,8 +1584,8 @@ const SessionsEnhanced = () => {
                 </CardBody>
               </Card>
 
-              {/* 推理过程可视化 - 仅实时会话显示 */}
-              {'reasoningSteps' in selectedSession && selectedSession.reasoningSteps.length > 0 && (
+              {/* 推理过程可视化 - 支持历史和实时会话 */}
+              {selectedSession.reasoningSteps && selectedSession.reasoningSteps.length > 0 && (
                 <Card>
                   <CardBody>
                     <ReasoningStepsVisualization steps={selectedSession.reasoningSteps} />
