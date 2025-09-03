@@ -8,13 +8,34 @@
  * 指标分类
  */
 export enum MetricCategory {
-  BUSINESS = 'business',         // 业务指标
-  PERFORMANCE = 'performance',   // 性能指标
-  QUALITY = 'quality',          // 质量指标
-  COST = 'cost',                // 成本指标
-  USER = 'user',                // 用户指标
-  SYSTEM = 'system',            // 系统指标
-  SECURITY = 'security'         // 安全指标
+  // L1 核心业务指标分类
+  CORE_BUSINESS = 'core_business',         // 核心业务
+
+  // L2 对话与体验指标分类
+  CONVERSATION_EFFICIENCY = 'conversation_efficiency', // 对话效率
+
+  // L3 成本与性能指标分类
+  COST_EFFICIENCY = 'cost_efficiency',     // 成本效率
+  SYSTEM_PERFORMANCE = 'system_performance', // 系统性能
+
+  // L4 运维与安全指标分类
+  SYSTEM_RELIABILITY = 'system_reliability', // 系统可靠性
+  SECURITY_COMPLIANCE = 'security_compliance', // 安全合规
+
+  // 保留原有分类
+  BUSINESS_INSIGHT = 'business_insight',     // 业务洞察
+  BUSINESS_IMPACT = 'business_impact',       // 业务影响
+  RISK_MANAGEMENT = 'risk_management',       // 风险管理
+  DATA_FOUNDATION = 'data_foundation',       // 数据基础
+  CAPABILITY_COVERAGE = 'capability_coverage', // 能力覆盖
+  ANALYTICAL_CAPABILITY = 'analytical_capability', // 分析能力
+  USER_EXPERIENCE = 'user_experience',       // 用户体验
+  SYSTEM_CAPACITY = 'system_capacity',       // 系统容量
+  ALGORITHM_QUALITY = 'algorithm_quality',   // 算法质量
+  INFRASTRUCTURE_EFFICIENCY = 'infrastructure_efficiency', // 基础设施效率
+  LLM_PERFORMANCE = 'llm_performance',       // LLM性能
+  MCP_PERFORMANCE = 'mcp_performance',       // MCP性能
+  USER_JOURNEY = 'user_journey'              // 用户旅程
 }
 
 /**
@@ -22,8 +43,9 @@ export enum MetricCategory {
  */
 export enum MetricLevel {
   L1 = 'L1',  // 核心业务指标
-  L2 = 'L2',  // 支撑分析指标  
-  L3 = 'L3'   // 技术监控指标
+  L2 = 'L2',  // 对话体验指标
+  L3 = 'L3',  // 成本性能指标
+  L4 = 'L4'   // 运维安全指标
 }
 
 /**
@@ -471,7 +493,7 @@ export class MetricDefinitionBuilder {
 export const STANDARD_METRIC_TEMPLATES = {
   L1_BUSINESS: {
     level: MetricLevel.L1,
-    category: MetricCategory.BUSINESS,
+    category: MetricCategory.CORE_BUSINESS,
     format: {
       displayType: 'percentage' as const,
       thousandsSeparator: false,
@@ -492,7 +514,7 @@ export const STANDARD_METRIC_TEMPLATES = {
   
   L2_QUALITY: {
     level: MetricLevel.L2,
-    category: MetricCategory.QUALITY,
+    category: MetricCategory.ALGORITHM_QUALITY,
     format: {
       displayType: 'number' as const,
       thousandsSeparator: true
@@ -512,7 +534,7 @@ export const STANDARD_METRIC_TEMPLATES = {
   
   L3_PERFORMANCE: {
     level: MetricLevel.L3,
-    category: MetricCategory.PERFORMANCE,
+    category: MetricCategory.SYSTEM_PERFORMANCE,
     format: {
       displayType: 'duration' as const,
       thousandsSeparator: false

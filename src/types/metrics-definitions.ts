@@ -1,12 +1,12 @@
 // 标准化指标体系定义
-// 基于PRD的L1/L2/L3三层指标架构
+// 基于PRD的L1/L2/L3/L4四层指标架构
 
 export interface MetricDefinition {
   id: string;
   name: string;
   description: string;
   unit: string;
-  level: 'L1' | 'L2' | 'L3';
+  level: 'L1' | 'L2' | 'L3' | 'L4';
   category: string;
   calculation: string;
   dataSource: string;
@@ -30,15 +30,34 @@ export interface MetricValue {
   metadata?: Record<string, any>;
 }
 
+import { MetricCategory } from './metric-types';
+
 // L1 核心业务指标 - "The What" - 是否创造了价值？
 export const L1_BUSINESS_METRICS: MetricDefinition[] = [
+  {
+    id: 'analysis_insight_accuracy',
+    name: '分析洞察准确性',
+    description: '数字员工提供的分析和洞察与实际情况的符合程度，衡量其决策支持能力',
+    unit: '%',
+    level: 'L1',
+    category: MetricCategory.CORE_BUSINESS,
+    calculation: '(准确分析洞察的会话数 / 总分析会话数) × 100',
+    dataSource: 'analysis_metrics',
+    updateFrequency: '5m',
+    targets: {
+      excellent: 90,
+      good: 80,
+      needsImprovement: 70,
+      poor: 0
+    }
+  },
   {
     id: 'task_success_rate',
     name: '任务成功率',
     description: '数字员工成功完成用户任务的比例，这是最重要的指标，直接回答了"数字员工是否解决了问题？"',
     unit: '%',
     level: 'L1',
-    category: 'core_business',
+    category: MetricCategory.CORE_BUSINESS,
     calculation: '(成功完成任务的会话数 / 总会话数) × 100',
     dataSource: 'session_metrics',
     updateFrequency: '1m',
@@ -111,7 +130,7 @@ export const L2_CONVERSATION_METRICS: MetricDefinition[] = [
     description: '每个会话的平均对话轮数，衡量效率。轮数过多可能意味着理解能力差，轮数过少可能意味着用户意图被过早切断',
     unit: '轮',
     level: 'L2',
-    category: 'conversation_efficiency',
+    category: MetricCategory.CONVERSATION_EFFICIENCY,
     calculation: '总对话轮数 / 总会话数',
     dataSource: 'conversation_metrics',
     updateFrequency: '1m',
@@ -128,7 +147,7 @@ export const L2_CONVERSATION_METRICS: MetricDefinition[] = [
     description: '首轮即提供准确回答的会话比例，衡量精准度和理解能力，高命中率代表强大的首次交互解决能力',
     unit: '%',
     level: 'L2',
-    category: 'conversation_efficiency',
+    category: MetricCategory.CONVERSATION_EFFICIENCY,
     calculation: '(首轮即提供准确回答的会话数 / 总会话数) × 100',
     dataSource: 'conversation_metrics',
     updateFrequency: '1m',
@@ -183,7 +202,7 @@ export const L3_COST_PERFORMANCE_METRICS: MetricDefinition[] = [
     description: 'LLM应用的核心成本指标，每次会话平均消耗的Token数量，直接转化为现金成本',
     unit: 'tokens',
     level: 'L3',
-    category: 'cost_efficiency',
+    category: MetricCategory.COST_EFFICIENCY,
     calculation: '总消耗Token数 / 总会话数',
     dataSource: 'llm_metrics',
     updateFrequency: '1m',
@@ -200,7 +219,7 @@ export const L3_COST_PERFORMANCE_METRICS: MetricDefinition[] = [
     description: '综合成本视图，包含LLM调用成本、工具调用成本、基础设施成本等，用于计算数字员工的单位经济效益',
     unit: 'USD',
     level: 'L3',
-    category: 'cost_efficiency',
+    category: MetricCategory.COST_EFFICIENCY,
     calculation: '总成本 / 总会话数',
     dataSource: 'cost_metrics',
     updateFrequency: '5m',
@@ -217,7 +236,7 @@ export const L3_COST_PERFORMANCE_METRICS: MetricDefinition[] = [
     description: '从用户发送消息到收到完整回复的95分位数时间，衡量性能。延迟直接影响用户体验',
     unit: 'ms',
     level: 'L3',
-    category: 'system_performance',
+    category: MetricCategory.SYSTEM_PERFORMANCE,
     calculation: '所有会话响应时间的P95值',
     dataSource: 'performance_metrics',
     updateFrequency: '1m',
@@ -234,7 +253,7 @@ export const L3_COST_PERFORMANCE_METRICS: MetricDefinition[] = [
     description: '每次调用外部工具（通过MCP）的平均耗时，帮助定位性能瓶颈',
     unit: 'ms',
     level: 'L3',
-    category: 'system_performance',
+    category: MetricCategory.SYSTEM_PERFORMANCE,
     calculation: '所有工具调用时间总和 / 工具调用总次数',
     dataSource: 'mcp_metrics',
     updateFrequency: '1m',
@@ -254,8 +273,8 @@ export const L4_OPERATIONS_SECURITY_METRICS: MetricDefinition[] = [
     name: '工具调用成功率',
     description: '数字员工所依赖的外部服务的健康度，成功率低会直接导致任务失败',
     unit: '%',
-    level: 'L3',
-    category: 'system_reliability',
+    level: 'L4',
+    category: MetricCategory.SYSTEM_RELIABILITY,
     calculation: '(工具调用成功的次数 / 工具调用总次数) × 100',
     dataSource: 'mcp_metrics',
     updateFrequency: '1m',
@@ -271,8 +290,8 @@ export const L4_OPERATIONS_SECURITY_METRICS: MetricDefinition[] = [
     name: '错误率 / 异常率',
     description: '综合稳定性指标，监控各种错误（LLM异常、程序bug、网络错误等）',
     unit: '%',
-    level: 'L3',
-    category: 'system_reliability',
+    level: 'L4',
+    category: MetricCategory.SYSTEM_RELIABILITY,
     calculation: '(抛出错误的会话数 / 总会话数) × 100',
     dataSource: 'error_metrics',
     updateFrequency: '1m',
@@ -288,8 +307,8 @@ export const L4_OPERATIONS_SECURITY_METRICS: MetricDefinition[] = [
     name: '敏感信息泄露事件',
     description: '最高优先级的安全指标，通过日志分析和关键字检测，确保数字员工不会意外泄露用户隐私或公司机密',
     unit: '次',
-    level: 'L3',
-    category: 'security_compliance',
+    level: 'L4',
+    category: MetricCategory.SECURITY_COMPLIANCE,
     calculation: '统计期内发现的潜在泄露次数',
     dataSource: 'security_metrics',
     updateFrequency: '1m',
@@ -297,7 +316,7 @@ export const L4_OPERATIONS_SECURITY_METRICS: MetricDefinition[] = [
       excellent: 0,
       good: 0,
       needsImprovement: 1,
-      poor: Infinity
+      poor: 10
     }
   },
   {
@@ -305,8 +324,8 @@ export const L4_OPERATIONS_SECURITY_METRICS: MetricDefinition[] = [
     name: '有害内容生成率',
     description: '生成有害或不合规内容的会话比例，衡量内容安全风险',
     unit: '%',
-    level: 'L3',
-    category: 'security_compliance',
+    level: 'L4',
+    category: MetricCategory.SECURITY_COMPLIANCE,
     calculation: '(生成有害或不合规内容的会话数 / 总会话数) × 100',
     dataSource: 'content_safety_metrics',
     updateFrequency: '1m',
@@ -344,7 +363,7 @@ export const L3_TECHNICAL_METRICS: MetricDefinition[] = [
     description: '系统在单位时间内处理数据的能力和稳定性',
     unit: 'MB/s',
     level: 'L3',
-    category: 'system_capacity',
+    category: MetricCategory.SYSTEM_CAPACITY,
     calculation: '处理的数据量(MB) / 处理时间(秒)',
     dataSource: 'throughput_metrics',
     updateFrequency: '1m',
@@ -361,7 +380,7 @@ export const L3_TECHNICAL_METRICS: MetricDefinition[] = [
     description: '分析算法在不同数据条件下的稳定性和鲁棒性',
     unit: '%',
     level: 'L3',
-    category: 'algorithm_quality',
+    category: MetricCategory.ALGORITHM_QUALITY,
     calculation: '结果一致性 × 0.3 + 异常数据处理能力 × 0.25 + 边界条件处理能力 × 0.25 + 版本更新稳定性 × 0.2',
     dataSource: 'algorithm_metrics',
     updateFrequency: '1h',
@@ -378,7 +397,7 @@ export const L3_TECHNICAL_METRICS: MetricDefinition[] = [
     description: '分析数据存储架构和查询性能的优化程度',
     unit: '%',
     level: 'L3',
-    category: 'infrastructure_efficiency',
+    category: MetricCategory.INFRASTRUCTURE_EFFICIENCY,
     calculation: '查询响应时间优化度 × 0.3 + 存储空间利用率 × 0.25 + 缓存命中率 × 0.25 + 索引效率 × 0.2',
     dataSource: 'storage_metrics',
     updateFrequency: '15m',
@@ -396,7 +415,7 @@ export const L3_TECHNICAL_METRICS: MetricDefinition[] = [
     description: 'LLM调用的成功率和稳定性',
     unit: '%',
     level: 'L3',
-    category: 'llm_performance',
+    category: MetricCategory.LLM_PERFORMANCE,
     calculation: '成功调用次数 / 总调用次数 × 100',
     dataSource: 'llm_metrics',
     updateFrequency: '1m',
@@ -413,7 +432,7 @@ export const L3_TECHNICAL_METRICS: MetricDefinition[] = [
     description: 'LLM调用的平均响应时间',
     unit: 'ms',
     level: 'L3',
-    category: 'llm_performance',
+    category: MetricCategory.LLM_PERFORMANCE,
     calculation: '所有LLM调用响应时间的P95值',
     dataSource: 'llm_metrics',
     updateFrequency: '1m',
@@ -447,7 +466,7 @@ export const L3_TECHNICAL_METRICS: MetricDefinition[] = [
     description: 'MCP工具调用的成功率',
     unit: '%',
     level: 'L3',
-    category: 'mcp_performance',
+    category: MetricCategory.MCP_PERFORMANCE,
     calculation: '成功的工具调用次数 / 总工具调用次数 × 100',
     dataSource: 'mcp_metrics',
     updateFrequency: '1m',
@@ -464,7 +483,7 @@ export const L3_TECHNICAL_METRICS: MetricDefinition[] = [
     description: '用户会话成功完成的比例',
     unit: '%',
     level: 'L3',
-    category: 'user_journey',
+    category: MetricCategory.USER_JOURNEY,
     calculation: '成功完成的会话数 / 总会话数 × 100',
     dataSource: 'session_metrics',
     updateFrequency: '5m',
@@ -559,7 +578,7 @@ export function getMetricDefinition(metricId: string): MetricDefinition | undefi
 }
 
 // 根据级别获取指标
-export function getMetricsByLevel(level: 'L1' | 'L2' | 'L3'): MetricDefinition[] {
+export function getMetricsByLevel(level: 'L1' | 'L2' | 'L3' | 'L4'): MetricDefinition[] {
   return ALL_METRICS.filter(metric => metric.level === level);
 }
 

@@ -31,11 +31,11 @@ import {
 } from 'lucide-react';
 import { mockDashboardMetrics } from '../data/mockData';
 import { PageLayout, PageHeader, PageContent, MetricCard, Card, CardHeader, CardBody, Button, Modal } from '../components/ui';
-import { ALL_METRICS, getMetricsByLevel, METRIC_CATEGORIES } from '../types/metrics-definitions';
+import { ALL_METRICS, getMetricsByLevel, METRIC_CATEGORIES, L1_BUSINESS_METRICS, getMetricStatus } from '../types/metrics-definitions';
 import type { MetricValue } from '../types/metrics-definitions';
 
 const Dashboard = () => {
-  const [selectedMetricLevel, setSelectedMetricLevel] = useState<'all' | 'L1' | 'L2' | 'L3'>('L1');
+  const [selectedMetricLevel, setSelectedMetricLevel] = useState<'all' | 'L1' | 'L2' | 'L3' | 'L4'>('L1');
   const [realTimeData, setRealTimeData] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [showDetailedReport, setShowDetailedReport] = useState(false);
@@ -47,32 +47,44 @@ const Dashboard = () => {
   const failureRate = (metrics.failedSessions / metrics.totalSessions * 100).toFixed(1);
   
   // L1核心业务指标模拟数据
-  const [coreMetrics, setCoreMetrics] = useState<Record<string, MetricValue>>({
-    'analysis_insight_accuracy': {
-      metricId: 'analysis_insight_accuracy',
-      value: 87.3,
-      timestamp: new Date(),
-      trend: 'up',
-      changePercent: 3.2,
-      status: 'good'
-    },
-    'llm_call_success_rate': {
-      metricId: 'llm_call_success_rate',
-      value: 98.7,
-      timestamp: new Date(),
-      trend: 'stable',
-      changePercent: 0.8,
-      status: 'excellent'
-    },
-    'token_cost_efficiency': {
-      metricId: 'token_cost_efficiency',
-      value: 0.23,
-      timestamp: new Date(),
-      trend: 'down',
-      changePercent: -15.2,
-      status: 'good'
-    }
-  });
+  const [coreMetrics, setCoreMetrics] = useState<Record<string, MetricValue>>({});
+
+  // 初始化核心指标数据
+  useEffect(() => {
+    // 从L1业务指标中选择几个关键指标
+    const keyMetrics = L1_BUSINESS_METRICS.filter(metric => 
+      ['task_success_rate', 'user_satisfaction_csat', 'analysis_insight_accuracy'].includes(metric.id)
+    );
+
+    // 生成模拟数据
+    const initialMetrics: Record<string, MetricValue> = {};
+    keyMetrics.forEach(metric => {
+      // 生成基于目标值的模拟值
+      let value = 0;
+      if (metric.id === 'task_success_rate') value = 82.5; // 良好
+      else if (metric.id === 'user_satisfaction_csat') value = 88.2; // 接近优秀
+      else if (metric.id === 'analysis_insight_accuracy') value = 87.3; // 良好
+
+      // 生成趋势和变化百分比
+      const trendOptions = ['up', 'down', 'stable'];
+      const trend = trendOptions[Math.floor(Math.random() * trendOptions.length)];
+      const changePercent = trend === 'stable' ? 0 : parseFloat((Math.random() * 10 - 5).toFixed(1));
+
+      // 确定状态
+      const status = getMetricStatus(metric, value);
+
+      initialMetrics[metric.id] = {
+        metricId: metric.id,
+        value,
+        timestamp: new Date(),
+        trend: trend as 'up' | 'down' | 'stable',
+        changePercent,
+        status
+      };
+    });
+
+    setCoreMetrics(initialMetrics);
+  }, []);
   
   // 实验状态模拟数据
   const [experimentSummary] = useState({
@@ -144,6 +156,7 @@ const Dashboard = () => {
               { key: 'L1', label: 'L1', tooltip: '核心业务指标 - 直接衡量业务价值和成效' },
               { key: 'L2', label: 'L2', tooltip: '支撑分析指标 - 支撑业务指标的中间层分析' },
               { key: 'L3', label: 'L3', tooltip: '技术监控指标 - 底层技术性能和系统稳定性' },
+              { key: 'L4', label: 'L4', tooltip: '运维与安全指标 - 系统可靠性与安全合规性' },
               { key: 'all', label: '全部', tooltip: '显示所有层级的指标' }
             ].map((level) => (
               <div key={level.key} className="relative">
@@ -163,7 +176,7 @@ const Dashboard = () => {
             
             {/* 指标体系说明浮窗 */}
             <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-lg border border-gray-200 shadow-lg p-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
-              <h4 className="font-semibold text-gray-900 mb-3">L1/L2/L3 指标体系说明</h4>
+              <h4 className="font-semibold text-gray-900 mb-3">L1/L2/L3/L4 指标体系说明</h4>
               <div className="space-y-3 text-sm">
                 <div className="flex items-start gap-3">
                   <span className="inline-flex items-center justify-center w-6 h-6 bg-red-100 text-red-700 rounded-full font-medium text-xs">L1</span>
@@ -184,6 +197,13 @@ const Dashboard = () => {
                   <div>
                     <div className="font-medium text-gray-900">技术监控指标</div>
                     <div className="text-gray-600">底层技术性能和系统运行指标，如响应时间、成功率、资源使用等</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="inline-flex items-center justify-center w-6 h-6 bg-purple-100 text-purple-700 rounded-full font-medium text-xs">L4</span>
+                  <div>
+                    <div className="font-medium text-gray-900">运维与安全指标</div>
+                    <div className="text-gray-600">系统可靠性、安全性和合规性指标，如错误率、敏感信息保护等</div>
                   </div>
                 </div>
               </div>
@@ -208,44 +228,44 @@ const Dashboard = () => {
                 <p className="text-gray-600">基于多维度实时监控的智能评分</p>
               </div>
               <div className="text-right">
-                <div className="text-4xl font-bold text-blue-600 mb-1">{systemHealth.overall}%</div>
+                <div className="text-4xl font-bold text-blue-600 mb-1">{systemHealth.overall.toString()}%</div>
                 <div className="text-sm text-blue-600 font-medium">优秀状态</div>
               </div>
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {Object.entries(systemHealth.components).map(([key, component]) => {
-                const icons = {
-                  llm_services: <Brain className="h-5 w-5" />,
-                  mcp_tools: <Zap className="h-5 w-5" />,
-                  data_pipeline: <Activity className="h-5 w-5" />,
-                  storage: <Database className="h-5 w-5" />
-                };
-                const labels = {
-                  llm_services: 'LLM服务',
-                  mcp_tools: 'MCP工具',
-                  data_pipeline: '数据管道',
-                  storage: '存储系统'
-                };
-                return (
-                  <div key={key} className={`p-4 rounded-lg border ${getHealthColor(component.score)}`}>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        {icons[key as keyof typeof icons]}
-                        <span className="font-medium text-sm">{labels[key as keyof typeof labels]}</span>
-                      </div>
-                      <span className="text-lg font-bold">{component.score}%</span>
+            {Object.entries(systemHealth.components).map(([key, component]) => {
+              const icons = {
+                llm_services: <Brain className="h-5 w-5" />,
+                mcp_tools: <Zap className="h-5 w-5" />,
+                data_pipeline: <Activity className="h-5 w-5" />,
+                storage: <Database className="h-5 w-5" />
+              };
+              const labels = {
+                llm_services: 'LLM服务',
+                mcp_tools: 'MCP工具',
+                data_pipeline: '数据管道',
+                storage: '存储系统'
+              };
+              return (
+                <div key={key} className={`p-4 rounded-lg border ${getHealthColor(component.score)}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      {icons[key as keyof typeof icons]}
+                      <span className="font-medium text-sm">{labels[key as keyof typeof labels]}</span>
                     </div>
-                    <div className="text-xs opacity-75">
-                      {key === 'llm_services' && `延迟: ${component.latency}s`}
-                      {key === 'mcp_tools' && `成功率: ${component.success_rate}%`}
-                      {key === 'data_pipeline' && `吞吐: ${component.throughput}/min`}
-                      {key === 'storage' && `查询: ${component.query_time}ms`}
-                    </div>
+                    <span className="text-lg font-bold">{component.score}%</span>
                   </div>
-                );
-              })}
-            </div>
+                  <div className="text-xs opacity-75">
+                    {key === 'llm_services' && 'latency' in component && `延迟: ${component.latency}s`}
+                    {key === 'mcp_tools' && 'success_rate' in component && `成功率: ${component.success_rate}%`}
+                    {key === 'data_pipeline' && 'throughput' in component && `吞吐: ${component.throughput}/min`}
+                    {key === 'storage' && 'query_time' in component && `查询: ${component.query_time}ms`}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
           </CardBody>
         </Card>
         
@@ -771,10 +791,10 @@ const Dashboard = () => {
                       <div>
                         <h4 className="font-medium text-gray-900">{labels[key as keyof typeof labels]}</h4>
                         <p className="text-sm text-gray-600">
-                          {key === 'llm_services' && `平均延迟: ${component.latency}s`}
-                          {key === 'mcp_tools' && `成功率: ${component.success_rate}%`}
-                          {key === 'data_pipeline' && `吞吐量: ${component.throughput}/min`}
-                          {key === 'storage' && `查询时间: ${component.query_time}ms`}
+                          {key === 'llm_services' && `平均延迟: ${(component as { latency: number }).latency}s`}
+                          {key === 'mcp_tools' && `成功率: ${(component as { success_rate: number }).success_rate}%`}
+                          {key === 'data_pipeline' && `吞吐量: ${(component as { throughput: number }).throughput}/min`}
+                          {key === 'storage' && `查询时间: ${(component as { query_time: number }).query_time}ms`}
                         </p>
                       </div>
                     </div>

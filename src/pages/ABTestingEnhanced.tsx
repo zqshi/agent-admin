@@ -577,7 +577,7 @@ const ABTestingEnhancedUpdated: React.FC = () => {
                       <nav className="flex px-6">
                         {[
                           { id: 'overview', name: '概览与决策', icon: BarChart3 },
-                          { id: 'metrics', name: '三层指标', icon: Target },
+                          { id: 'metrics', name: '全层级指标', icon: Target },
                           { id: 'analysis', name: '统计分析', icon: TrendingUp },
                           { id: 'insights', name: '洞察分析', icon: Eye },
                           { id: 'status_flow', name: '状态管理', icon: Activity }

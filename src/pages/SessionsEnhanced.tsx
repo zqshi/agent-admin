@@ -778,10 +778,10 @@ const SessionsEnhanced = () => {
               {(connectionStatus === 'disconnected' || connectionStatus === 'reconnecting') && (
                 <button
                   onClick={handleManualReconnect}
-                  disabled={connectionStatus === 'connecting'}
+                  disabled={false}
                   className="flex items-center text-xs bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white px-3 py-1 rounded transition-colors"
                 >
-                  {connectionStatus === 'connecting' ? (
+                  {false ? (
                     <>
                       <div className="animate-spin rounded-full h-3 w-3 border border-white border-t-transparent mr-1"></div>
                       连接中

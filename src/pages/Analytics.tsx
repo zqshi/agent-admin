@@ -15,22 +15,13 @@ import {
   Settings
 } from 'lucide-react';
 import { PageLayout, PageHeader, PageContent, MetricCard, Card, CardHeader, CardBody, Button, FilterSection } from '../components/ui';
-import { 
-  ALL_METRICS, 
-  getMetricsByLevel, 
-  getMetricStatus, 
-  METRIC_STATUS_COLORS, 
-  METRIC_STATUS_LABELS,
-  METRIC_CATEGORIES,
-  type MetricValue,
-  type MetricDefinition
-} from '../types/metrics-definitions';
+import { ALL_METRICS, getMetricsByLevel, getMetricStatus, METRIC_STATUS_COLORS, METRIC_STATUS_LABELS, METRIC_CATEGORIES, L4_OPERATIONS_SECURITY_METRICS, type MetricValue, type MetricDefinition } from '../types/metrics-definitions';
 
 const Analytics = () => {
   const [selectedTimeRange, setSelectedTimeRange] = useState('7d');
   const [selectedDimension, setSelectedDimension] = useState('model');
   const [selectedMetric, setSelectedMetric] = useState('tokens');
-  const [selectedMetricLevel, setSelectedMetricLevel] = useState<'L1' | 'L2' | 'L3' | 'all'>('all');
+  const [selectedMetricLevel, setSelectedMetricLevel] = useState<'L1' | 'L2' | 'L3' | 'L4' | 'all'>('all');
   const [metricsData, setMetricsData] = useState<Record<string, MetricValue>>({});
   const [loading, setLoading] = useState(false);
 
@@ -39,7 +30,7 @@ const Analytics = () => {
     if (selectedMetricLevel === 'all') {
       return ALL_METRICS;
     }
-    return getMetricsByLevel(selectedMetricLevel);
+    return getMetricsByLevel(selectedMetricLevel as 'L1' | 'L2' | 'L3' | 'L4');
   }, [selectedMetricLevel]);
 
   // 模拟指标数据
@@ -166,11 +157,12 @@ const Analytics = () => {
   ];
 
   // 获取指标级别图标
-  const getLevelIcon = (level: 'L1' | 'L2' | 'L3') => {
+  const getLevelIcon = (level: 'L1' | 'L2' | 'L3' | 'L4') => {
     switch (level) {
       case 'L1': return <Target className="h-4 w-4" />;
       case 'L2': return <BarChart3 className="h-4 w-4" />;
       case 'L3': return <Activity className="h-4 w-4" />;
+      case 'L4': return <Settings className="h-4 w-4" />;
     }
   };
 
@@ -215,7 +207,8 @@ const Analytics = () => {
                 <span className={`text-xs px-2 py-1 rounded-full font-medium ${
                   metric.level === 'L1' ? 'bg-red-100 text-red-700' :
                   metric.level === 'L2' ? 'bg-blue-100 text-blue-700' :
-                  'bg-green-100 text-green-700'
+                  metric.level === 'L3' ? 'bg-green-100 text-green-700' :
+                  'bg-purple-100 text-purple-700'
                 }`}>
                   {metric.level}
                 </span>
@@ -354,8 +347,27 @@ const Analytics = () => {
           </CardBody>
         </Card>
 
+        {/* 指标级别筛选 */}
+        <div className="mb-6 flex space-x-2 overflow-x-auto pb-2">
+          {[
+            { value: 'all', label: '全部指标' },
+            { value: 'L1', label: 'L1 核心业务' },
+            { value: 'L2', label: 'L2 对话体验' },
+            { value: 'L3', label: 'L3 成本性能' },
+            { value: 'L4', label: 'L4 运维安全' }
+          ].map((item) => (
+            <button
+              key={item.value}
+              onClick={() => setSelectedMetricLevel(item.value as 'L1' | 'L2' | 'L3' | 'L4' | 'all')}
+              className={`px-4 py-2 rounded-md whitespace-nowrap ${selectedMetricLevel === item.value ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
         {/* 标准化指标概览 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredMetrics.map(renderMetricCard)}
         </div>
 

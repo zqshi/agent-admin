@@ -55,8 +55,15 @@ const CreateMCPTool: React.FC<CreateMCPToolProps> = ({ isOpen, onClose, onSubmit
           parameters: tc.parameters,
           tags: tc.tags
         })) || [],
-        stdioConfig: editingTool.config.stdio,
-        networkConfig: editingTool.config.network
+        stdioConfig: {
+          command: editingTool.config.stdio?.command || '',
+          args: editingTool.config.stdio?.args || [],
+          env: editingTool.config.stdio?.env || {}
+        },
+        networkConfig: {
+          url: editingTool.config.network?.url || '',
+          headers: editingTool.config.network?.headers || {}
+        }
       });
       setCurrentStep(1);
     } else {
