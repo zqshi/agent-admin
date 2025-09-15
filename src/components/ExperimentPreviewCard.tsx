@@ -52,6 +52,7 @@ const ExperimentPreviewCard: React.FC<ExperimentPreviewCardProps> = ({
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [editingParam, setEditingParam] = useState<string | null>(null);
+  const [recentlyFixed, setRecentlyFixed] = useState<Set<string>>(new Set());
 
   // 计算配置完整度
   const completeness = React.useMemo(() => {
@@ -81,6 +82,18 @@ const ExperimentPreviewCard: React.FC<ExperimentPreviewCardProps> = ({
 
   const handleQuickFix = (field: string, value: any) => {
     onParamUpdate(field, value);
+
+    // 添加到最近修复的参数集合，用于显示成功反馈
+    setRecentlyFixed(prev => new Set(prev).add(field));
+
+    // 3秒后移除反馈标记
+    setTimeout(() => {
+      setRecentlyFixed(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(field);
+        return newSet;
+      });
+    }, 3000);
   };
 
   const intentColor = {
@@ -282,20 +295,62 @@ const ExperimentPreviewCard: React.FC<ExperimentPreviewCardProps> = ({
             <div className="flex items-center gap-2 mb-3">
               <AlertTriangle className="h-5 w-5 text-red-500" />
               <span className="font-medium text-red-800">缺失必需参数</span>
+              <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full ml-2">
+                {missingParams.required.length} 项待设置
+              </span>
             </div>
             <div className="space-y-2">
-              {missingParams.required.map((param, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <span className="text-sm text-red-700">{param.description}</span>
-                  <button 
-                    onClick={() => handleQuickFix(param.field, param.default)}
-                    className="text-sm bg-red-100 text-red-700 px-3 py-1 rounded-md hover:bg-red-200"
-                  >
-                    快速设置
-                  </button>
-                </div>
-              ))}
+              {missingParams.required.map((param, index) => {
+                const isRecentlyFixed = recentlyFixed.has(param.field);
+                return (
+                  <div key={index} className={`flex items-center justify-between transition-all duration-300 ${
+                    isRecentlyFixed ? 'bg-green-50 border-l-4 border-green-400 pl-3 -ml-1 rounded-r' : ''
+                  }`}>
+                    <span className={`text-sm ${
+                      isRecentlyFixed ? 'text-green-700 font-medium' : 'text-red-700'
+                    }`}>
+                      {isRecentlyFixed ? (
+                        <span className="flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          {param.description} ✓ 已设置
+                        </span>
+                      ) : (
+                        param.description
+                      )}
+                    </span>
+                    {!isRecentlyFixed && (
+                      <button
+                        onClick={() => handleQuickFix(param.field, param.default)}
+                        className="text-sm bg-red-100 text-red-700 px-3 py-1 rounded-md hover:bg-red-200 transition-colors"
+                      >
+                        快速设置
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
+            {recentlyFixed.size > 0 && (
+              <div className="mt-3 pt-3 border-t border-red-200">
+                <div className="text-xs text-green-600 flex items-center gap-1">
+                  <CheckCircle className="h-3 w-3" />
+                  参数设置成功！缺失参数列表将自动更新
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 参数设置完成反馈 */}
+        {missingParams.required.length === 0 && recentlyFixed.size > 0 && (
+          <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              <span className="font-medium text-green-800">所有必需参数已完成设置</span>
+            </div>
+            <p className="text-sm text-green-700 mt-1">
+              实验配置已完整，现在可以创建实验了！
+            </p>
           </div>
         )}
 
@@ -372,7 +427,9 @@ const ExperimentPreviewCard: React.FC<ExperimentPreviewCardProps> = ({
         {showAdvanced && (
           <div className="mt-6 pt-6 border-t border-gray-200 bg-gray-50 rounded-lg p-4">
             <h4 className="font-medium text-gray-900 mb-4">高级配置</h4>
-            <div className="grid grid-cols-2 gap-4">
+
+            {/* 基础配置区域 */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">实验描述</label>
                 <textarea
@@ -405,6 +462,263 @@ const ExperimentPreviewCard: React.FC<ExperimentPreviewCardProps> = ({
                       </span>
                     </label>
                   ))}
+                </div>
+              </div>
+            </div>
+
+            {/* 实验策略配置 */}
+            <div className="mb-6">
+              <h5 className="text-sm font-medium text-gray-900 mb-3">实验策略</h5>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">分流策略</label>
+                  <select
+                    value={extractedParams.splittingStrategy || 'session'}
+                    onChange={(e) => onParamUpdate('splittingStrategy', e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="session">会话级分流</option>
+                    <option value="user">用户级分流</option>
+                    <option value="request">请求级分流</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">主要指标</label>
+                  <select
+                    value={extractedParams.primaryMetric || 'task_success_rate'}
+                    onChange={(e) => onParamUpdate('primaryMetric', e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="task_success_rate">任务完成率</option>
+                    <option value="response_time">响应时间</option>
+                    <option value="user_satisfaction">用户满意度</option>
+                    <option value="token_cost">Token成本</option>
+                    <option value="conversion_rate">转化率</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* 模型参数配置 */}
+            <div className="mb-6">
+              <h5 className="text-sm font-medium text-gray-900 mb-3">模型参数</h5>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">温度参数</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="2"
+                    step="0.1"
+                    value={extractedParams.temperatures?.[0] || 0.7}
+                    onChange={(e) => onParamUpdate('temperatures', [parseFloat(e.target.value)])}
+                    className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Top-P</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={extractedParams.topP?.[0] || 1.0}
+                    onChange={(e) => onParamUpdate('topP', [parseFloat(e.target.value)])}
+                    className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">最大Token数</label>
+                  <input
+                    type="number"
+                    min="100"
+                    max="4000"
+                    step="100"
+                    value={extractedParams.maxTokens?.[0] || 2000}
+                    onChange={(e) => onParamUpdate('maxTokens', [parseInt(e.target.value)])}
+                    className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 工具配置 */}
+            <div className="mb-6">
+              <h5 className="text-sm font-medium text-gray-900 mb-3">可用工具</h5>
+              <div className="grid grid-cols-2 gap-2">
+                {['search', 'calculator', 'code_executor', 'web_scraper', 'file_reader', 'image_generator'].map(tool => (
+                  <label key={tool} className="flex items-center p-2 border border-gray-200 rounded hover:bg-gray-50">
+                    <input
+                      type="checkbox"
+                      checked={extractedParams.tools?.includes(tool) || false}
+                      onChange={(e) => {
+                        const current = extractedParams.tools || ['search', 'calculator'];
+                        const updated = e.target.checked
+                          ? [...current, tool]
+                          : current.filter(t => t !== tool);
+                        onParamUpdate('tools', updated);
+                      }}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-700 capitalize">
+                      {tool.replace('_', ' ')}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* 预算和时长控制 */}
+            <div className="mb-6">
+              <h5 className="text-sm font-medium text-gray-900 mb-3">预算和时长控制</h5>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">最大预算 (USD)</label>
+                  <input
+                    type="number"
+                    min="10"
+                    step="10"
+                    value={extractedParams.budget?.maxCost || 1000}
+                    onChange={(e) => onParamUpdate('budget', {
+                      ...extractedParams.budget,
+                      maxCost: parseInt(e.target.value)
+                    })}
+                    className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">最小运行天数</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={extractedParams.duration?.minDays || 7}
+                    onChange={(e) => onParamUpdate('duration', {
+                      ...extractedParams.duration,
+                      minDays: parseInt(e.target.value)
+                    })}
+                    className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">最大运行天数</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={extractedParams.duration?.maxDays || 30}
+                    onChange={(e) => onParamUpdate('duration', {
+                      ...extractedParams.duration,
+                      maxDays: parseInt(e.target.value)
+                    })}
+                    className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 自动停止条件 */}
+            <div>
+              <h5 className="text-sm font-medium text-gray-900 mb-3">自动停止条件</h5>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={extractedParams.duration?.autoStopConditions?.includes('statistical_significance') || false}
+                      onChange={(e) => {
+                        const current = extractedParams.duration?.autoStopConditions || [];
+                        const updated = e.target.checked
+                          ? [...current, 'statistical_significance']
+                          : current.filter(c => c !== 'statistical_significance');
+                        onParamUpdate('duration', {
+                          ...extractedParams.duration,
+                          autoStopConditions: updated
+                        });
+                      }}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-700">达到统计显著性</span>
+                  </label>
+
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={extractedParams.duration?.autoStopConditions?.includes('budget_exhausted') || false}
+                      onChange={(e) => {
+                        const current = extractedParams.duration?.autoStopConditions || [];
+                        const updated = e.target.checked
+                          ? [...current, 'budget_exhausted']
+                          : current.filter(c => c !== 'budget_exhausted');
+                        onParamUpdate('duration', {
+                          ...extractedParams.duration,
+                          autoStopConditions: updated
+                        });
+                      }}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-700">预算用尽</span>
+                  </label>
+
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={extractedParams.duration?.autoStopConditions?.includes('target_sample_reached') || false}
+                      onChange={(e) => {
+                        const current = extractedParams.duration?.autoStopConditions || [];
+                        const updated = e.target.checked
+                          ? [...current, 'target_sample_reached']
+                          : current.filter(c => c !== 'target_sample_reached');
+                        onParamUpdate('duration', {
+                          ...extractedParams.duration,
+                          autoStopConditions: updated
+                        });
+                      }}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-700">达到目标样本量</span>
+                  </label>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">目标样本量</label>
+                    <input
+                      type="number"
+                      min="100"
+                      step="100"
+                      value={extractedParams.duration?.targetSamples || 1000}
+                      onChange={(e) => onParamUpdate('duration', {
+                        ...extractedParams.duration,
+                        targetSamples: parseInt(e.target.value)
+                      })}
+                      className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">P值阈值</label>
+                    <input
+                      type="number"
+                      min="0.01"
+                      max="0.1"
+                      step="0.01"
+                      value={extractedParams.pValueThreshold || 0.05}
+                      onChange={(e) => onParamUpdate('pValueThreshold', parseFloat(e.target.value))}
+                      className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">最小效果量</label>
+                    <input
+                      type="number"
+                      min="0.1"
+                      max="1"
+                      step="0.1"
+                      value={extractedParams.minEffectSize || 0.2}
+                      onChange={(e) => onParamUpdate('minEffectSize', parseFloat(e.target.value))}
+                      className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
