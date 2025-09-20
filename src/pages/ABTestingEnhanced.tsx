@@ -3,7 +3,7 @@ import {
   Plus, Settings, Filter, Search, RotateCcw, Eye, EyeOff,
   TrendingUp, Users, DollarSign, Clock, Bot, User, Bell,
   CheckCircle, AlertTriangle, BarChart3, Target, Activity,
-  Brain, Lightbulb, Wand2, Sparkles
+  Brain, Lightbulb, Wand2, Sparkles, Play, Pause, Building2
 } from 'lucide-react';
 
 // 导入我们新开发的组件
@@ -14,6 +14,10 @@ import CreateExperiment from '../components/CreateExperiment';
 import EnhancedNLExperimentCreator from '../components/EnhancedNLExperimentCreator';
 import UserFeedbackModal from '../components/UserFeedbackModal';
 import { errorHandler, generateSessionId, getUserAgent } from '../services/errorHandling';
+
+// 导入UI组件
+import { PageLayout, PageHeader, PageContent } from '../components/ui/PageLayout';
+import { MetricCard } from '../components/ui/MetricCard';
 
 // 导入类型定义
 import { ABTest } from '../types';
@@ -244,6 +248,7 @@ const ABTestingEnhancedUpdated: React.FC = () => {
   const [mainTab, setMainTab] = useState<'experiments' | 'system_config'>('experiments');
   const [selectedExperiment, setSelectedExperiment] = useState<ABTest | null>(null);
   const [activeSubTab, setActiveSubTab] = useState<'overview' | 'metrics' | 'analysis' | 'insights' | 'status_flow'>('overview');
+  const [expandedExperiments, setExpandedExperiments] = useState<Set<string>>(new Set());
   
   // 实验数据和配置
   const [experiments, setExperiments] = useState<ABTest[]>(mockEnhancedExperiments);
@@ -365,241 +370,291 @@ const ABTestingEnhancedUpdated: React.FC = () => {
     await handleStatusTransition(experimentId, 'deploying', `手动部署获胜组: ${winnerGroup}`);
   }, [handleStatusTransition]);
 
-  // 自动选择第一个实验
-  useEffect(() => {
-    if (!selectedExperiment && experiments.length > 0) {
-      setSelectedExperiment(experiments[0]);
-    }
-  }, [experiments, selectedExperiment]);
+  // 处理实验展开/收起
+  const toggleExperiment = useCallback((experimentId: string) => {
+    setExpandedExperiments(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(experimentId)) {
+        newSet.delete(experimentId);
+        // 如果收起的是当前选中的实验，则清除选中状态
+        if (selectedExperiment?.id === experimentId) {
+          setSelectedExperiment(null);
+        }
+      } else {
+        newSet.add(experimentId);
+        // 展开时自动设为选中状态
+        const experiment = experiments.find(e => e.id === experimentId);
+        if (experiment) {
+          setSelectedExperiment(experiment);
+        }
+      }
+      return newSet;
+    });
+  }, [selectedExperiment, experiments]);
 
   return (
-    <div className="h-full bg-gray-50">
-      {/* 页面头部 */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">A/B 测试平台</h1>
-              <p className="text-sm text-gray-600 mt-1">智能实验驱动增长引擎</p>
+    <PageLayout>
+      <PageHeader 
+        title="A/B 测试平台" 
+        subtitle="智能实验驱动增长引擎"
+      >
+        {/* 主要操作按钮 */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowCreateExperiment(true)}
+            disabled={systemConfig.experimentCreation.requiresHumanCreation === false}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Plus className="h-4 w-4" />
+            创建实验
+          </button>
+          
+          <button
+            onClick={() => setShowNLExperimentCreator(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg"
+          >
+            <Wand2 className="h-4 w-4" />
+            <Sparkles className="h-3 w-3" />
+            智能创建
+          </button>
+          
+          {!systemConfig.experimentCreation.requiresHumanCreation && (
+            <div className="flex items-center gap-1 px-3 py-2 bg-purple-100 text-purple-800 rounded-lg text-sm">
+              <Bot className="h-4 w-4" />
+              AI自动创建已启用
             </div>
-            
-            {/* 统计概览 */}
-            <div className="flex items-center gap-6 text-sm">
-              <div className="text-center">
-                <div className="font-semibold text-gray-900">{stats.total}</div>
-                <div className="text-gray-500">总实验</div>
-              </div>
-              <div className="text-center">
-                <div className="font-semibold text-blue-600">{stats.running}</div>
-                <div className="text-gray-500">进行中</div>
-              </div>
-              <div className="text-center">
-                <div className="font-semibold text-purple-600">{stats.aiCreated}</div>
-                <div className="text-gray-500">AI创建</div>
-              </div>
-              <div className="text-center">
-                <div className="font-semibold text-green-600">${stats.totalBudget.toFixed(0)}</div>
-                <div className="text-gray-500">总支出</div>
-              </div>
-            </div>
-            
-            {/* 主要操作按钮 */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowCreateExperiment(true)}
-                disabled={systemConfig.experimentCreation.requiresHumanCreation === false}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Plus className="h-4 w-4" />
-                创建实验
-              </button>
-              
-              <button
-                onClick={() => setShowNLExperimentCreator(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg"
-              >
-                <Wand2 className="h-4 w-4" />
-                <Sparkles className="h-3 w-3" />
-                智能创建
-              </button>
-              
-              {!systemConfig.experimentCreation.requiresHumanCreation && (
-                <div className="flex items-center gap-1 px-3 py-2 bg-purple-100 text-purple-800 rounded-lg text-sm">
-                  <Bot className="h-4 w-4" />
-                  AI自动创建已启用
-                </div>
-              )}
-            </div>
-          </div>
+          )}
         </div>
+      </PageHeader>
 
-        {/* 主导航标签 */}
-        <div className="border-b border-gray-200">
-          <nav className="flex px-6">
-            {[
-              { id: 'experiments', name: '实验管理', icon: BarChart3 },
-              { id: 'system_config', name: '系统配置', icon: Settings }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setMainTab(tab.id as any)}
-                className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium text-sm transition-colors ${
-                  mainTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <tab.icon className="h-4 w-4" />
-                {tab.name}
-              </button>
-            ))}
-          </nav>
-        </div>
+      {/* 主导航标签 */}
+      <div className="border-b border-gray-200">
+        <nav className="flex px-6">
+          {[
+            { id: 'experiments', name: '实验管理', icon: BarChart3 },
+            { id: 'system_config', name: '系统配置', icon: Settings }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setMainTab(tab.id as any)}
+              className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium text-sm transition-colors ${
+                mainTab === tab.id
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <tab.icon className="h-4 w-4" />
+              {tab.name}
+            </button>
+          ))}
+        </nav>
       </div>
 
-      {/* 主体内容 */}
-      <div className="flex-1 p-6">
+      <PageContent>
         {/* 实验管理标签页 */}
         {mainTab === 'experiments' && (
-          <div className="grid grid-cols-12 gap-6 h-full">
-            {/* 左侧实验列表 */}
-            <div className="col-span-4 bg-white rounded-lg border border-gray-200">
-              <div className="p-4 border-b border-gray-200">
+          <div className="space-y-6">
+            {/* 统计概览 - 使用MetricCard统一样式 */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <MetricCard
+                title="总实验"
+                value={stats.total}
+                icon={BarChart3}
+                color="blue"
+              />
+              
+              <MetricCard
+                title="进行中"
+                value={stats.running}
+                icon={Play}
+                color="green"
+              />
+              
+              <MetricCard
+                title="AI创建"
+                value={stats.aiCreated}
+                icon={Bot}
+                color="purple"
+              />
+              
+              <MetricCard
+                title="总支出"
+                value={`$${stats.totalBudget.toFixed(0)}`}
+                icon={DollarSign}
+                color="yellow"
+              />
+            </div>
+            
+            {/* 搜索和筛选工具栏 */}
+            <div className="bg-white rounded-lg border border-gray-200 mb-6">
+              <div className="p-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-gray-900">实验列表</h3>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="p-1 text-gray-400 hover:text-gray-600"
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                  </button>
+                  <h3 className="font-semibold text-gray-900">实验管理</h3>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => window.location.reload()}
+                      className="p-1 text-gray-400 hover:text-gray-600"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </button>
+                    <span className="text-sm text-gray-500">
+                      {filteredExperiments.length} 个实验
+                    </span>
+                  </div>
                 </div>
-                
+
                 {/* 搜索和筛选 */}
-                <div className="space-y-3">
-                  <div className="relative">
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 relative">
                     <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                     <input
                       type="text"
-                      placeholder="搜索实验..."
+                      placeholder="搜索实验名称或描述..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-2">
-                    <select
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="all">所有状态</option>
-                      <option value="experimenting">实验中</option>
-                      <option value="experiment_ended">已结束</option>
-                      <option value="deployed">已上线</option>
-                      <option value="draft">草稿</option>
-                    </select>
-                    
-                    <select
-                      value={creationTypeFilter}
-                      onChange={(e) => setCreationTypeFilter(e.target.value)}
-                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="all">创建方式</option>
-                      <option value="human_created">人工创建</option>
-                      <option value="ai_created">AI创建</option>
-                    </select>
-                  </div>
+
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="all">所有状态</option>
+                    <option value="experimenting">实验中</option>
+                    <option value="experiment_ended">已结束</option>
+                    <option value="deployed">已上线</option>
+                    <option value="draft">草稿</option>
+                  </select>
+
+                  <select
+                    value={creationTypeFilter}
+                    onChange={(e) => setCreationTypeFilter(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="all">创建方式</option>
+                    <option value="human_created">人工创建</option>
+                    <option value="ai_created">AI创建</option>
+                  </select>
                 </div>
               </div>
-              
-              {/* 实验列表 */}
-              <div className="overflow-y-auto" style={{ height: 'calc(100vh - 300px)' }}>
-                {filteredExperiments.map((experiment) => (
+            </div>
+
+            {/* 实验统一行布局 */}
+            <div className="space-y-4">
+
+              {filteredExperiments.map((experiment) => (
+                <div
+                  key={experiment.id}
+                  className="bg-white border border-gray-200 rounded-lg overflow-hidden"
+                >
+                  {/* 实验基本信息行 */}
                   <div
-                    key={experiment.id}
-                    onClick={() => setSelectedExperiment(experiment)}
-                    className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
-                      selectedExperiment?.id === experiment.id ? 'bg-blue-50 border-blue-200' : ''
-                    }`}
+                    onClick={() => toggleExperiment(experiment.id)}
+                    className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
                   >
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-medium text-gray-900 text-sm line-clamp-2">{experiment.name}</h4>
-                      <div className="flex items-center gap-1">
-                        {experiment.creationType === 'ai_created' ? (
-                          <Bot className="h-3 w-3 text-purple-600" />
+                    <div className="flex items-center justify-between">
+                      {/* 左侧基本信息 */}
+                      <div className="flex-1 grid grid-cols-4 gap-4 items-center">
+                        {/* 实验名称和状态 */}
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-medium text-gray-900 text-sm">{experiment.name}</h4>
+                            {experiment.creationType === 'ai_created' ? (
+                              <Bot className="h-3 w-3 text-purple-600" />
+                            ) : (
+                              <User className="h-3 w-3 text-blue-600" />
+                            )}
+                          </div>
+                          <span className={`px-2 py-1 rounded-full font-medium text-xs ${
+                            experiment.status === 'experimenting' ? 'bg-blue-100 text-blue-800' :
+                            experiment.status === 'experiment_ended' ? 'bg-purple-100 text-purple-800' :
+                            experiment.status === 'deployed' ? 'bg-green-100 text-green-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {experiment.status === 'experimenting' ? '实验中' :
+                             experiment.status === 'experiment_ended' ? '已结束' :
+                             experiment.status === 'deployed' ? '已上线' : '其他'}
+                          </span>
+                        </div>
+
+                        {/* 关键指标 */}
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">任务成功率</div>
+                          <div className="font-bold text-green-600">
+                            {experiment.groups[1]?.realTimeMetrics?.avgMetricValues?.taskSuccessRate || 0}%
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            vs {experiment.groups[0]?.realTimeMetrics?.avgMetricValues?.taskSuccessRate || 0}%
+                          </div>
+                        </div>
+
+                        {/* 样本量和成本 */}
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">样本量</div>
+                          <div className="font-bold text-blue-600">
+                            {experiment.groups.reduce((sum, group) => sum + (group.realTimeMetrics?.totalSessions || 0), 0).toLocaleString()}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            ${experiment.config.budget?.currentSpent?.toFixed(0) || '0'} 已花费
+                          </div>
+                        </div>
+
+                        {/* 用户满意度 */}
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">用户满意度</div>
+                          <div className="font-bold text-purple-600">
+                            {experiment.groups[1]?.realTimeMetrics?.avgMetricValues?.userSatisfaction || 0}/5.0
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            vs {experiment.groups[0]?.realTimeMetrics?.avgMetricValues?.userSatisfaction || 0}/5.0
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 展开/收起图标 */}
+                      <div className="flex items-center gap-2">
+                        {expandedExperiments.has(experiment.id) ? (
+                          <EyeOff className="h-4 w-4 text-gray-400" />
                         ) : (
-                          <User className="h-3 w-3 text-blue-600" />
+                          <Eye className="h-4 w-4 text-gray-400" />
                         )}
                       </div>
                     </div>
-                    
-                    <p className="text-xs text-gray-600 mb-3 line-clamp-2">{experiment.description}</p>
-                    
-                    <div className="flex items-center justify-between text-xs">
-                      <span className={`px-2 py-1 rounded-full font-medium ${
-                        experiment.status === 'experimenting' ? 'bg-blue-100 text-blue-800' :
-                        experiment.status === 'experiment_ended' ? 'bg-purple-100 text-purple-800' :
-                        experiment.status === 'deployed' ? 'bg-green-100 text-green-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {experiment.status === 'experimenting' ? '实验中' :
-                         experiment.status === 'experiment_ended' ? '已结束' :
-                         experiment.status === 'deployed' ? '已上线' : '其他'}
-                      </span>
-                      
-                      <div className="flex items-center gap-2 text-gray-500">
-                        <span>${experiment.config.budget?.currentSpent?.toFixed(0) || '0'}</span>
-                        <span>•</span>
-                        <span>{experiment.groups.length}组</span>
+                  </div>
+
+                  {/* 展开的详情面板 */}
+                  {expandedExperiments.has(experiment.id) && selectedExperiment?.id === experiment.id && (
+                    <div className="border-t border-gray-200">
+                      {/* 子标签导航 */}
+                      <div className="border-b border-gray-200">
+                        <nav className="flex px-6">
+                          {[
+                            { id: 'overview', name: '概览与决策', icon: BarChart3 },
+                            { id: 'metrics', name: '全层级指标', icon: Target },
+                            { id: 'analysis', name: '统计分析', icon: TrendingUp },
+                            { id: 'insights', name: '洞察分析', icon: Eye },
+                            { id: 'status_flow', name: '状态管理', icon: Activity }
+                          ].map((tab) => (
+                            <button
+                              key={tab.id}
+                              onClick={() => setActiveSubTab(tab.id as any)}
+                              className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium text-sm transition-colors ${
+                                activeSubTab === tab.id
+                                  ? 'border-blue-500 text-blue-600'
+                                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                              }`}
+                            >
+                              <tab.icon className="h-4 w-4" />
+                              {tab.name}
+                            </button>
+                          ))}
+                        </nav>
                       </div>
-                    </div>
-                  </div>
-                ))}
-                
-                {filteredExperiments.length === 0 && (
-                  <div className="p-8 text-center text-gray-500">
-                    <BarChart3 className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm">没有找到匹配的实验</p>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {/* 右侧实验详情 */}
-            <div className="col-span-8">
-              {selectedExperiment ? (
-                <div className="space-y-6">
-                  {/* 子标签导航 */}
-                  <div className="bg-white border border-gray-200 rounded-lg">
-                    <div className="border-b border-gray-200">
-                      <nav className="flex px-6">
-                        {[
-                          { id: 'overview', name: '概览与决策', icon: BarChart3 },
-                          { id: 'metrics', name: '全层级指标', icon: Target },
-                          { id: 'analysis', name: '统计分析', icon: TrendingUp },
-                          { id: 'insights', name: '洞察分析', icon: Eye },
-                          { id: 'status_flow', name: '状态管理', icon: Activity }
-                        ].map((tab) => (
-                          <button
-                            key={tab.id}
-                            onClick={() => setActiveSubTab(tab.id as any)}
-                            className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium text-sm transition-colors ${
-                              activeSubTab === tab.id
-                                ? 'border-blue-500 text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                            }`}
-                          >
-                            <tab.icon className="h-4 w-4" />
-                            {tab.name}
-                          </button>
-                        ))}
-                      </nav>
-                    </div>
-                    
-                    {/* 标签页内容 */}
-                    <div className="p-6">
+
+                      {/* 标签页内容 */}
+                      <div className="p-6">
                       {activeSubTab === 'overview' && (
                         <EnhancedExperimentOverview
                           experiment={selectedExperiment}
@@ -1501,21 +1556,24 @@ const ABTestingEnhancedUpdated: React.FC = () => {
                             </div>
                           </div>
                         </div>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
-              ) : (
+              ))}
+
+              {filteredExperiments.length === 0 && (
                 <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
-                  <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">选择一个实验</h3>
-                  <p className="text-gray-600">从左侧列表中选择一个实验以查看详细信息</p>
+                  <BarChart3 className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">没有找到匹配的实验</h3>
+                  <p className="text-gray-600">请调整搜索条件或创建新的实验</p>
                 </div>
               )}
             </div>
           </div>
         )}
-        
+
         {/* 系统配置标签页 */}
         {mainTab === 'system_config' && (
           <SystemConfigPanel
@@ -1526,7 +1584,7 @@ const ABTestingEnhancedUpdated: React.FC = () => {
             hasUnsavedChanges={hasUnsavedConfig}
           />
         )}
-      </div>
+      </PageContent>
 
       {/* 创建实验弹窗 */}
       {showCreateExperiment && (
@@ -1592,7 +1650,7 @@ const ABTestingEnhancedUpdated: React.FC = () => {
           message={feedbackModalConfig.message}
         />
       )}
-    </div>
+    </PageLayout>
   );
 };
 

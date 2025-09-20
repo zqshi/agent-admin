@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Plus, 
+import {
+  Plus,
   MoreHorizontal,
   User,
   Settings,
@@ -10,12 +10,15 @@ import {
   Pause,
   Clock,
   Building2,
-  Brain
+  Brain,
+  Sparkles,
+  Zap
 } from 'lucide-react';
 import { DigitalEmployeeManagement } from '../types';
 import { mockDigitalEmployees } from '../data/mockDigitalEmployees';
 import { PageLayout, PageHeader, PageContent, MetricCard, Card, CardHeader, CardBody, Button, FilterSection } from '../components/ui';
-import CreateDigitalEmployee from '../components/CreateDigitalEmployee';
+import AdvancedEmployeeCreationModal from '../features/employee-creation/components/AdvancedEmployeeCreationModal';
+import { useCreationStore } from '../features/employee-creation/stores/creationStore';
 
 const DigitalEmployees = () => {
   const navigate = useNavigate();
@@ -23,7 +26,9 @@ const DigitalEmployees = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'disabled' | 'retired'>('all');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
-  const [showCreateForm, setShowCreateForm] = useState(false);
+
+  // 统一创建弹窗状态
+  const { openModal } = useCreationStore();
 
   const filteredEmployees = employees.filter(emp => {
     const matchesSearch = emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -72,24 +77,28 @@ const DigitalEmployees = () => {
     navigate(`/digital-employees/${employee.id}`);
   };
 
-  const handleCreateEmployee = (newEmployee: DigitalEmployeeManagement) => {
+
+  const handleEmployeeCreate = (newEmployee: DigitalEmployeeManagement) => {
     setEmployees(prev => [newEmployee, ...prev]);
-    setShowCreateForm(false);
   };
 
   return (
     <PageLayout>
-      <PageHeader 
-        title="员工管理" 
+      <PageHeader
+        title="员工管理"
         subtitle="管理和配置您的数字员工团队"
       >
-        <Button 
-          onClick={() => setShowCreateForm(true)}
-          variant="primary"
-        >
-          <Plus className="h-4 w-4" />
-          添加数字员工
-        </Button>
+        <div className="flex items-center gap-3">
+          {/* 新的统一创建按钮 */}
+          <Button
+            onClick={openModal}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Plus className="h-4 w-4" />
+            创建数字员工
+          </Button>
+
+        </div>
       </PageHeader>
 
       <PageContent>
@@ -298,13 +307,13 @@ const DigitalEmployees = () => {
           </CardBody>
         </Card>
 
-        {/* 创建表单弹窗 */}
-        {showCreateForm && (
-          <CreateDigitalEmployee
-            onClose={() => setShowCreateForm(false)}
-            onSave={handleCreateEmployee}
-          />
-        )}
+
+        {/* 统一创建弹窗 */}
+        <AdvancedEmployeeCreationModal
+          onSave={handleEmployeeCreate}
+          enableAIAssist={true}
+          enableReasoningViz={true}
+        />
       </PageContent>
     </PageLayout>
   );

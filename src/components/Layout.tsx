@@ -1,14 +1,14 @@
 import { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
-import { 
-  BarChart3, 
-  MessageSquare, 
-  TestTube2, 
+import {
+  BarChart3,
+  MessageSquare,
+  TestTube2,
   TrendingUp,
   Brain,
   Settings,
   Users,
-  Wrench
+  Wrench,
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 
