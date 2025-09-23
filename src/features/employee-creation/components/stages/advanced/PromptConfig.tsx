@@ -35,33 +35,7 @@ import type { SlotDefinition } from '../../../../prompt-engineering/types';
 import { slotRegistry } from '../../../services/SlotRegistry';
 import { slotInjector } from '../../../services/SlotInjector';
 
-// 使用Store中定义的类型，匹配store的promptTemplates定义
-
-// 模板类型定义 - 匹配store定义
-interface PromptTemplate {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  content: string;
-  slots: Array<{
-    id: string;
-    name: string;
-    description: string;
-    type: 'text' | 'number' | 'date' | 'select' | 'multiselect';
-    required: boolean;
-    defaultValue?: string;
-    options?: string[];
-    placeholder?: string;
-  }>;
-  createdAt: string;
-  updatedAt: string;
-  usageCount: number;
-  isBuiltIn: boolean;
-}
-
-// Slot类型定义，直接使用PromptTemplate中的定义
-type SlotType = PromptTemplate['slots'][0];
+// 直接使用PromptManagement类型
 
 // 压缩策略类型
 interface CompressionStrategy {
@@ -90,80 +64,18 @@ const PromptConfig: React.FC<PromptConfigProps> = ({ config, onChange }) => {
   });
 
   const {
-    getPromptTemplates,
-    addPromptTemplate,
-    updatePromptTemplate,
-    deletePromptTemplate,
-    importPromptTemplates,
-    incrementTemplateUsage
+    createPrompt,
+    updatePrompt,
+    deletePrompt,
+    duplicatePrompt,
+    incrementPromptUsage
   } = store;
 
-  // ============ 数据转换适配器 ============
-
-  // 将旧的PromptTemplate转换为PromptManagement格式
-  const convertTemplateToPromptManagement = (template: PromptTemplate): PromptManagement => {
-    return {
-      id: template.id,
-      name: template.name,
-      displayName: template.name, // 使用name作为displayName的默认值
-      description: template.description,
-      version: '1.0.0', // 默认版本
-      parameter: {
-        category: template.category,
-        isBuiltIn: template.isBuiltIn
-      },
-      slots: template.slots.map(slot => slot.name), // 提取slot名称
-      example: [], // 默认空示例
-      content: template.content,
-      category: template.category,
-      createdAt: template.createdAt,
-      updatedAt: template.updatedAt,
-      author: 'System',
-      tags: [template.category],
-      isBuiltIn: template.isBuiltIn,
-      usageCount: template.usageCount
-    };
-  };
-
-  // 将PromptManagement转换回PromptTemplate格式
-  const convertPromptManagementToTemplate = (prompt: PromptManagement): PromptTemplate => {
-    return {
-      id: prompt.id,
-      name: prompt.name,
-      description: prompt.description,
-      category: prompt.category,
-      content: prompt.content,
-      slots: prompt.slots.map((slotName, index) => ({
-        id: `${prompt.id}_slot_${index}`,
-        name: slotName,
-        description: `${slotName} slot`,
-        type: 'text' as const,
-        required: false,
-        defaultValue: '',
-        placeholder: `输入${slotName}`
-      })),
-      createdAt: prompt.createdAt,
-      updatedAt: prompt.updatedAt,
-      usageCount: prompt.usageCount,
-      isBuiltIn: prompt.isBuiltIn
-    };
-  };
-
-  // 将store中的promptManagement数据转换为PromptTemplate格式供现有UI使用
-  const getManagedPrompts = (): PromptManagement[] => {
+  // 直接使用PromptManagement数据
+  const getAllPrompts = (): PromptManagement[] => {
     return store.promptManagement.prompts;
   };
-
-  // 获取转换后的模板数据（兼容现有UI）
-  const getCompatibleTemplates = (): PromptTemplate[] => {
-    const templates = getPromptTemplates();
-    const managedPrompts = getManagedPrompts();
-
-    // 合并两种数据源
-    const convertedManagedPrompts = managedPrompts.map(convertPromptManagementToTemplate);
-    return [...templates, ...convertedManagedPrompts];
-  };
-  const [activeTab, setActiveTab] = useState<'templates' | 'prompts' | 'slots' | 'registry' | 'scenarios' | 'compression'>('templates');
+  const [activeTab, setActiveTab] = useState<'prompts' | 'slots' | 'registry' | 'compression'>('prompts');
   const [slotValues, setSlotValues] = useState<Record<string, any>>({});
   const [showSuccessMessage, setShowSuccessMessage] = useState<string | null>(null);
   const [showErrorMessage, setShowErrorMessage] = useState<string | null>(null);
@@ -558,11 +470,9 @@ const PromptConfig: React.FC<PromptConfigProps> = ({ config, onChange }) => {
   };
 
   const tabs = [
-    { id: 'templates', label: '模板管理', icon: Database },
-    { id: 'prompts', label: 'Prompt管理', icon: FileText },
+    { id: 'prompts', label: 'Prompt模板管理', icon: FileText },
     { id: 'slots', label: 'Slot配置', icon: Zap },
     { id: 'registry', label: 'Slot注册表', icon: Settings },
-    { id: 'scenarios', label: '业务场景', icon: Eye },
     { id: 'compression', label: '压缩策略', icon: Settings }
   ];
 

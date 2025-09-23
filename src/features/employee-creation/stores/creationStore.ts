@@ -81,28 +81,6 @@ interface CreationState {
     config: Partial<EmployeeCreationConfig>;
   }>;
 
-  // Prompt模板
-  promptTemplates: Array<{
-    id: string;
-    name: string;
-    description: string;
-    category: string;
-    content: string;
-    slots: Array<{
-      id: string;
-      name: string;
-      description: string;
-      type: 'text' | 'number' | 'date' | 'select' | 'multiselect';
-      required: boolean;
-      defaultValue?: string;
-      options?: string[];
-      placeholder?: string;
-    }>;
-    createdAt: string;
-    updatedAt: string;
-    usageCount: number;
-    isBuiltIn: boolean;
-  }>;
 
   // ============ 多领域配置相关状态 ============
 
@@ -196,13 +174,6 @@ interface CreationActions {
   loadTemplate: (templateId: string) => void;
   saveAsTemplate: (name: string, description: string) => void;
 
-  // Prompt模板管理
-  getPromptTemplates: () => typeof initialState.promptTemplates;
-  addPromptTemplate: (template: Omit<typeof initialState.promptTemplates[0], 'id' | 'createdAt' | 'updatedAt' | 'usageCount'>) => void;
-  updatePromptTemplate: (id: string, template: Partial<typeof initialState.promptTemplates[0]>) => void;
-  deletePromptTemplate: (id: string) => void;
-  importPromptTemplates: (templates: typeof initialState.promptTemplates) => void;
-  incrementTemplateUsage: (id: string) => void;
 
   // 导出/导入
   exportConfig: (includeAdvanced?: boolean) => ConfigExport;
@@ -351,69 +322,6 @@ const initialState: CreationState = {
   // 新增字段
   promptConfigMode: 'template',
   independentSlots: [],
-  promptTemplates: [
-    {
-      id: '1',
-      name: '客服专员模板',
-      description: '适用于客户服务场景的专业模板',
-      category: '客服',
-      content: `你是一名专业的客户服务代表，名字是{{name}}。
-
-你的主要职责：
-{{responsibilities}}
-
-服务原则：
-1. 始终保持耐心和礼貌
-2. 准确理解客户需求
-3. 提供专业的解决方案
-4. 及时跟进问题进展
-
-回复风格：{{tone}}
-回复长度：{{response_length}}
-
-请根据以上设定，为客户提供优质的服务体验。`,
-      slots: [
-        { id: '1', name: 'name', description: '数字员工姓名', type: 'text', required: true, placeholder: '例：小王' },
-        { id: '2', name: 'responsibilities', description: '主要职责列表', type: 'text', required: true, placeholder: '例：处理客户咨询、解决技术问题' },
-        { id: '3', name: 'tone', description: '回复语调', type: 'select', required: false, defaultValue: '友好专业', options: ['友好专业', '正式严谨', '轻松幽默'] },
-        { id: '4', name: 'response_length', description: '回复长度', type: 'select', required: false, defaultValue: '适中', options: ['简洁', '适中', '详细'] }
-      ],
-      createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z',
-      usageCount: 23,
-      isBuiltIn: true
-    },
-    {
-      id: '2',
-      name: '技术支持模板',
-      description: '专为技术支持场景设计',
-      category: '技术',
-      content: `我是{{name}}，专业的技术支持工程师。
-
-技术专长：
-{{specialties}}
-
-解决问题的流程：
-1. 理解问题现象
-2. 收集相关信息
-3. 分析可能原因
-4. 提供解决方案
-5. 确认问题解决
-
-技术水平：{{technical_level}}
-回复详细程度：{{detail_level}}`,
-      slots: [
-        { id: '5', name: 'name', description: '技术支持姓名', type: 'text', required: true },
-        { id: '6', name: 'specialties', description: '技术专长', type: 'text', required: true },
-        { id: '7', name: 'technical_level', description: '技术表达水平', type: 'select', required: false, options: ['通俗易懂', '技术专业', '深度技术'] },
-        { id: '8', name: 'detail_level', description: '回复详细程度', type: 'select', required: false, options: ['简要说明', '详细解释', 'step-by-step'] }
-      ],
-      createdAt: '2024-01-02T00:00:00Z',
-      updatedAt: '2024-01-02T00:00:00Z',
-      usageCount: 15,
-      isBuiltIn: true
-    }
-  ],
 
   // ============ 多领域配置初始状态 ============
 
@@ -840,66 +748,6 @@ export const useCreationStore = create<CreationState & CreationActions>()(
       if (config.basic) get().updateBasicInfo(config.basic);
       if (config.features) get().updateCoreFeatures(config.features);
       if (config.advanced) get().updateAdvancedConfig(config.advanced);
-    },
-
-    // Prompt模板管理
-    getPromptTemplates: () => get().promptTemplates,
-
-    addPromptTemplate: (template) => {
-      const newTemplate = {
-        ...template,
-        id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        usageCount: 0
-      };
-
-      set((state) => ({
-        promptTemplates: [...state.promptTemplates, newTemplate]
-      }));
-    },
-
-    updatePromptTemplate: (id, updates) => {
-      set((state) => ({
-        promptTemplates: state.promptTemplates.map(template =>
-          template.id === id
-            ? { ...template, ...updates, updatedAt: new Date().toISOString() }
-            : template
-        )
-      }));
-    },
-
-    deletePromptTemplate: (id) => {
-      set((state) => ({
-        promptTemplates: state.promptTemplates.filter(template =>
-          template.id !== id && !template.isBuiltIn
-        )
-      }));
-    },
-
-    importPromptTemplates: (templates) => {
-      const newTemplates = templates.map(template => ({
-        ...template,
-        id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        isBuiltIn: false,
-        usageCount: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }));
-
-      set((state) => ({
-        promptTemplates: [...state.promptTemplates, ...newTemplates]
-      }));
-    },
-
-    incrementTemplateUsage: (id) => {
-      set((state) => ({
-        promptTemplates: state.promptTemplates.map(template =>
-          template.id === id
-            ? { ...template, usageCount: template.usageCount + 1 }
-            : template
-        )
-      }));
     },
 
     // 重置
