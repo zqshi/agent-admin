@@ -443,3 +443,235 @@ export interface RoutingDecision {
   confidence: number;
   context?: any;
 }
+
+// ============ Prompt与Slot管理升级相关类型 ============
+
+// Prompt管理接口
+export interface PromptManagement {
+  id: string;
+  name: string;
+  displayName: string;
+  description: string;
+  version: string;
+  parameter: Record<string, any>;
+  slots: string[];  // 关联的slot id列表
+  example: PromptExample[];
+  content: string;  // prompt内容
+  category: string;
+  // 元数据
+  createdAt: string;
+  updatedAt: string;
+  author?: string;
+  tags: string[];
+  isBuiltIn: boolean;
+  usageCount: number;
+}
+
+// Prompt示例
+export interface PromptExample {
+  id: string;
+  title: string;
+  description?: string;
+  input: Record<string, any>;  // 输入参数示例
+  expectedOutput: string;      // 期望输出
+  scenario: string;            // 应用场景
+  metadata?: {
+    difficulty: 'basic' | 'intermediate' | 'advanced';
+    tags: string[];
+    createdAt: string;
+  };
+}
+
+// 增强的Slot定义
+export interface EnhancedSlotDefinition {
+  id: string;
+  name: string;
+  role: 'system' | 'user' | 'context' | 'dynamic' | 'computed';
+  type: 'text' | 'number' | 'enum' | 'boolean' | 'json' | 'array';
+  description?: string;
+  required: boolean;
+  defaultValue?: any;
+
+  // 新增字段
+  immutable: boolean;          // 是否不可变
+  ephemeral: boolean;          // 是否临时（会话级别）
+  updatedAt: string;
+  origin: 'preset' | 'custom' | 'runtime' | 'api';  // 来源
+
+  // 数据源配置
+  dataSource?: {
+    type: 'static' | 'api' | 'database' | 'computed' | 'external';
+    config: Record<string, any>;
+    endpoint?: string;
+    refreshInterval?: number;    // 数据刷新间隔（秒）
+  };
+
+  // 验证规则
+  validation?: {
+    rules: ValidationRule[];
+    customValidator?: string;    // 自定义验证函数名
+  };
+
+  // 依赖关系
+  dependencies?: string[];       // 依赖的其他slot
+
+  // 缓存配置
+  caching?: {
+    enabled: boolean;
+    ttl: number;                // 缓存时间（秒）
+    key: string;
+    strategy: 'memory' | 'session' | 'persistent';
+  };
+
+  // 业务场景配置
+  scenarios?: {
+    keywords: string[];          // 触发关键词
+    contexts: string[];          // 适用上下文
+    priority: number;            // 优先级 1-10
+    conditions?: string[];       // 触发条件
+  };
+
+  // 错误处理
+  errorHandling: {
+    strategy: 'fallback' | 'retry' | 'alert' | 'skip' | 'default';
+    fallbackValue?: any;
+    retryCount?: number;
+    alertChannel?: string;
+    onError?: string;            // 错误处理函数名
+  };
+
+  // 权限控制
+  permissions?: {
+    read: string[];              // 可读角色列表
+    write: string[];             // 可写角色列表
+    execute: string[];           // 可执行角色列表
+  };
+
+  // 审计信息
+  audit?: {
+    createdBy: string;
+    lastModifiedBy: string;
+    changeLog: SlotChangeLogEntry[];
+  };
+}
+
+// Slot变更日志
+export interface SlotChangeLogEntry {
+  id: string;
+  timestamp: string;
+  action: 'create' | 'update' | 'delete' | 'register' | 'unregister';
+  field?: string;
+  oldValue?: any;
+  newValue?: any;
+  operator: string;
+  reason?: string;
+}
+
+// Slot注册表状态
+export interface SlotRegistryState {
+  // 运行时注册的slot
+  runtimeSlots: Map<string, EnhancedSlotDefinition>;
+
+  // 会话级slot（临时）
+  sessionSlots: Map<string, EnhancedSlotDefinition>;
+
+  // 持久化slot
+  persistentSlots: Map<string, EnhancedSlotDefinition>;
+
+  // slot依赖图
+  dependencyGraph: Map<string, string[]>;
+
+  // 注册历史
+  registrationHistory: SlotRegistrationRecord[];
+
+  // 缓存状态
+  cache: Map<string, {
+    value: any;
+    expiry: number;
+    hits: number;
+  }>;
+}
+
+// Slot注册记录
+export interface SlotRegistrationRecord {
+  id: string;
+  slotId: string;
+  action: 'register' | 'unregister' | 'update';
+  timestamp: string;
+  source: string;              // 注册来源
+  context?: any;
+  success: boolean;
+  error?: string;
+}
+
+// 业务场景检测结果
+export interface ScenarioDetectionResult {
+  scenarioId: string;
+  name: string;
+  confidence: number;          // 0-1
+  matchedKeywords: string[];
+  contextFactors: string[];
+  recommendedSlots: {
+    slotId: string;
+    priority: number;
+    reason: string;
+  }[];
+  suggestedValues?: Record<string, any>;
+}
+
+// Slot注入配置
+export interface SlotInjectionConfig {
+  slotId: string;
+  timing: 'immediate' | 'lazy' | 'on-demand' | 'scheduled';
+  conditions?: {
+    keywords?: string[];
+    contexts?: string[];
+    userBehavior?: string[];
+    customConditions?: string[];
+  };
+  transformation?: {
+    type: 'format' | 'filter' | 'aggregate' | 'map' | 'compute';
+    rules: any[];
+  };
+  priority: number;            // 1-10, 数字越大优先级越高
+  fallback?: {
+    slotId?: string;
+    value?: any;
+    strategy: 'default' | 'skip' | 'error';
+  };
+}
+
+// Slot注入结果
+export interface SlotInjectionResult {
+  slotId: string;
+  success: boolean;
+  value?: any;
+  timing: number;              // 注入耗时（毫秒）
+  source: string;
+  error?: string;
+  metadata?: {
+    cached: boolean;
+    transformed: boolean;
+    fallbackUsed: boolean;
+  };
+}
+
+// 动态注入上下文
+export interface DynamicInjectionContext {
+  userId?: string;
+  sessionId: string;
+  conversationId?: string;
+  userInput: string;
+  conversationHistory: any[];
+  currentDomain?: string;
+  timestamp: string;
+  metadata?: Record<string, any>;
+}
+
+// 验证规则接口（用于slot验证）
+export interface ValidationRule {
+  type: 'minLength' | 'maxLength' | 'pattern' | 'required' | 'custom';
+  value?: number;
+  pattern?: string;
+  message?: string;
+}

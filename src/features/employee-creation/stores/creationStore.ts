@@ -16,7 +16,15 @@ import type {
   ResponsibilityAnalysis,
   DomainConfig,
   MultiDomainConfig,
-  RoutingStrategy
+  RoutingStrategy,
+  PromptManagement,
+  EnhancedSlotDefinition,
+  SlotRegistryState,
+  SlotRegistrationRecord,
+  ScenarioDetectionResult,
+  SlotInjectionConfig,
+  SlotInjectionResult,
+  DynamicInjectionContext
 } from '../types';
 import type { CreateDigitalEmployeeForm } from '../../../types';
 import type { SmartSuggestion, AnalysisResult } from '../services/SmartAnalysisService';
@@ -106,6 +114,47 @@ interface CreationState {
 
   // 领域验证结果
   domainValidation: Map<string, ValidationResult>;
+
+  // ============ Prompt与Slot管理增强状态 ============
+
+  // Prompt管理状态
+  promptManagement: {
+    prompts: PromptManagement[];
+    currentPromptId: string | null;
+    isEditing: boolean;
+    searchQuery: string;
+    filterCategory: string;
+    sortBy: 'name' | 'updatedAt' | 'usageCount';
+  };
+
+  // Slot注册表状态
+  slotRegistry: SlotRegistryState;
+
+  // 业务场景检测
+  scenarioDetection: {
+    currentScenario: ScenarioDetectionResult | null;
+    detectionHistory: ScenarioDetectionResult[];
+    autoDetectionEnabled: boolean;
+  };
+
+  // Slot注入配置
+  slotInjection: {
+    configs: SlotInjectionConfig[];
+    injectionHistory: SlotInjectionResult[];
+    activeInjections: Map<string, SlotInjectionResult>;
+  };
+
+  // 动态上下文
+  dynamicContext: DynamicInjectionContext | null;
+
+  // 增强的独立slot管理
+  enhancedSlots: {
+    slots: EnhancedSlotDefinition[];
+    searchQuery: string;
+    filterRole: string;
+    filterOrigin: string;
+    showEphemeral: boolean;
+  };
 }
 
 interface CreationActions {
@@ -209,6 +258,66 @@ interface CreationActions {
   getDomain: (id: string) => DomainConfig | null;
   getActiveDomains: () => DomainConfig[];
   isMultiDomainEnabled: () => boolean;
+
+  // ============ Prompt与Slot管理增强方法 ============
+
+  // Prompt管理方法
+  createPrompt: (prompt: Omit<PromptManagement, 'id' | 'createdAt' | 'updatedAt' | 'usageCount'>) => string;
+  updatePrompt: (id: string, updates: Partial<PromptManagement>) => void;
+  deletePrompt: (id: string) => void;
+  duplicatePrompt: (id: string) => string;
+  setCurrentPrompt: (id: string | null) => void;
+  searchPrompts: (query: string) => void;
+  filterPrompts: (category: string) => void;
+  sortPrompts: (sortBy: 'name' | 'updatedAt' | 'usageCount') => void;
+  incrementPromptUsage: (id: string) => void;
+
+  // Slot注册表方法
+  registerSlot: (slot: EnhancedSlotDefinition) => Promise<boolean>;
+  unregisterSlot: (slotId: string) => Promise<boolean>;
+  updateSlotInRegistry: (slotId: string, updates: Partial<EnhancedSlotDefinition>) => Promise<boolean>;
+  getSlotFromRegistry: (slotId: string) => EnhancedSlotDefinition | null;
+  getSlotsByRole: (role: string) => EnhancedSlotDefinition[];
+  getSlotsByOrigin: (origin: string) => EnhancedSlotDefinition[];
+  clearEphemeralSlots: () => void;
+  getSlotDependencies: (slotId: string) => string[];
+  validateSlotDependencies: (slotId: string) => boolean;
+
+  // 业务场景检测方法
+  detectScenario: (userInput: string, context?: any) => Promise<ScenarioDetectionResult | null>;
+  setCurrentScenario: (scenario: ScenarioDetectionResult | null) => void;
+  toggleAutoDetection: (enabled: boolean) => void;
+  clearScenarioHistory: () => void;
+
+  // Slot注入方法
+  createInjectionConfig: (config: SlotInjectionConfig) => void;
+  updateInjectionConfig: (slotId: string, config: Partial<SlotInjectionConfig>) => void;
+  deleteInjectionConfig: (slotId: string) => void;
+  injectSlot: (slotId: string, context: DynamicInjectionContext) => Promise<SlotInjectionResult>;
+  batchInjectSlots: (slotIds: string[], context: DynamicInjectionContext) => Promise<SlotInjectionResult[]>;
+  getActiveInjections: () => SlotInjectionResult[];
+  clearInjectionHistory: () => void;
+
+  // 动态上下文方法
+  updateDynamicContext: (context: Partial<DynamicInjectionContext>) => void;
+  clearDynamicContext: () => void;
+
+  // 增强的独立slot管理方法
+  addEnhancedSlot: (slot: Omit<EnhancedSlotDefinition, 'id' | 'updatedAt'>) => string;
+  updateEnhancedSlot: (id: string, updates: Partial<EnhancedSlotDefinition>) => void;
+  deleteEnhancedSlot: (id: string) => void;
+  searchEnhancedSlots: (query: string) => void;
+  filterEnhancedSlotsByRole: (role: string) => void;
+  filterEnhancedSlotsByOrigin: (origin: string) => void;
+  toggleShowEphemeral: (show: boolean) => void;
+  exportEnhancedSlots: () => string;
+  importEnhancedSlots: (slotsJson: string) => Promise<boolean>;
+
+  // 缓存管理方法
+  getCachedSlotValue: (slotId: string) => any;
+  setCachedSlotValue: (slotId: string, value: any, ttl?: number) => void;
+  clearSlotCache: (slotId?: string) => void;
+  getSlotCacheStats: () => Record<string, { hits: number; expiry: number }>;
 }
 
 const initialState: CreationState = {
@@ -315,7 +424,55 @@ const initialState: CreationState = {
   selectedDomainId: null,
 
   // 领域验证结果
-  domainValidation: new Map()
+  domainValidation: new Map(),
+
+  // ============ Prompt与Slot管理增强初始状态 ============
+
+  // Prompt管理状态
+  promptManagement: {
+    prompts: [],
+    currentPromptId: null,
+    isEditing: false,
+    searchQuery: '',
+    filterCategory: '',
+    sortBy: 'updatedAt'
+  },
+
+  // Slot注册表状态
+  slotRegistry: {
+    runtimeSlots: new Map(),
+    sessionSlots: new Map(),
+    persistentSlots: new Map(),
+    dependencyGraph: new Map(),
+    registrationHistory: [],
+    cache: new Map()
+  },
+
+  // 业务场景检测
+  scenarioDetection: {
+    currentScenario: null,
+    detectionHistory: [],
+    autoDetectionEnabled: true
+  },
+
+  // Slot注入配置
+  slotInjection: {
+    configs: [],
+    injectionHistory: [],
+    activeInjections: new Map()
+  },
+
+  // 动态上下文
+  dynamicContext: null,
+
+  // 增强的独立slot管理
+  enhancedSlots: {
+    slots: [],
+    searchQuery: '',
+    filterRole: '',
+    filterOrigin: '',
+    showEphemeral: true
+  }
 };
 
 export const useCreationStore = create<CreationState & CreationActions>()(
@@ -1157,6 +1314,115 @@ export const useCreationStore = create<CreationState & CreationActions>()(
         total,
         isValid: total === 100
       };
+    },
+
+    // ============ Prompt与Slot管理增强方法实现 ============
+
+    // Prompt管理方法实现
+    createPrompt: (prompt) => {
+      const id = `prompt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const now = new Date().toISOString();
+
+      const newPrompt: PromptManagement = {
+        ...prompt,
+        id,
+        createdAt: now,
+        updatedAt: now,
+        usageCount: 0
+      };
+
+      set((state) => ({
+        promptManagement: {
+          ...state.promptManagement,
+          prompts: [...state.promptManagement.prompts, newPrompt],
+          currentPromptId: id
+        }
+      }));
+
+      return id;
+    },
+
+    updatePrompt: (id, updates) => {
+      set((state) => ({
+        promptManagement: {
+          ...state.promptManagement,
+          prompts: state.promptManagement.prompts.map(p =>
+            p.id === id ? { ...p, ...updates, updatedAt: new Date().toISOString() } : p
+          )
+        }
+      }));
+    },
+
+    deletePrompt: (id) => {
+      set((state) => ({
+        promptManagement: {
+          ...state.promptManagement,
+          prompts: state.promptManagement.prompts.filter(p => p.id !== id),
+          currentPromptId: state.promptManagement.currentPromptId === id ? null : state.promptManagement.currentPromptId
+        }
+      }));
+    },
+
+    duplicatePrompt: (id) => {
+      const state = get();
+      const original = state.promptManagement.prompts.find(p => p.id === id);
+
+      if (!original) return '';
+
+      const newId = get().createPrompt({
+        ...original,
+        name: `${original.name} (副本)`,
+        displayName: `${original.displayName} (副本)`
+      });
+
+      return newId;
+    },
+
+    setCurrentPrompt: (id) => {
+      set((state) => ({
+        promptManagement: {
+          ...state.promptManagement,
+          currentPromptId: id
+        }
+      }));
+    },
+
+    searchPrompts: (query) => {
+      set((state) => ({
+        promptManagement: {
+          ...state.promptManagement,
+          searchQuery: query
+        }
+      }));
+    },
+
+    filterPrompts: (category) => {
+      set((state) => ({
+        promptManagement: {
+          ...state.promptManagement,
+          filterCategory: category
+        }
+      }));
+    },
+
+    sortPrompts: (sortBy) => {
+      set((state) => ({
+        promptManagement: {
+          ...state.promptManagement,
+          sortBy
+        }
+      }));
+    },
+
+    incrementPromptUsage: (id) => {
+      set((state) => ({
+        promptManagement: {
+          ...state.promptManagement,
+          prompts: state.promptManagement.prompts.map(p =>
+            p.id === id ? { ...p, usageCount: p.usageCount + 1 } : p
+          )
+        }
+      }));
     }
   }))
 );
