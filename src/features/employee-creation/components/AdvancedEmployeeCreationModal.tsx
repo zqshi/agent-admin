@@ -275,13 +275,12 @@ const AdvancedEmployeeCreationModal: React.FC<AdvancedEmployeeCreationModalProps
   const isMultiDomain = basicInfo?.enableMultiDomain || false;
   const stages = isMultiDomain ? [
     { id: 'basic', title: '基础信息', description: '员工基本信息和职责定义' },
-    { id: 'features', title: '核心特征', description: '性格特点和工作风格' },
-    { id: 'domains', title: '领域配置', description: '多领域能力和智能路由设置' },
-    { id: 'advanced', title: '高级配置', description: '全局默认配置和系统设置' }
+    { id: 'features', title: '核心特征', description: '数字员工的性格特点和工作风格' },
+    { id: 'domains', title: '领域配置', description: '多领域能力配置和智能路由设置' }
   ] : [
     { id: 'basic', title: '基础信息', description: '员工基本信息和职责定义' },
-    { id: 'features', title: '核心特征', description: '性格特点和工作风格' },
-    { id: 'advanced', title: '高级配置', description: 'Prompt、知识库、工具等高级设置' }
+    { id: 'features', title: '核心特征', description: '数字员工的性格特点和工作风格' },
+    { id: 'advanced', title: '高级配置', description: 'Prompt、知识库、工具等专业设置' }
   ];
 
   const currentStageIndex = stages.findIndex(s => s.id === currentStage);
@@ -323,12 +322,24 @@ const AdvancedEmployeeCreationModal: React.FC<AdvancedEmployeeCreationModalProps
         {/* 头部 */}
         <div className="flex items-center justify-between p-3 border-b border-gray-200 flex-shrink-0">
           <div className="min-w-0 flex-1 mr-4">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
-              创建数字员工
-            </h2>
+            <div className="flex items-center gap-3 mb-2">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+                创建数字员工
+              </h2>
+              {isMultiDomain && (
+                <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">
+                  多领域模式
+                </span>
+              )}
+            </div>
             <p className="text-gray-600 mt-1 text-sm sm:text-base line-clamp-2">
               {stages[currentStageIndex]?.description}
             </p>
+            {isMultiDomain && currentStage === 'domains' && (
+              <div className="mt-1 text-xs text-indigo-600">
+                📌 领域配置包含完整的高级配置功能
+              </div>
+            )}
           </div>
           <button
             onClick={handleClose}
@@ -360,8 +371,29 @@ const AdvancedEmployeeCreationModal: React.FC<AdvancedEmployeeCreationModalProps
         </div>
 
         {/* 底部操作栏 */}
-        <div className="flex items-center justify-between p-3 border-t border-gray-200 bg-white flex-shrink-0 gap-2">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
+        <div className="flex items-center justify-between p-3 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-white flex-shrink-0 gap-2">
+          <div className="flex flex-col gap-1 min-w-0 flex-1">
+            {/* 进度信息 */}
+            <div className="flex items-center gap-3 text-xs text-gray-500">
+              <span>第 {currentStageIndex + 1} / {stages.length} 步</span>
+              {isMultiDomain && (
+                <span className="text-indigo-600 font-medium">多领域模式</span>
+              )}
+            </div>
+
+            {/* 进度条 */}
+            <div className="w-32 sm:w-48 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className={`h-full transition-all duration-500 ease-out ${
+                  isMultiDomain
+                    ? 'bg-gradient-to-r from-indigo-500 to-purple-600'
+                    : 'bg-gradient-to-r from-blue-500 to-indigo-600'
+                }`}
+                style={{ width: `${((currentStageIndex + 1) / stages.length) * 100}%` }}
+              />
+            </div>
+
+            {/* 验证状态 */}
             {validation && !validation.isValid && (
               <div className="text-red-600 text-xs sm:text-sm truncate">
                 {validation.errors.length} 个错误需要修复
@@ -379,7 +411,7 @@ const AdvancedEmployeeCreationModal: React.FC<AdvancedEmployeeCreationModalProps
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <button
               onClick={handleClose}
-              className="px-3 py-2 sm:px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm"
+              className="px-3 py-2 sm:px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 text-sm"
               disabled={isProcessing || isAIProcessing}
             >
               取消
@@ -389,7 +421,7 @@ const AdvancedEmployeeCreationModal: React.FC<AdvancedEmployeeCreationModalProps
             {!isFirstStage && (
               <button
                 onClick={prevStage}
-                className="flex items-center gap-1 px-3 py-2 sm:px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm"
+                className="flex items-center gap-1 px-3 py-2 sm:px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:shadow-sm transition-all duration-200 text-sm"
                 disabled={isProcessing}
               >
                 <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -400,11 +432,13 @@ const AdvancedEmployeeCreationModal: React.FC<AdvancedEmployeeCreationModalProps
             <button
               onClick={isLastStage ? handleSave : handleNext}
               disabled={!canProceed()}
-              className={`flex items-center gap-1 px-3 py-2 sm:px-4 rounded-lg transition-colors text-sm whitespace-nowrap ${
+              className={`flex items-center gap-1 px-3 py-2 sm:px-4 rounded-lg transition-all duration-200 text-sm whitespace-nowrap font-medium shadow-sm hover:shadow-md ${
                 canProceed()
                   ? isLastStage
-                    ? 'bg-green-600 hover:bg-green-700 text-white'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white'
+                    : isMultiDomain
+                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white'
+                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
             >

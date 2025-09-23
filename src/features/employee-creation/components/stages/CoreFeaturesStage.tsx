@@ -3,9 +3,9 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Brain, MessageCircle, Zap, TrendingUp, Info, Star, Sparkles } from 'lucide-react';
+import { Brain, MessageCircle, Zap, TrendingUp, Info, Star, Sparkles, Users, Palette, Settings } from 'lucide-react';
 import { useCreationStore } from '../../stores/creationStore';
-import type { CoreFeatures, PersonalityTraits, WorkStyle, CommunicationStyle } from '../../types';
+import type { CoreFeatures, PersonalityTraits, WorkStyle, CommunicationStyle, MBTIProfile, PersonalityConfigMode } from '../../types';
 
 const CoreFeaturesStage: React.FC = () => {
   const {
@@ -17,6 +17,99 @@ const CoreFeaturesStage: React.FC = () => {
     smartSuggestions,
     getSmartSuggestionsByType
   } = useCreationStore();
+
+  // MBTI类型数据
+  const mbtiTypes = {
+    'INTJ': {
+      name: '建筑师',
+      description: '富有想象力和战略性的思想家，一切皆在计划之中',
+      characteristics: {
+        strengths: ['战略思维', '独立自主', '高效执行', '专注深度'],
+        workStyle: ['系统性思考', '追求完美', '重视效率', '独立工作'],
+        communication: ['逻辑清晰', '简洁直接', '重视准确性'],
+        teamRole: '战略规划者',
+        idealScenarios: ['技术咨询', '策略分析', '产品规划', '系统设计']
+      },
+      mapping: {
+        personality: { friendliness: 6, professionalism: 8, patience: 7, empathy: 5 },
+        workStyle: { rigor: 'strict', humor: 'none', proactivity: 'proactive', detailOrientation: 'high' },
+        communication: { responseLength: 'concise', language: 'formal', technicality: 'technical' }
+      }
+    },
+    'ENFP': {
+      name: '竞选者',
+      description: '热情洋溢、富有创造力的社交家，总能找到理由微笑',
+      characteristics: {
+        strengths: ['富有创造力', '善于社交', '适应性强', '激励他人'],
+        workStyle: ['灵活变通', '团队合作', '创新思维', '积极主动'],
+        communication: ['热情友好', '善于表达', '激励性强'],
+        teamRole: '团队激励者',
+        idealScenarios: ['客户服务', '市场推广', '培训指导', '创意咨询']
+      },
+      mapping: {
+        personality: { friendliness: 9, professionalism: 7, patience: 6, empathy: 8 },
+        workStyle: { rigor: 'flexible', humor: 'frequent', proactivity: 'proactive', detailOrientation: 'medium' },
+        communication: { responseLength: 'detailed', language: 'casual', technicality: 'simple' }
+      }
+    },
+    'ISTJ': {
+      name: '物流师',
+      description: '实用和注重事实的人，其可靠性无可怀疑',
+      characteristics: {
+        strengths: ['责任心强', '注重细节', '遵守规则', '可靠稳定'],
+        workStyle: ['按部就班', '严谨细致', '重视传统', '稳步推进'],
+        communication: ['准确无误', '条理清晰', '实事求是'],
+        teamRole: '质量保证者',
+        idealScenarios: ['技术支持', '质量管控', '流程管理', '客户服务']
+      },
+      mapping: {
+        personality: { friendliness: 6, professionalism: 9, patience: 8, empathy: 6 },
+        workStyle: { rigor: 'strict', humor: 'none', proactivity: 'reactive', detailOrientation: 'high' },
+        communication: { responseLength: 'moderate', language: 'formal', technicality: 'moderate' }
+      }
+    },
+    'ESFJ': {
+      name: '执政官',
+      description: '极有同情心、喜欢社交和受欢迎的人，总是愿意帮助他人',
+      characteristics: {
+        strengths: ['善解人意', '团队协作', '服务精神', '组织能力'],
+        workStyle: ['以人为本', '团队合作', '积极主动', '关注细节'],
+        communication: ['温暖友善', '体贴入微', '善于倾听'],
+        teamRole: '团队协调者',
+        idealScenarios: ['客户服务', '人事管理', '社区运营', '教育培训']
+      },
+      mapping: {
+        personality: { friendliness: 9, professionalism: 8, patience: 9, empathy: 9 },
+        workStyle: { rigor: 'balanced', humor: 'occasional', proactivity: 'proactive', detailOrientation: 'high' },
+        communication: { responseLength: 'detailed', language: 'casual', technicality: 'simple' }
+      }
+    }
+  };
+
+  // 人格模板数据
+  const personalityTemplates = {
+    'friendly-assistant': {
+      name: '友好助手型',
+      description: '温暖友善，善于与用户建立良好关系',
+      personality: { friendliness: 8, professionalism: 7, patience: 8, empathy: 8 },
+      workStyle: { rigor: 'balanced', humor: 'occasional', proactivity: 'balanced', detailOrientation: 'medium' },
+      communication: { responseLength: 'moderate', language: 'casual', technicality: 'simple' }
+    },
+    'professional-consultant': {
+      name: '专业顾问型',
+      description: '专业权威，提供精准的专业建议',
+      personality: { friendliness: 6, professionalism: 9, patience: 7, empathy: 6 },
+      workStyle: { rigor: 'strict', humor: 'none', proactivity: 'proactive', detailOrientation: 'high' },
+      communication: { responseLength: 'detailed', language: 'formal', technicality: 'technical' }
+    },
+    'tech-expert': {
+      name: '技术专家型',
+      description: '技术精湛，能够解决复杂技术问题',
+      personality: { friendliness: 5, professionalism: 9, patience: 6, empathy: 5 },
+      workStyle: { rigor: 'strict', humor: 'none', proactivity: 'reactive', detailOrientation: 'high' },
+      communication: { responseLength: 'concise', language: 'neutral', technicality: 'technical' }
+    }
+  };
 
   // 本地状态
   const [localFeatures, setLocalFeatures] = useState<CoreFeatures>({
@@ -37,8 +130,12 @@ const CoreFeaturesStage: React.FC = () => {
       language: 'neutral',
       technicality: 'moderate'
     },
+    personalityMode: 'custom',
     ...coreFeatures
   });
+
+  // 配置模式状态
+  const [configMode, setConfigMode] = useState<PersonalityConfigMode>('custom');
 
   // 同步到store
   useEffect(() => {
@@ -74,53 +171,7 @@ const CoreFeaturesStage: React.FC = () => {
   const aiCommunicationRecommendation = getAICommunicationRecommendation();
 
   // 检查是否在多领域模式下
-  const isMultiDomainMode = basicInfo?.enableMultiDomain && multiDomainConfig;
-
-  // 如果是多领域模式，显示提示信息
-  if (isMultiDomainMode) {
-    return (
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <div className="flex items-start gap-3">
-            <Info className="h-5 w-5 text-blue-600 mt-0.5" />
-            <div>
-              <h3 className="text-lg font-semibold text-blue-900 mb-2">
-                多领域模式已启用
-              </h3>
-              <p className="text-blue-700 mb-4">
-                在多领域模式下，每个领域将拥有独立的特征配置。
-                请在下一步的领域配置中为每个领域设置核心特征。
-              </p>
-
-              {/* 显示将要配置的领域预览 */}
-              <div className="mt-4">
-                <h4 className="text-sm font-medium text-blue-800 mb-2">
-                  预计配置 {basicInfo?.estimatedDomains || 2} 个领域的特征配置：
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                  <div className="bg-white border border-blue-200 rounded-lg p-3 text-center">
-                    <div className="text-lg mb-1">🎭</div>
-                    <div className="font-medium text-blue-700">个性配置</div>
-                    <div className="text-blue-600">友好度、专业度等</div>
-                  </div>
-                  <div className="bg-white border border-blue-200 rounded-lg p-3 text-center">
-                    <div className="text-lg mb-1">💼</div>
-                    <div className="font-medium text-blue-700">工作风格</div>
-                    <div className="text-blue-600">严谨度、主动性等</div>
-                  </div>
-                  <div className="bg-white border border-blue-200 rounded-lg p-3 text-center">
-                    <div className="text-lg mb-1">💬</div>
-                    <div className="font-medium text-blue-700">沟通特征</div>
-                    <div className="text-blue-600">回应长度、语言风格等</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const isMultiDomainMode = basicInfo?.enableMultiDomain;
 
   // 性格特征滑块组件
   const PersonalitySlider: React.FC<{
@@ -248,6 +299,51 @@ const CoreFeaturesStage: React.FC = () => {
     }));
   };
 
+  // 应用MBTI配置
+  const applyMBTIConfiguration = (mbtiType: string) => {
+    const mbtiData = mbtiTypes[mbtiType as keyof typeof mbtiTypes];
+    if (!mbtiData) return;
+
+    setLocalFeatures(prev => ({
+      ...prev,
+      personality: { ...prev.personality, ...mbtiData.mapping.personality },
+      workStyle: { ...prev.workStyle, ...mbtiData.mapping.workStyle },
+      communication: { ...prev.communication, ...mbtiData.mapping.communication },
+      personalityMode: 'mbti',
+      mbtiProfile: {
+        energySource: mbtiType[0] as 'E' | 'I',
+        infoGathering: mbtiType[1] as 'S' | 'N',
+        decisionMaking: mbtiType[2] as 'T' | 'F',
+        lifestyle: mbtiType[3] as 'J' | 'P',
+        type: mbtiType,
+        characteristics: mbtiData.characteristics
+      }
+    }));
+  };
+
+  // 应用人格模板
+  const applyPersonalityTemplate = (templateKey: string) => {
+    const template = personalityTemplates[templateKey as keyof typeof personalityTemplates];
+    if (!template) return;
+
+    setLocalFeatures(prev => ({
+      ...prev,
+      personality: { ...prev.personality, ...template.personality },
+      workStyle: { ...prev.workStyle, ...template.workStyle },
+      communication: { ...prev.communication, ...template.communication },
+      personalityMode: 'quick'
+    }));
+  };
+
+  // 切换配置模式
+  const handleModeChange = (mode: PersonalityConfigMode) => {
+    setConfigMode(mode);
+    setLocalFeatures(prev => ({
+      ...prev,
+      personalityMode: mode
+    }));
+  };
+
   // 工作风格选项
   const workStyleOptions = {
     rigor: [
@@ -320,6 +416,165 @@ const CoreFeaturesStage: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {/* 多领域模式提示 */}
+      {isMultiDomainMode && (
+        <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <Info className="h-5 w-5 text-indigo-600 mt-0.5 flex-shrink-0" />
+            <div className="text-sm">
+              <h4 className="text-indigo-900 font-medium mb-2">多领域共享人格配置</h4>
+              <p className="text-indigo-700 mb-3">
+                您正在配置数字员工的基础人格特征，这些特征将作为所有领域的共同基础。
+                每个专业领域可以在此基础上进行针对性调整，但核心人格保持一致。
+              </p>
+              <div className="text-indigo-600 space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-1 h-1 bg-indigo-500 rounded-full"></span>
+                  <span>基础人格：跨所有领域保持一致</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-1 h-1 bg-indigo-500 rounded-full"></span>
+                  <span>专业调整：每个领域可独立微调</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 人格配置模式选择 */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="flex items-center gap-2 mb-6">
+          <Users className="h-5 w-5 text-purple-600" />
+          <h3 className="text-lg font-semibold text-gray-900">人格配置模式</h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <button
+            onClick={() => handleModeChange('quick')}
+            className={`p-4 border-2 rounded-lg text-left transition-all ${
+              configMode === 'quick'
+                ? 'border-purple-500 bg-purple-50'
+                : 'border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <Palette className="h-5 w-5 text-purple-600" />
+              <span className="font-medium">快速模式</span>
+            </div>
+            <p className="text-sm text-gray-600">选择预设人格模板，快速配置</p>
+          </button>
+
+          <button
+            onClick={() => handleModeChange('mbti')}
+            className={`p-4 border-2 rounded-lg text-left transition-all ${
+              configMode === 'mbti'
+                ? 'border-purple-500 bg-purple-50'
+                : 'border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <Brain className="h-5 w-5 text-purple-600" />
+              <span className="font-medium">MBTI模式</span>
+            </div>
+            <p className="text-sm text-gray-600">基于MBTI人格类型配置</p>
+          </button>
+
+          <button
+            onClick={() => handleModeChange('custom')}
+            className={`p-4 border-2 rounded-lg text-left transition-all ${
+              configMode === 'custom'
+                ? 'border-purple-500 bg-purple-50'
+                : 'border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <Settings className="h-5 w-5 text-purple-600" />
+              <span className="font-medium">自定义模式</span>
+            </div>
+            <p className="text-sm text-gray-600">细粒度调整各项参数</p>
+          </button>
+        </div>
+
+        {/* 快速模式 - 人格模板选择 */}
+        {configMode === 'quick' && (
+          <div className="space-y-4">
+            <h4 className="text-sm font-medium text-gray-700">选择人格模板</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {Object.entries(personalityTemplates).map(([key, template]) => (
+                <button
+                  key={key}
+                  onClick={() => applyPersonalityTemplate(key)}
+                  className={`p-4 border rounded-lg text-left transition-all hover:border-purple-300 ${
+                    localFeatures.personalityMode === 'quick' ? 'border-purple-200 bg-purple-50' : 'border-gray-200'
+                  }`}
+                >
+                  <h5 className="font-medium text-gray-900 mb-1">{template.name}</h5>
+                  <p className="text-sm text-gray-600">{template.description}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* MBTI模式 - MBTI类型选择 */}
+        {configMode === 'mbti' && (
+          <div className="space-y-4">
+            <h4 className="text-sm font-medium text-gray-700">选择MBTI人格类型</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {Object.entries(mbtiTypes).map(([type, data]) => (
+                <button
+                  key={type}
+                  onClick={() => applyMBTIConfiguration(type)}
+                  className={`p-4 border rounded-lg text-left transition-all hover:border-purple-300 ${
+                    localFeatures.mbtiProfile?.type === type ? 'border-purple-500 bg-purple-50' : 'border-gray-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="font-bold text-purple-600">{type}</span>
+                    <span className="font-medium text-gray-900">{data.name}</span>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">{data.description}</p>
+                  <div className="text-xs text-gray-500">
+                    <div className="mb-1">
+                      <span className="font-medium">适用场景：</span>
+                      {data.characteristics.idealScenarios.slice(0, 2).join('、')}
+                    </div>
+                    <div>
+                      <span className="font-medium">团队角色：</span>
+                      {data.characteristics.teamRole}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* MBTI特征展示 */}
+            {localFeatures.mbtiProfile && (
+              <div className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+                <h5 className="font-medium text-purple-900 mb-3">
+                  {localFeatures.mbtiProfile.type} - {mbtiTypes[localFeatures.mbtiProfile.type as keyof typeof mbtiTypes]?.name}
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium text-purple-800">核心优势：</span>
+                    <div className="text-purple-700 mt-1">
+                      {localFeatures.mbtiProfile.characteristics.strengths.join('、')}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-purple-800">沟通风格：</span>
+                    <div className="text-purple-700 mt-1">
+                      {localFeatures.mbtiProfile.characteristics.communication.join('、')}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* 性格特征卡片 */}
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="flex items-center gap-2 mb-6">

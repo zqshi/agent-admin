@@ -55,11 +55,39 @@ export interface CommunicationStyle {
   technicality: 'simple' | 'moderate' | 'technical';
 }
 
+// MBTI人格类型
+export interface MBTIProfile {
+  // 四个维度
+  energySource: 'E' | 'I';        // 外向(E) vs 内向(I)
+  infoGathering: 'S' | 'N';       // 感觉(S) vs 直觉(N)
+  decisionMaking: 'T' | 'F';      // 思考(T) vs 情感(F)
+  lifestyle: 'J' | 'P';           // 判断(J) vs 感知(P)
+
+  // MBTI类型（如INTJ）
+  type: string;
+
+  // 类型特征描述
+  characteristics: {
+    strengths: string[];          // 优势
+    workStyle: string[];          // 工作风格
+    communication: string[];      // 沟通方式
+    teamRole: string;            // 团队角色
+    idealScenarios: string[];    // 理想应用场景
+  };
+}
+
+// 人格配置模式
+export type PersonalityConfigMode = 'quick' | 'mbti' | 'custom';
+
 // 核心特征配置
 export interface CoreFeatures {
   personality: PersonalityTraits;
   workStyle: WorkStyle;
   communication: CommunicationStyle;
+
+  // 新增MBTI配置
+  mbtiProfile?: MBTIProfile;
+  personalityMode: PersonalityConfigMode;
 }
 
 // Slot配置

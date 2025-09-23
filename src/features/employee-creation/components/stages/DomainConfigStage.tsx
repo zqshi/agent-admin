@@ -117,30 +117,100 @@ const DomainConfigStage: React.FC = () => {
     addDomain(newDomain);
   };
 
-  // 领域配置完整性检查
+  // 领域配置完整性检查 - 增强版本
   const getDomainConfigStatus = (domain: DomainConfig) => {
-    const checks = {
-      basicInfo: domain.name && domain.description,
-      keywords: domain.keywords.length > 0 || domain.semanticTopics.length > 0,
-      persona: !!domain.advancedConfig.persona?.systemPrompt,
-      prompt: (domain.advancedConfig.prompt?.templates?.length || 0) > 0,
-      knowledge: (
-        (domain.advancedConfig.knowledge?.documents?.files?.length || 0) > 0 ||
-        (domain.advancedConfig.knowledge?.faq?.items?.length || 0) > 0
-      ),
-      tools: (domain.advancedConfig.tools?.selectedTools?.length || 0) > 0,
-      mentor: domain.advancedConfig.mentor?.enabled || false
+    // 基础配置检查
+    const basicChecks = {
+      hasName: !!domain.name?.trim(),
+      hasDescription: !!domain.description?.trim(),
+      hasIcon: !!domain.icon,
+      hasKeywords: domain.keywords.length > 0 || domain.semanticTopics.length > 0
     };
 
-    const completedItems = Object.values(checks).filter(Boolean).length;
-    const totalItems = Object.keys(checks).length;
+    // 高级配置检查
+    const advancedChecks = {
+      // 人设配置
+      persona: {
+        hasSystemPrompt: !!domain.advancedConfig.persona?.systemPrompt?.trim(),
+        hasBackground: !!domain.advancedConfig.persona?.characterBackground?.trim(),
+        hasConstraints: (domain.advancedConfig.persona?.constraints?.length || 0) > 0,
+        hasExamples: (domain.advancedConfig.persona?.examples?.length || 0) > 0
+      },
+
+      // Prompt配置
+      prompt: {
+        hasTemplates: (domain.advancedConfig.prompt?.templates?.length || 0) > 0,
+        hasSlots: (domain.advancedConfig.prompt?.slots?.length || 0) > 0,
+        hasCompression: !!domain.advancedConfig.prompt?.compression?.enabled,
+        hasErrorHandling: !!domain.advancedConfig.prompt?.errorHandling
+      },
+
+      // 知识配置
+      knowledge: {
+        hasDocuments: (domain.advancedConfig.knowledge?.documents?.files?.length || 0) > 0,
+        hasFAQ: (domain.advancedConfig.knowledge?.faq?.items?.length || 0) > 0,
+        hasKnowledgeBase: domain.advancedConfig.knowledge?.knowledgeBase?.type !== undefined,
+        hasRetention: !!domain.advancedConfig.knowledge?.retention?.enabled
+      },
+
+      // 工具配置
+      tools: {
+        hasRecommended: (domain.advancedConfig.tools?.recommendedTools?.length || 0) > 0,
+        hasSelected: (domain.advancedConfig.tools?.selectedTools?.length || 0) > 0,
+        hasUsagePolicy: !!domain.advancedConfig.tools?.usagePolicy
+      },
+
+      // 导师配置
+      mentor: {
+        isEnabled: !!domain.advancedConfig.mentor?.enabled,
+        hasMentor: !!domain.advancedConfig.mentor?.mentor?.id,
+        hasReporting: !!domain.advancedConfig.mentor?.reporting?.enabled,
+        hasSupervision: !!domain.advancedConfig.mentor?.supervision
+      }
+    };
+
+    // 计算各部分完成度
+    const basicCompleted = Object.values(basicChecks).filter(Boolean).length;
+    const basicTotal = Object.keys(basicChecks).length;
+
+    const personaCompleted = Object.values(advancedChecks.persona).filter(Boolean).length;
+    const personaTotal = Object.keys(advancedChecks.persona).length;
+
+    const promptCompleted = Object.values(advancedChecks.prompt).filter(Boolean).length;
+    const promptTotal = Object.keys(advancedChecks.prompt).length;
+
+    const knowledgeCompleted = Object.values(advancedChecks.knowledge).filter(Boolean).length;
+    const knowledgeTotal = Object.keys(advancedChecks.knowledge).length;
+
+    const toolsCompleted = Object.values(advancedChecks.tools).filter(Boolean).length;
+    const toolsTotal = Object.keys(advancedChecks.tools).length;
+
+    const mentorCompleted = Object.values(advancedChecks.mentor).filter(Boolean).length;
+    const mentorTotal = Object.keys(advancedChecks.mentor).length;
+
+    const totalCompleted = basicCompleted + personaCompleted + promptCompleted + knowledgeCompleted + toolsCompleted + mentorCompleted;
+    const totalItems = basicTotal + personaTotal + promptTotal + knowledgeTotal + toolsTotal + mentorTotal;
+
+    // 高级配置完整性 - 至少需要人设和知识配置
+    const hasAdvancedConfig = (
+      advancedChecks.persona.hasSystemPrompt &&
+      (advancedChecks.knowledge.hasDocuments || advancedChecks.knowledge.hasFAQ)
+    );
 
     return {
-      completed: completedItems,
+      completed: totalCompleted,
       total: totalItems,
-      percentage: Math.round((completedItems / totalItems) * 100),
-      details: checks,
-      isValid: checks.basicInfo && checks.keywords // 最少需要基础信息和路由配置
+      percentage: Math.round((totalCompleted / totalItems) * 100),
+      isValid: basicChecks.hasName && basicChecks.hasDescription && basicChecks.hasKeywords,
+      hasAdvancedConfig,
+      details: {
+        basic: { completed: basicCompleted, total: basicTotal, checks: basicChecks },
+        persona: { completed: personaCompleted, total: personaTotal, checks: advancedChecks.persona },
+        prompt: { completed: promptCompleted, total: promptTotal, checks: advancedChecks.prompt },
+        knowledge: { completed: knowledgeCompleted, total: knowledgeTotal, checks: advancedChecks.knowledge },
+        tools: { completed: toolsCompleted, total: toolsTotal, checks: advancedChecks.tools },
+        mentor: { completed: mentorCompleted, total: mentorTotal, checks: advancedChecks.mentor }
+      }
     };
   };
 
@@ -260,6 +330,97 @@ const DomainConfigStage: React.FC = () => {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* 高级配置能力汇总 */}
+      {!showEmptyState && activeDomains.length > 0 && (
+        <div className="mt-6">
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <h3 className="text-lg font-semibold text-gray-900">高级配置完整性检查</h3>
+              <span className="text-sm text-gray-500">
+                多领域已包含所有高级配置能力
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              {activeDomains.map(domain => {
+                const status = getDomainConfigStatus(domain);
+                return (
+                  <div key={domain.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{domain.icon}</span>
+                        <span className="font-medium text-gray-900">{domain.name}</span>
+                        {status.hasAdvancedConfig && (
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                            高级配置完整
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {status.completed}/{status.total} 项已配置 ({status.percentage}%)
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-xs">
+                      {Object.entries(status.details).map(([key, detail]) => (
+                        <div key={key} className="text-center">
+                          <div className={`p-2 rounded border ${
+                            detail.completed === detail.total
+                              ? 'border-green-200 bg-green-50'
+                              : detail.completed > 0
+                              ? 'border-yellow-200 bg-yellow-50'
+                              : 'border-gray-200 bg-gray-50'
+                          }`}>
+                            <div className="font-medium text-gray-700 capitalize">{key}</div>
+                            <div className={`text-xs mt-1 ${
+                              detail.completed === detail.total
+                                ? 'text-green-600'
+                                : detail.completed > 0
+                                ? 'text-yellow-600'
+                                : 'text-gray-500'
+                            }`}>
+                              {detail.completed}/{detail.total}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* 配置建议 */}
+                    {!status.hasAdvancedConfig && (
+                      <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                          <div className="text-sm">
+                            <p className="text-yellow-800 font-medium">配置建议</p>
+                            <p className="text-yellow-700 mt-1">
+                              建议完善该领域的人设配置和知识配置，以确保具备完整的高级配置能力。
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 整体汇总 */}
+            <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <span className="font-medium text-green-900">配置完整性总结</span>
+              </div>
+              <div className="text-sm text-green-800">
+                {activeDomains.filter(domain => getDomainConfigStatus(domain).hasAdvancedConfig).length} / {activeDomains.length} 个领域已完成高级配置，
+                多领域模式已包含：人设配置、Prompt配置、知识配置、工具管理、导师机制等完整功能。
+              </div>
+            </div>
           </div>
         </div>
       )}

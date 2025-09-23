@@ -577,55 +577,47 @@ const BasicInfoStage: React.FC = () => {
 
           {localData.enableMultiDomain && (
             <div className="space-y-4 pl-4 border-l-2 border-indigo-200">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  预计配置领域数量
-                </label>
-                <select
-                  value={localData.estimatedDomains || 2}
-                  onChange={(e) => handleFieldChange('estimatedDomains', parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  <option value={2}>2个领域（如：客服 + 技术支持）</option>
-                  <option value={3}>3个领域（如：销售 + 客服 + 技术）</option>
-                  <option value={4}>4个领域</option>
-                  <option value={5}>5个领域</option>
-                  <option value={8}>8个领域</option>
-                  <option value={10}>10个领域</option>
-                </select>
-                <p className="text-xs text-gray-500 mt-1">
-                  这将影响后续的领域配置界面，您也可以随时调整
-                </p>
-              </div>
-
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="h-5 w-5 text-indigo-600 mt-0.5 flex-shrink-0" />
                   <div className="text-sm">
-                    <p className="text-yellow-800 font-medium mb-1">配置提醒</p>
-                    <p className="text-yellow-700">
-                      启用多领域后，系统将跳过传统的高级配置阶段，改为领域配置界面。
-                      每个领域都将拥有独立的人设配置、Prompt配置、知识配置、工具管理和导师机制。
+                    <p className="text-indigo-800 font-medium mb-2">多领域模式已启用</p>
+                    <p className="text-indigo-700 mb-3">
+                      您的数字员工将具备处理多个专业领域的能力，可以智能识别用户意图并切换到相应专业领域进行响应。
                     </p>
+                    <div className="text-indigo-600 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="w-1 h-1 bg-indigo-500 rounded-full"></span>
+                        <span>智能识别：自动判断用户咨询类型</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-1 h-1 bg-indigo-500 rounded-full"></span>
+                        <span>专业切换：快速切换到对应领域模式</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-1 h-1 bg-indigo-500 rounded-full"></span>
+                        <span>独立配置：每个领域拥有专门的知识和能力</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                <div className="bg-white border border-gray-200 rounded-lg p-3 text-center">
+                <div className="bg-white border border-indigo-200 rounded-lg p-3 text-center">
                   <div className="text-lg mb-1">🎯</div>
-                  <div className="font-medium text-gray-700">智能路由</div>
-                  <div className="text-gray-500">自动识别意图</div>
+                  <div className="font-medium text-indigo-700">智能路由</div>
+                  <div className="text-indigo-600">自动识别意图</div>
                 </div>
-                <div className="bg-white border border-gray-200 rounded-lg p-3 text-center">
+                <div className="bg-white border border-indigo-200 rounded-lg p-3 text-center">
                   <div className="text-lg mb-1">⚙️</div>
-                  <div className="font-medium text-gray-700">独立配置</div>
-                  <div className="text-gray-500">领域间完全隔离</div>
+                  <div className="font-medium text-indigo-700">独立配置</div>
+                  <div className="text-indigo-600">领域专业化</div>
                 </div>
-                <div className="bg-white border border-gray-200 rounded-lg p-3 text-center">
+                <div className="bg-white border border-indigo-200 rounded-lg p-3 text-center">
                   <div className="text-lg mb-1">📊</div>
-                  <div className="font-medium text-gray-700">统一管理</div>
-                  <div className="text-gray-500">一个界面管理</div>
+                  <div className="font-medium text-indigo-700">统一管理</div>
+                  <div className="text-indigo-600">一体化界面</div>
                 </div>
               </div>
             </div>
