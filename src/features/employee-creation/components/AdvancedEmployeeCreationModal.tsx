@@ -23,6 +23,7 @@ import { useCreationStore } from '../stores/creationStore';
 import StageNavigator from './StageNavigator';
 import BasicInfoStage from './stages/BasicInfoStage';
 import CoreFeaturesStage from './stages/CoreFeaturesStage';
+import DomainConfigStage from './stages/DomainConfigStage';
 import AdvancedConfigStage from './stages/AdvancedConfigStage';
 import FloatingSmartAssistant from './FloatingSmartAssistant';
 import NaturalLanguageInput from '../../../features/react-engine/components/NaturalLanguageInput';
@@ -270,8 +271,14 @@ const AdvancedEmployeeCreationModal: React.FC<AdvancedEmployeeCreationModalProps
     }
   }, [validateCurrentStage, toCreateDigitalEmployeeForm, onSave, handleClose]);
 
-  // 阶段配置
-  const stages = [
+  // 阶段配置 - 根据是否启用多领域动态调整
+  const isMultiDomain = basicInfo?.enableMultiDomain || false;
+  const stages = isMultiDomain ? [
+    { id: 'basic', title: '基础信息', description: '员工基本信息和职责定义' },
+    { id: 'features', title: '核心特征', description: '性格特点和工作风格' },
+    { id: 'domains', title: '领域配置', description: '多领域能力和智能路由设置' },
+    { id: 'advanced', title: '高级配置', description: '全局默认配置和系统设置' }
+  ] : [
     { id: 'basic', title: '基础信息', description: '员工基本信息和职责定义' },
     { id: 'features', title: '核心特征', description: '性格特点和工作风格' },
     { id: 'advanced', title: '高级配置', description: 'Prompt、知识库、工具等高级设置' }
@@ -288,6 +295,8 @@ const AdvancedEmployeeCreationModal: React.FC<AdvancedEmployeeCreationModalProps
         return <BasicInfoStage />;
       case 'features':
         return <CoreFeaturesStage />;
+      case 'domains':
+        return <DomainConfigStage />;
       case 'advanced':
         return <AdvancedConfigStage />;
       default:

@@ -4,7 +4,7 @@
 
 
 // 创建阶段类型
-export type CreationStage = 'basic' | 'features' | 'advanced';
+export type CreationStage = 'basic' | 'features' | 'domains' | 'advanced';
 
 // 基础信息配置
 export interface BasicInfo {
@@ -20,6 +20,10 @@ export interface BasicInfo {
 
   // 智能推荐
   autoSuggest: boolean;      // 启用智能建议
+
+  // 多领域配置
+  enableMultiDomain: boolean;    // 是否启用多领域
+  estimatedDomains?: number;     // 预估领域数量
 
   // 增强分析结果字段
   personalityTraits?: any[];
@@ -337,4 +341,77 @@ export interface CreationSession {
   steps: ReasoningStep[];
   currentConfig: any;
   generatedConfig: GeneratedConfig | null;
+}
+
+// ============ 多领域配置相关类型 ============
+
+// 路由策略类型
+export type RoutingStrategy = 'keyword' | 'semantic' | 'context' | 'hybrid';
+
+// 领域配置
+export interface DomainConfig {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  weight: number;          // 0-100 权重
+  enabled: boolean;
+  isDefault: boolean;
+
+  // 每个领域包含完整的高级配置
+  advancedConfig: AdvancedConfig;
+
+  // 领域特有的核心特征（可覆盖全局）
+  coreFeatures?: {
+    personality?: Partial<PersonalityTraits>;
+    workStyle?: Partial<WorkStyle>;
+    communication?: Partial<CommunicationStyle>;
+  };
+
+  // 路由相关
+  keywords: string[];      // 关键词匹配
+  semanticTopics: string[]; // 语义主题
+
+  // 元数据
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 多领域配置
+export interface MultiDomainConfig {
+  enabled: boolean;
+  domains: DomainConfig[];
+  routingStrategy: RoutingStrategy;
+  defaultDomainId?: string;
+  maxConcurrentDomains: number;
+
+  // 全局默认配置（作为各领域的基础）
+  globalDefaults: AdvancedConfig;
+
+  // 路由配置
+  routingConfig: {
+    keywordSensitivity: number;      // 关键词敏感度 0-1
+    semanticThreshold: number;       // 语义相似度阈值 0-1
+    contextMemoryLength: number;     // 上下文记忆长度
+    fallbackBehavior: 'default' | 'ask' | 'random';
+  };
+}
+
+// 领域匹配结果
+export interface DomainMatch {
+  domainId: string;
+  confidence: number;       // 0-1
+  reason: string;          // 匹配原因
+  matchType: 'keyword' | 'semantic' | 'context' | 'manual';
+}
+
+// 路由决策记录
+export interface RoutingDecision {
+  id: string;
+  timestamp: string;
+  userInput: string;
+  matches: DomainMatch[];
+  selectedDomain: string;
+  confidence: number;
+  context?: any;
 }

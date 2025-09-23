@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { CheckCircle, Circle, User, Brain, Settings } from 'lucide-react';
+import { CheckCircle, Circle, User, Brain, Settings, Layers } from 'lucide-react';
 import type { CreationStage } from '../types';
 
 interface Stage {
@@ -29,6 +29,7 @@ const StageNavigator: React.FC<StageNavigatorProps> = ({
   const stageIcons = {
     basic: User,
     features: Brain,
+    domains: Layers,
     advanced: Settings
   };
 

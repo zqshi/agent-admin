@@ -3,7 +3,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Plus, Minus, User, Building2, Target, AlertCircle, Sparkles, Loader, ChevronDown, ChevronUp, CheckCircle } from 'lucide-react';
+import { Plus, Minus, User, Building2, Target, AlertCircle, Sparkles, Loader, ChevronDown, ChevronUp, CheckCircle, Layers, Settings } from 'lucide-react';
 import { useCreationStore } from '../../stores/creationStore';
 import { smartAnalysisService } from '../../services/SmartAnalysisService';
 import { enhancedAnalysisService } from '../../services/EnhancedAnalysisService';
@@ -31,6 +31,8 @@ const BasicInfoStage: React.FC = () => {
     responsibilities: [''],
     serviceScope: [''],
     autoSuggest: true,
+    enableMultiDomain: false,
+    estimatedDomains: 2,
     ...basicInfo
   });
 
@@ -533,8 +535,106 @@ const BasicInfoStage: React.FC = () => {
         </div>
       </div>
 
-      {/* 智能配置选项 */}
+      {/* 多领域配置 */}
       <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Layers className="h-5 w-5 text-indigo-600" />
+            <h3 className="text-lg font-semibold text-gray-900">多领域配置</h3>
+            <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">
+              实验性功能
+            </span>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={localData.enableMultiDomain}
+              onChange={(e) => handleFieldChange('enableMultiDomain', e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+          </label>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+            <Settings className="h-5 w-5 text-indigo-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <h4 className="text-sm font-medium text-indigo-900 mb-1">
+                什么是多领域数字员工？
+              </h4>
+              <p className="text-sm text-indigo-700 mb-2">
+                多领域数字员工具备跨专业领域的综合能力，能够智能识别用户意图并自动切换到相应的专业领域进行响应。
+              </p>
+              <div className="text-xs text-indigo-600 space-y-1">
+                <div>• 一个员工处理多个专业领域的咨询</div>
+                <div>• 智能路由：自动识别用户意图并切换领域</div>
+                <div>• 每个领域独立配置：人设、知识库、工具等</div>
+                <div>• 减少员工数量，提升管理效率</div>
+              </div>
+            </div>
+          </div>
+
+          {localData.enableMultiDomain && (
+            <div className="space-y-4 pl-4 border-l-2 border-indigo-200">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  预计配置领域数量
+                </label>
+                <select
+                  value={localData.estimatedDomains || 2}
+                  onChange={(e) => handleFieldChange('estimatedDomains', parseInt(e.target.value))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value={2}>2个领域（如：客服 + 技术支持）</option>
+                  <option value={3}>3个领域（如：销售 + 客服 + 技术）</option>
+                  <option value={4}>4个领域</option>
+                  <option value={5}>5个领域</option>
+                  <option value={8}>8个领域</option>
+                  <option value={10}>10个领域</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  这将影响后续的领域配置界面，您也可以随时调整
+                </p>
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm">
+                    <p className="text-yellow-800 font-medium mb-1">配置提醒</p>
+                    <p className="text-yellow-700">
+                      启用多领域后，系统将跳过传统的高级配置阶段，改为领域配置界面。
+                      每个领域都将拥有独立的人设配置、Prompt配置、知识配置、工具管理和导师机制。
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                <div className="bg-white border border-gray-200 rounded-lg p-3 text-center">
+                  <div className="text-lg mb-1">🎯</div>
+                  <div className="font-medium text-gray-700">智能路由</div>
+                  <div className="text-gray-500">自动识别意图</div>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-lg p-3 text-center">
+                  <div className="text-lg mb-1">⚙️</div>
+                  <div className="font-medium text-gray-700">独立配置</div>
+                  <div className="text-gray-500">领域间完全隔离</div>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-lg p-3 text-center">
+                  <div className="text-lg mb-1">📊</div>
+                  <div className="font-medium text-gray-700">统一管理</div>
+                  <div className="text-gray-500">一个界面管理</div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 智能配置选项 - 已隐藏 */}
+      {/* <div className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="flex items-center gap-2 mb-4">
           <Building2 className="h-5 w-5 text-purple-600" />
           <h3 className="text-lg font-semibold text-gray-900">智能配置</h3>
@@ -567,10 +667,10 @@ const BasicInfoStage: React.FC = () => {
             </div>
           </label>
         </div>
-      </div>
+      </div> */}
 
-      {/* 配置预览 */}
-      {localData.name && localData.primaryRole && (
+      {/* 配置预览 - 已隐藏 */}
+      {/* {localData.name && localData.primaryRole && (
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-3">配置预览</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -592,7 +692,7 @@ const BasicInfoStage: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 };

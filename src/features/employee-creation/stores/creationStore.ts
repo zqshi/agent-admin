@@ -13,7 +13,10 @@ import type {
   ConfigSuggestion,
   ValidationResult,
   ConfigExport,
-  ResponsibilityAnalysis
+  ResponsibilityAnalysis,
+  DomainConfig,
+  MultiDomainConfig,
+  RoutingStrategy
 } from '../types';
 import type { CreateDigitalEmployeeForm } from '../../../types';
 import type { SmartSuggestion, AnalysisResult } from '../services/SmartAnalysisService';
@@ -92,6 +95,17 @@ interface CreationState {
     usageCount: number;
     isBuiltIn: boolean;
   }>;
+
+  // ============ 多领域配置相关状态 ============
+
+  // 多领域配置
+  multiDomainConfig: MultiDomainConfig | null;
+
+  // 当前选中的领域
+  selectedDomainId: string | null;
+
+  // 领域验证结果
+  domainValidation: Map<string, ValidationResult>;
 }
 
 interface CreationActions {
@@ -156,6 +170,46 @@ interface CreationActions {
 
   // 转换为旧格式（兼容性）
   toCreateDigitalEmployeeForm: () => CreateDigitalEmployeeForm;
+
+  // ============ 多领域配置相关方法 ============
+
+  // 多领域配置管理
+  enableMultiDomain: (enable: boolean) => void;
+  initializeMultiDomain: () => void;
+  setRoutingStrategy: (strategy: RoutingStrategy) => void;
+
+  // 领域管理
+  addDomain: (domain: Omit<DomainConfig, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateDomain: (id: string, updates: Partial<DomainConfig>) => void;
+  deleteDomain: (id: string) => void;
+  toggleDomain: (id: string) => void;
+  setDomainWeight: (id: string, weight: number) => void;
+  selectDomain: (id: string) => void;
+  duplicateDomain: (id: string) => void;
+
+  // 领域高级配置管理
+  updateDomainPersona: (domainId: string, persona: Partial<AdvancedConfig['persona']>) => void;
+  updateDomainPrompt: (domainId: string, prompt: Partial<AdvancedConfig['prompt']>) => void;
+  updateDomainKnowledge: (domainId: string, knowledge: Partial<AdvancedConfig['knowledge']>) => void;
+  updateDomainTools: (domainId: string, tools: Partial<AdvancedConfig['tools']>) => void;
+  updateDomainMentor: (domainId: string, mentor: Partial<AdvancedConfig['mentor']>) => void;
+
+  // 配置继承和覆盖
+  inheritFromGlobal: (domainId: string, configType: keyof AdvancedConfig) => void;
+  resetDomainConfig: (domainId: string, configType: keyof AdvancedConfig) => void;
+
+  // 领域验证
+  validateDomain: (id: string) => Promise<ValidationResult>;
+  validateAllDomains: () => Promise<Map<string, ValidationResult>>;
+
+  // 权重管理
+  normalizeWeights: () => void;
+  getWeightSummary: () => { total: number; isValid: boolean; };
+
+  // 获取方法
+  getDomain: (id: string) => DomainConfig | null;
+  getActiveDomains: () => DomainConfig[];
+  isMultiDomainEnabled: () => boolean;
 }
 
 const initialState: CreationState = {
@@ -166,6 +220,7 @@ const initialState: CreationState = {
   stageProgress: {
     basic: false,
     features: false,
+    domains: false,
     advanced: false
   },
 
@@ -250,7 +305,18 @@ const initialState: CreationState = {
       usageCount: 15,
       isBuiltIn: true
     }
-  ]
+  ],
+
+  // ============ 多领域配置初始状态 ============
+
+  // 多领域配置
+  multiDomainConfig: null,
+
+  // 当前选中的领域
+  selectedDomainId: null,
+
+  // 领域验证结果
+  domainValidation: new Map()
 };
 
 export const useCreationStore = create<CreationState & CreationActions>()(
@@ -265,8 +331,29 @@ export const useCreationStore = create<CreationState & CreationActions>()(
     setStage: (stage) => set({ currentStage: stage }),
 
     nextStage: () => {
-      const { currentStage } = get();
-      const stages: CreationStage[] = ['basic', 'features', 'advanced'];
+      const { currentStage, basicInfo } = get();
+
+      // 添加空值检查
+      if (!basicInfo) {
+        console.warn('BasicInfo not initialized, cannot navigate');
+        return;
+      }
+
+      const isMultiDomain = basicInfo.enableMultiDomain;
+      const stages: CreationStage[] = isMultiDomain
+        ? ['basic', 'features', 'domains', 'advanced']
+        : ['basic', 'features', 'advanced'];
+
+      // 添加阶段验证
+      if (currentStage === 'features' && isMultiDomain) {
+        // 在多领域模式下，确保多领域配置已初始化
+        const multiDomainConfig = get().multiDomainConfig;
+        if (!multiDomainConfig) {
+          console.warn('Multi-domain not properly initialized');
+          get().initializeMultiDomain();
+        }
+      }
+
       const currentIndex = stages.indexOf(currentStage);
 
       if (currentIndex < stages.length - 1) {
@@ -275,8 +362,20 @@ export const useCreationStore = create<CreationState & CreationActions>()(
     },
 
     prevStage: () => {
-      const { currentStage } = get();
-      const stages: CreationStage[] = ['basic', 'features', 'advanced'];
+      const { currentStage, basicInfo } = get();
+
+      // 添加空值检查
+      if (!basicInfo) {
+        console.warn('BasicInfo not initialized, cannot navigate');
+        return;
+      }
+
+      // 根据是否启用多领域决定阶段流程
+      const isMultiDomain = basicInfo.enableMultiDomain;
+      const stages: CreationStage[] = isMultiDomain
+        ? ['basic', 'features', 'domains', 'advanced']
+        : ['basic', 'features', 'advanced'];
+
       const currentIndex = stages.indexOf(currentStage);
 
       if (currentIndex > 0) {
@@ -289,10 +388,32 @@ export const useCreationStore = create<CreationState & CreationActions>()(
     })),
 
     // 数据更新
-    updateBasicInfo: (info) => set((state) => ({
-      basicInfo: state.basicInfo ? { ...state.basicInfo, ...info } : info as BasicInfo,
-      validation: null // 清除验证状态
-    })),
+    updateBasicInfo: (info) => set((state) => {
+      const newBasicInfo = state.basicInfo ? { ...state.basicInfo, ...info } : info as BasicInfo;
+
+      // 如果启用多领域且尚未初始化，立即初始化
+      if (newBasicInfo.enableMultiDomain && !state.multiDomainConfig) {
+        // 使用 setTimeout 避免在 setState 中调用另一个 setState
+        setTimeout(() => {
+          get().initializeMultiDomain();
+        }, 0);
+      }
+
+      // 如果禁用多领域，清理相关配置
+      if (!newBasicInfo.enableMultiDomain && state.multiDomainConfig) {
+        return {
+          basicInfo: newBasicInfo,
+          multiDomainConfig: null,
+          selectedDomainId: null,
+          validation: null
+        };
+      }
+
+      return {
+        basicInfo: newBasicInfo,
+        validation: null
+      };
+    }),
 
     updateCoreFeatures: (features) => set((state) => ({
       coreFeatures: state.coreFeatures ? { ...state.coreFeatures, ...features } : features as CoreFeatures,
@@ -667,6 +788,372 @@ export const useCreationStore = create<CreationState & CreationActions>()(
             creativity: 'balanced' as const
           }
         }
+      };
+    },
+
+    // ============ 多领域配置相关方法实现 ============
+
+    // 多领域配置管理
+    enableMultiDomain: (enable) => {
+      if (enable) {
+        get().initializeMultiDomain();
+      } else {
+        set({ multiDomainConfig: null, selectedDomainId: null });
+      }
+    },
+
+    initializeMultiDomain: () => {
+      const { advancedConfig, coreFeatures } = get();
+
+      // 创建默认的全局配置
+      const globalDefaults: AdvancedConfig = advancedConfig || {
+        persona: { systemPrompt: '', characterBackground: '', constraints: [], examples: [] },
+        prompt: { templates: [], slots: [], compression: { enabled: false, trigger: 'tokenLimit', threshold: 2048, strategy: 'summary', preserveKeys: [] }, errorHandling: { onSlotMissing: 'useDefault', onCompressionFail: 'retry' } },
+        knowledge: { documents: { files: [], maxSize: 10485760, allowedFormats: ['.txt', '.md', '.pdf'] }, faq: { items: [], importSource: 'manual' }, retention: { enabled: false, strategy: 'internalize', updateFrequency: 'realtime' }, knowledgeBase: { type: 'internal', internalSources: [], externalAPIs: [] }, knowledgeGraph: { enabled: false, autoGenerate: false, updateTrigger: 'manual', visualization: false } },
+        tools: { recommendedTools: [], selectedTools: [], usagePolicy: { requireConfirmation: false, loggingLevel: 'basic' } },
+        mentor: { enabled: false, mentor: { id: '', name: '', role: '' }, reporting: { enabled: false, schedule: 'weekly', method: 'email', template: '' }, supervision: { reviewDecisions: false, approvalRequired: [], escalationRules: [] } }
+      };
+
+      const multiDomainConfig: MultiDomainConfig = {
+        enabled: true,
+        domains: [],
+        routingStrategy: 'hybrid',
+        maxConcurrentDomains: 5,
+        globalDefaults,
+        routingConfig: {
+          keywordSensitivity: 0.7,
+          semanticThreshold: 0.8,
+          contextMemoryLength: 10,
+          fallbackBehavior: 'default'
+        }
+      };
+
+      set({ multiDomainConfig, domainValidation: new Map() });
+    },
+
+    setRoutingStrategy: (strategy) => set((state) => {
+      if (state.multiDomainConfig) {
+        return {
+          multiDomainConfig: {
+            ...state.multiDomainConfig,
+            routingStrategy: strategy
+          }
+        };
+      }
+      return state;
+    }),
+
+    // 领域管理
+    addDomain: (domainData) => {
+      const now = new Date().toISOString();
+      const newDomain: DomainConfig = {
+        ...domainData,
+        id: `domain_${Date.now()}`,
+        createdAt: now,
+        updatedAt: now,
+        advancedConfig: get().multiDomainConfig?.globalDefaults || {
+          persona: { systemPrompt: '', characterBackground: '', constraints: [], examples: [] },
+          prompt: { templates: [], slots: [], compression: { enabled: false, trigger: 'tokenLimit', threshold: 2048, strategy: 'summary', preserveKeys: [] }, errorHandling: { onSlotMissing: 'useDefault', onCompressionFail: 'retry' } },
+          knowledge: { documents: { files: [], maxSize: 10485760, allowedFormats: ['.txt', '.md', '.pdf'] }, faq: { items: [], importSource: 'manual' }, retention: { enabled: false, strategy: 'internalize', updateFrequency: 'realtime' }, knowledgeBase: { type: 'internal', internalSources: [], externalAPIs: [] }, knowledgeGraph: { enabled: false, autoGenerate: false, updateTrigger: 'manual', visualization: false } },
+          tools: { recommendedTools: [], selectedTools: [], usagePolicy: { requireConfirmation: false, loggingLevel: 'basic' } },
+          mentor: { enabled: false, mentor: { id: '', name: '', role: '' }, reporting: { enabled: false, schedule: 'weekly', method: 'email', template: '' }, supervision: { reviewDecisions: false, approvalRequired: [], escalationRules: [] } }
+        }
+      };
+
+      set((state) => {
+        if (state.multiDomainConfig) {
+          return {
+            multiDomainConfig: {
+              ...state.multiDomainConfig,
+              domains: [...state.multiDomainConfig.domains, newDomain]
+            },
+            selectedDomainId: newDomain.id
+          };
+        }
+        return state;
+      });
+    },
+
+    updateDomain: (id, updates) => set((state) => {
+      if (state.multiDomainConfig) {
+        return {
+          multiDomainConfig: {
+            ...state.multiDomainConfig,
+            domains: state.multiDomainConfig.domains.map(domain =>
+              domain.id === id ? { ...domain, ...updates, updatedAt: new Date().toISOString() } : domain
+            )
+          }
+        };
+      }
+      return state;
+    }),
+
+    deleteDomain: (id) => set((state) => {
+      if (state.multiDomainConfig) {
+        const newDomains = state.multiDomainConfig.domains.filter(d => d.id !== id);
+        return {
+          multiDomainConfig: {
+            ...state.multiDomainConfig,
+            domains: newDomains
+          },
+          selectedDomainId: state.selectedDomainId === id ? null : state.selectedDomainId
+        };
+      }
+      return state;
+    }),
+
+    toggleDomain: (id) => set((state) => {
+      if (state.multiDomainConfig) {
+        return {
+          multiDomainConfig: {
+            ...state.multiDomainConfig,
+            domains: state.multiDomainConfig.domains.map(domain =>
+              domain.id === id ? { ...domain, enabled: !domain.enabled, updatedAt: new Date().toISOString() } : domain
+            )
+          }
+        };
+      }
+      return state;
+    }),
+
+    setDomainWeight: (id, weight) => get().updateDomain(id, { weight }),
+
+    selectDomain: (id) => set({ selectedDomainId: id }),
+
+    duplicateDomain: (id) => {
+      const domain = get().getDomain(id);
+      if (domain) {
+        get().addDomain({
+          ...domain,
+          name: `${domain.name} (副本)`,
+          isDefault: false
+        });
+      }
+    },
+
+    // 领域高级配置管理
+    updateDomainPersona: (domainId, persona) => {
+      const domain = get().getDomain(domainId);
+      if (domain) {
+        get().updateDomain(domainId, {
+          advancedConfig: {
+            ...domain.advancedConfig,
+            persona: { ...domain.advancedConfig.persona, ...persona }
+          }
+        });
+      }
+    },
+
+    updateDomainPrompt: (domainId, prompt) => {
+      const domain = get().getDomain(domainId);
+      if (domain) {
+        get().updateDomain(domainId, {
+          advancedConfig: {
+            ...domain.advancedConfig,
+            prompt: { ...domain.advancedConfig.prompt, ...prompt }
+          }
+        });
+      }
+    },
+
+    updateDomainKnowledge: (domainId, knowledge) => {
+      const domain = get().getDomain(domainId);
+      if (domain) {
+        get().updateDomain(domainId, {
+          advancedConfig: {
+            ...domain.advancedConfig,
+            knowledge: { ...domain.advancedConfig.knowledge, ...knowledge }
+          }
+        });
+      }
+    },
+
+    updateDomainTools: (domainId, tools) => {
+      const domain = get().getDomain(domainId);
+      if (domain) {
+        get().updateDomain(domainId, {
+          advancedConfig: {
+            ...domain.advancedConfig,
+            tools: { ...domain.advancedConfig.tools, ...tools }
+          }
+        });
+      }
+    },
+
+    updateDomainMentor: (domainId, mentor) => {
+      const domain = get().getDomain(domainId);
+      if (domain) {
+        get().updateDomain(domainId, {
+          advancedConfig: {
+            ...domain.advancedConfig,
+            mentor: { ...domain.advancedConfig.mentor, ...mentor }
+          }
+        });
+      }
+    },
+
+    // 配置继承和覆盖
+    inheritFromGlobal: (domainId, configType) => {
+      const { multiDomainConfig } = get();
+      if (multiDomainConfig) {
+        const globalConfig = multiDomainConfig.globalDefaults[configType];
+        const domain = get().getDomain(domainId);
+        if (domain && globalConfig) {
+          get().updateDomain(domainId, {
+            advancedConfig: {
+              ...domain.advancedConfig,
+              [configType]: globalConfig
+            }
+          });
+        }
+      }
+    },
+
+    resetDomainConfig: (domainId, configType) => {
+      // 重置指定配置类型为默认值
+      const domain = get().getDomain(domainId);
+      if (domain) {
+        const defaultConfigs = {
+          persona: { systemPrompt: '', characterBackground: '', constraints: [], examples: [] },
+          prompt: { templates: [], slots: [], compression: { enabled: false, trigger: 'tokenLimit', threshold: 2048, strategy: 'summary', preserveKeys: [] }, errorHandling: { onSlotMissing: 'useDefault', onCompressionFail: 'retry' } },
+          knowledge: { documents: { files: [], maxSize: 10485760, allowedFormats: ['.txt', '.md', '.pdf'] }, faq: { items: [], importSource: 'manual' }, retention: { enabled: false, strategy: 'internalize', updateFrequency: 'realtime' }, knowledgeBase: { type: 'internal', internalSources: [], externalAPIs: [] }, knowledgeGraph: { enabled: false, autoGenerate: false, updateTrigger: 'manual', visualization: false } },
+          tools: { recommendedTools: [], selectedTools: [], usagePolicy: { requireConfirmation: false, loggingLevel: 'basic' } },
+          mentor: { enabled: false, mentor: { id: '', name: '', role: '' }, reporting: { enabled: false, schedule: 'weekly', method: 'email', template: '' }, supervision: { reviewDecisions: false, approvalRequired: [], escalationRules: [] } }
+        };
+
+        get().updateDomain(domainId, {
+          advancedConfig: {
+            ...domain.advancedConfig,
+            [configType]: defaultConfigs[configType]
+          }
+        });
+      }
+    },
+
+    // 领域验证
+    validateDomain: async (id) => {
+      const domain = get().getDomain(id);
+      if (!domain) {
+        return { isValid: false, errors: [{ field: 'domain', message: '领域不存在', code: 'NOT_FOUND' }], warnings: [], score: 0 };
+      }
+
+      const result: ValidationResult = {
+        isValid: true,
+        errors: [],
+        warnings: [],
+        score: 100
+      };
+
+      // 基本验证
+      if (!domain.name?.trim()) {
+        result.errors.push({ field: 'name', message: '请输入领域名称', code: 'REQUIRED_FIELD' });
+      }
+
+      if (!domain.description?.trim()) {
+        result.warnings.push({ field: 'description', message: '建议添加领域描述' });
+      }
+
+      if (domain.weight < 0 || domain.weight > 100) {
+        result.errors.push({ field: 'weight', message: '权重必须在0-100之间', code: 'INVALID_RANGE' });
+      }
+
+      result.isValid = result.errors.length === 0;
+      result.score = Math.max(0, 100 - result.errors.length * 20 - result.warnings.length * 5);
+
+      // 更新验证结果
+      set((state) => {
+        const newValidation = new Map(state.domainValidation);
+        newValidation.set(id, result);
+        return { domainValidation: newValidation };
+      });
+
+      return result;
+    },
+
+    validateAllDomains: async () => {
+      const { multiDomainConfig } = get();
+      if (!multiDomainConfig) return new Map();
+
+      const validationMap = new Map<string, ValidationResult>();
+
+      for (const domain of multiDomainConfig.domains) {
+        const result = await get().validateDomain(domain.id);
+        validationMap.set(domain.id, result);
+      }
+
+      return validationMap;
+    },
+
+    // 获取方法
+    getDomain: (id) => {
+      const { multiDomainConfig } = get();
+      return multiDomainConfig?.domains.find(d => d.id === id) || null;
+    },
+
+    getActiveDomains: () => {
+      const { multiDomainConfig } = get();
+      return multiDomainConfig?.domains.filter(d => d.enabled) || [];
+    },
+
+    isMultiDomainEnabled: () => {
+      const { basicInfo } = get();
+      return basicInfo?.enableMultiDomain || false;
+    },
+
+    // 权重管理
+    normalizeWeights: () => {
+      const { multiDomainConfig } = get();
+      if (!multiDomainConfig) return;
+
+      const activeDomains = multiDomainConfig.domains.filter(d => d.enabled);
+      if (activeDomains.length === 0) return;
+
+      const totalWeight = activeDomains.reduce((sum, d) => sum + d.weight, 0);
+
+      if (totalWeight !== 100) {
+        // 自动调整权重使总和为100
+        const factor = 100 / totalWeight;
+        const normalizedDomains = multiDomainConfig.domains.map(domain => {
+          if (!domain.enabled) return domain;
+          return {
+            ...domain,
+            weight: Math.round(domain.weight * factor),
+            updatedAt: new Date().toISOString()
+          };
+        });
+
+        // 处理舍入误差
+        const newTotal = normalizedDomains
+          .filter(d => d.enabled)
+          .reduce((sum, d) => sum + d.weight, 0);
+
+        if (newTotal !== 100 && activeDomains.length > 0) {
+          const diff = 100 - newTotal;
+          const firstActiveDomain = normalizedDomains.find(d => d.enabled);
+          if (firstActiveDomain) {
+            firstActiveDomain.weight += diff;
+          }
+        }
+
+        set({
+          multiDomainConfig: {
+            ...multiDomainConfig,
+            domains: normalizedDomains
+          }
+        });
+      }
+    },
+
+    getWeightSummary: () => {
+      const { multiDomainConfig } = get();
+      if (!multiDomainConfig) return { total: 0, isValid: false };
+
+      const activeDomains = multiDomainConfig.domains.filter(d => d.enabled);
+      const total = activeDomains.reduce((sum, d) => sum + d.weight, 0);
+
+      return {
+        total,
+        isValid: total === 100
       };
     }
   }))

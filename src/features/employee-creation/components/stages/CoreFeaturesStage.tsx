@@ -11,6 +11,7 @@ const CoreFeaturesStage: React.FC = () => {
   const {
     coreFeatures,
     basicInfo,
+    multiDomainConfig,
     updateCoreFeatures,
     suggestions,
     smartSuggestions,
@@ -71,6 +72,55 @@ const CoreFeaturesStage: React.FC = () => {
   };
 
   const aiCommunicationRecommendation = getAICommunicationRecommendation();
+
+  // 检查是否在多领域模式下
+  const isMultiDomainMode = basicInfo?.enableMultiDomain && multiDomainConfig;
+
+  // 如果是多领域模式，显示提示信息
+  if (isMultiDomainMode) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <div className="flex items-start gap-3">
+            <Info className="h-5 w-5 text-blue-600 mt-0.5" />
+            <div>
+              <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                多领域模式已启用
+              </h3>
+              <p className="text-blue-700 mb-4">
+                在多领域模式下，每个领域将拥有独立的特征配置。
+                请在下一步的领域配置中为每个领域设置核心特征。
+              </p>
+
+              {/* 显示将要配置的领域预览 */}
+              <div className="mt-4">
+                <h4 className="text-sm font-medium text-blue-800 mb-2">
+                  预计配置 {basicInfo?.estimatedDomains || 2} 个领域的特征配置：
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                  <div className="bg-white border border-blue-200 rounded-lg p-3 text-center">
+                    <div className="text-lg mb-1">🎭</div>
+                    <div className="font-medium text-blue-700">个性配置</div>
+                    <div className="text-blue-600">友好度、专业度等</div>
+                  </div>
+                  <div className="bg-white border border-blue-200 rounded-lg p-3 text-center">
+                    <div className="text-lg mb-1">💼</div>
+                    <div className="font-medium text-blue-700">工作风格</div>
+                    <div className="text-blue-600">严谨度、主动性等</div>
+                  </div>
+                  <div className="bg-white border border-blue-200 rounded-lg p-3 text-center">
+                    <div className="text-lg mb-1">💬</div>
+                    <div className="font-medium text-blue-700">沟通特征</div>
+                    <div className="text-blue-600">回应长度、语言风格等</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // 性格特征滑块组件
   const PersonalitySlider: React.FC<{
@@ -445,8 +495,8 @@ const CoreFeaturesStage: React.FC = () => {
         </div>
       )}
 
-      {/* 配置预览 */}
-      <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-6">
+      {/* 特征预览 - 已隐藏 */}
+      {/* <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">特征预览</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
@@ -479,7 +529,7 @@ const CoreFeaturesStage: React.FC = () => {
             <p className="text-gray-600">{getOverallScore()}/100 分</p>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };
