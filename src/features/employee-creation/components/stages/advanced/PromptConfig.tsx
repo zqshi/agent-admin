@@ -65,17 +65,30 @@ interface CompressionStrategy {
   preserveStructure: boolean;
 }
 
-const PromptConfig: React.FC = () => {
+// Props接口定义
+interface PromptConfigProps {
+  config?: PromptConfig;
+  onChange?: (updates: Partial<PromptConfig>) => void;
+}
+
+const PromptConfig: React.FC<PromptConfigProps> = ({ config, onChange }) => {
+  const store = useCreationStore();
+
+  // 判断是领域模式还是全局模式
+  const isGlobalMode = !config && !onChange;
+  const actualConfig = config || store.advancedConfig?.prompt;
+  const actualOnChange = onChange || ((updates: Partial<PromptConfig>) => {
+    store.updateAdvancedConfig({ prompt: { ...store.advancedConfig?.prompt, ...updates } });
+  });
+
   const {
-    advancedConfig,
-    updateAdvancedConfig,
     getPromptTemplates,
     addPromptTemplate,
     updatePromptTemplate,
     deletePromptTemplate,
     importPromptTemplates,
     incrementTemplateUsage
-  } = useCreationStore();
+  } = store;
   const [activeTab, setActiveTab] = useState<'templates' | 'slots' | 'compression'>('templates');
   const [slotValues, setSlotValues] = useState<Record<string, any>>({});
   const [showSuccessMessage, setShowSuccessMessage] = useState<string | null>(null);
@@ -128,43 +141,43 @@ const PromptConfig: React.FC = () => {
 
   // 应用模板
   const handleApplyTemplate = (template: PromptTemplate) => {
-    // 更新advancedConfig中的prompt配置
-    updateAdvancedConfig({
-      prompt: {
-        templates: [{
-          id: template.id,
-          name: template.name,
-          category: template.category,
-          basePrompt: template.content,
-          variables: template.slots.map(slot => ({
-            name: slot.name,
-            type: 'string',
-            description: (slot as any).description || '',
-            required: slot.required,
-            defaultValue: slot.defaultValue
-          }))
-        }],
-        slots: template.slots.map(slot => ({
+    // 更新配置中的prompt配置
+    const newPromptConfig = {
+      templates: [{
+        id: template.id,
+        name: template.name,
+        category: template.category,
+        basePrompt: template.content,
+        variables: template.slots.map(slot => ({
           name: slot.name,
-          source: 'user' as const,
-          injectionTiming: 'onStart' as const,
-          injectionOrder: 1,
+          type: 'string',
+          description: (slot as any).description || '',
           required: slot.required,
           defaultValue: slot.defaultValue
-        })),
-        compression: {
-          enabled: false,
-          trigger: 'tokenLimit',
-          threshold: 4000,
-          strategy: 'summary',
-          preserveKeys: []
-        },
-        errorHandling: {
-          onSlotMissing: 'useDefault',
-          onCompressionFail: 'fallback'
-        }
+        }))
+      }],
+      slots: template.slots.map(slot => ({
+        name: slot.name,
+        source: 'user' as const,
+        injectionTiming: 'onStart' as const,
+        injectionOrder: 1,
+        required: slot.required,
+        defaultValue: slot.defaultValue
+      })),
+      compression: {
+        enabled: false,
+        trigger: 'tokenLimit',
+        threshold: 4000,
+        strategy: 'summary',
+        preserveKeys: []
+      },
+      errorHandling: {
+        onSlotMissing: 'useDefault',
+        onCompressionFail: 'fallback'
       }
-    });
+    };
+
+    actualOnChange(newPromptConfig);
 
     // 初始化slot值
     const initialSlotValues: Record<string, any> = {};
@@ -223,21 +236,19 @@ const PromptConfig: React.FC = () => {
       [slotName]: value
     }));
 
-    // 同时更新到advancedConfig中 - 通过模板变量更新
-    if (advancedConfig?.prompt?.templates?.[0]) {
-      const updatedVariables = advancedConfig.prompt.templates[0].variables.map(variable =>
+    // 同时更新到配置中 - 通过模板变量更新
+    if (actualConfig?.templates?.[0]) {
+      const updatedVariables = actualConfig.templates[0].variables.map(variable =>
         variable.name === slotName
           ? { ...variable, defaultValue: value }
           : variable
       );
-      updateAdvancedConfig({
-        prompt: {
-          ...advancedConfig.prompt,
-          templates: [{
-            ...advancedConfig.prompt.templates[0],
-            variables: updatedVariables
-          }]
-        }
+      actualOnChange({
+        ...actualConfig,
+        templates: [{
+          ...actualConfig.templates[0],
+          variables: updatedVariables
+        }]
       });
     }
   };
@@ -767,7 +778,7 @@ const TemplateModal: React.FC<TemplateModalProps> = ({ template, onSave, onClose
 
   const handleSave = () => {
     const templateData: PromptTemplate = {
-      id: template?.id || Date.now().toString(),
+      id: template?.id || `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       name: formData.name,
       description: formData.description,
       category: formData.category,
@@ -784,7 +795,7 @@ const TemplateModal: React.FC<TemplateModalProps> = ({ template, onSave, onClose
   const addSlot = () => {
     if (newSlot.name && newSlot.description) {
       const slot: SlotType = {
-        id: Date.now().toString(),
+        id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         name: newSlot.name,
         description: newSlot.description,
         type: newSlot.type || 'text',
@@ -1008,7 +1019,7 @@ const ImportTemplateModal: React.FC<ImportTemplateModalProps> = ({ onImport, onC
       if (Array.isArray(parsed)) {
         const templates = parsed.map(item => ({
           ...item,
-          id: Date.now().toString() + Math.random(),
+          id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           isBuiltIn: false,
           usageCount: 0,
           createdAt: new Date().toISOString(),
@@ -1019,7 +1030,7 @@ const ImportTemplateModal: React.FC<ImportTemplateModalProps> = ({ onImport, onC
         // 单个模板
         const template = {
           ...parsed,
-          id: Date.now().toString(),
+          id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           isBuiltIn: false,
           usageCount: 0,
           createdAt: new Date().toISOString(),

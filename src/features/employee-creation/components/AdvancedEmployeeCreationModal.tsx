@@ -147,7 +147,7 @@ const AdvancedEmployeeCreationModal: React.FC<AdvancedEmployeeCreationModalProps
 
       // 模拟AI推理过程
       const mockSession: CreationSession = {
-        id: Date.now().toString(),
+        id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         mode: 'standard',
         userInput: input,
         steps: [
@@ -220,7 +220,7 @@ const AdvancedEmployeeCreationModal: React.FC<AdvancedEmployeeCreationModalProps
       const formData = toCreateDigitalEmployeeForm();
 
       const newEmployee: DigitalEmployeeManagement = {
-        id: Date.now().toString(),
+        id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         name: formData.name,
         employeeNumber: formData.employeeNumber,
         description: formData.description,

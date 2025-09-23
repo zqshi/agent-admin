@@ -5,10 +5,25 @@
 import React, { useState, useEffect } from 'react';
 import { Wrench, Search, Check, Settings, Star, Sparkles } from 'lucide-react';
 import { useCreationStore } from '../../../stores/creationStore';
-import type { Tool, SelectedTool } from '../../../types';
+import type { Tool, SelectedTool, AdvancedConfig } from '../../../types';
 
-const ToolConfig: React.FC = () => {
-  const { basicInfo, advancedConfig, updateAdvancedConfig, getSmartSuggestionsByType } = useCreationStore();
+// Props接口定义
+interface ToolConfigProps {
+  config?: AdvancedConfig['tools'];
+  onChange?: (updates: Partial<AdvancedConfig['tools']>) => void;
+}
+
+const ToolConfig: React.FC<ToolConfigProps> = ({ config, onChange }) => {
+  const store = useCreationStore();
+
+  // 判断是领域模式还是全局模式
+  const isGlobalMode = !config && !onChange;
+  const actualConfig = config || store.advancedConfig?.tools;
+  const actualOnChange = onChange || ((updates: Partial<AdvancedConfig['tools']>) => {
+    store.updateAdvancedConfig({ tools: { ...store.advancedConfig?.tools, ...updates } });
+  });
+
+  const { basicInfo, getSmartSuggestionsByType } = store;
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
@@ -81,7 +96,7 @@ const ToolConfig: React.FC = () => {
   ];
 
   // 当前选择的工具
-  const selectedTools: SelectedTool[] = advancedConfig?.tools?.selectedTools || [];
+  const selectedTools: SelectedTool[] = actualConfig?.selectedTools || [];
 
   // 根据职责推荐工具
   const getRecommendedTools = (): string[] => {
@@ -142,12 +157,10 @@ const ToolConfig: React.FC = () => {
       newSelectedTools = [...selectedTools, selectedTool];
     }
 
-    updateAdvancedConfig({
-      tools: {
-        ...advancedConfig?.tools,
-        selectedTools: newSelectedTools,
-        recommendedTools: availableTools.filter(t => recommendedToolIds.includes(t.id))
-      }
+    actualOnChange({
+      ...actualConfig,
+      selectedTools: newSelectedTools,
+      recommendedTools: availableTools.filter(t => recommendedToolIds.includes(t.id))
     });
   };
 
@@ -163,12 +176,10 @@ const ToolConfig: React.FC = () => {
       config: {}
     }))];
 
-    updateAdvancedConfig({
-      tools: {
-        ...advancedConfig?.tools,
-        selectedTools: newSelectedTools,
-        recommendedTools: availableTools.filter(t => recommendedToolIds.includes(t.id))
-      }
+    actualOnChange({
+      ...actualConfig,
+      selectedTools: newSelectedTools,
+      recommendedTools: availableTools.filter(t => recommendedToolIds.includes(t.id))
     });
   };
 
@@ -187,12 +198,10 @@ const ToolConfig: React.FC = () => {
       }))
     ];
 
-    updateAdvancedConfig({
-      tools: {
-        ...advancedConfig?.tools,
-        selectedTools: newSelectedTools,
-        recommendedTools: availableTools.filter(t => recommendedToolIds.includes(t.id))
-      }
+    actualOnChange({
+      ...actualConfig,
+      selectedTools: newSelectedTools,
+      recommendedTools: availableTools.filter(t => recommendedToolIds.includes(t.id))
     });
   };
 

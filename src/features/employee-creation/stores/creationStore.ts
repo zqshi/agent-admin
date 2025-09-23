@@ -194,9 +194,8 @@ interface CreationActions {
   updateDomainTools: (domainId: string, tools: Partial<AdvancedConfig['tools']>) => void;
   updateDomainMentor: (domainId: string, mentor: Partial<AdvancedConfig['mentor']>) => void;
 
-  // 配置继承和覆盖
-  inheritFromGlobal: (domainId: string, configType: keyof AdvancedConfig) => void;
-  resetDomainConfig: (domainId: string, configType: keyof AdvancedConfig) => void;
+  // 全局默认配置管理
+  updateGlobalDefaults: (config: Partial<AdvancedConfig>) => void;
 
   // 领域验证
   validateDomain: (id: string) => Promise<ValidationResult>;
@@ -420,10 +419,24 @@ export const useCreationStore = create<CreationState & CreationActions>()(
       validation: null // 清除验证状态
     })),
 
-    updateAdvancedConfig: (config) => set((state) => ({
-      advancedConfig: state.advancedConfig ? { ...state.advancedConfig, ...config } : config as AdvancedConfig,
-      validation: null // 清除验证状态
-    })),
+    updateAdvancedConfig: (config) => set((state) => {
+      const newAdvancedConfig = state.advancedConfig ? { ...state.advancedConfig, ...config } : config as AdvancedConfig;
+
+      // 如果多领域模式已启用，同时更新globalDefaults
+      const updatedMultiDomainConfig = state.multiDomainConfig ? {
+        ...state.multiDomainConfig,
+        globalDefaults: {
+          ...state.multiDomainConfig.globalDefaults,
+          ...config
+        }
+      } : state.multiDomainConfig;
+
+      return {
+        advancedConfig: newAdvancedConfig,
+        multiDomainConfig: updatedMultiDomainConfig,
+        validation: null // 清除验证状态
+      };
+    }),
 
     // 验证控制
     clearValidation: () => set({ validation: null }),
@@ -626,7 +639,7 @@ export const useCreationStore = create<CreationState & CreationActions>()(
       const { basicInfo, coreFeatures, advancedConfig } = get();
 
       const template = {
-        id: Date.now().toString(),
+        id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         name,
         description,
         config: {
@@ -678,7 +691,7 @@ export const useCreationStore = create<CreationState & CreationActions>()(
     addPromptTemplate: (template) => {
       const newTemplate = {
         ...template,
-        id: Date.now().toString(),
+        id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         usageCount: 0
@@ -710,7 +723,7 @@ export const useCreationStore = create<CreationState & CreationActions>()(
     importPromptTemplates: (templates) => {
       const newTemplates = templates.map(template => ({
         ...template,
-        id: Date.now().toString() + Math.random(),
+        id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         isBuiltIn: false,
         usageCount: 0,
         createdAt: new Date().toISOString(),
@@ -743,7 +756,7 @@ export const useCreationStore = create<CreationState & CreationActions>()(
     addIndependentSlot: (slot) => set((state) => ({
       independentSlots: [
         ...state.independentSlots,
-        { ...slot, id: `slot_${Date.now()}` }
+        { ...slot, id: `slot_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` }
       ]
     })),
 
@@ -766,7 +779,7 @@ export const useCreationStore = create<CreationState & CreationActions>()(
         responsibilities: basicInfo?.responsibilities || [''],
 
         exampleDialogues: advancedConfig?.persona?.examples?.map(ex => ({
-          id: Date.now().toString(),
+          id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           userInput: ex.userInput,
           expectedResponse: ex.expectedResponse,
           tags: []
@@ -805,14 +818,20 @@ export const useCreationStore = create<CreationState & CreationActions>()(
     initializeMultiDomain: () => {
       const { advancedConfig, coreFeatures } = get();
 
-      // 创建默认的全局配置
-      const globalDefaults: AdvancedConfig = advancedConfig || {
+      // 创建基础默认配置
+      const createDefaultConfig = (): AdvancedConfig => ({
         persona: { systemPrompt: '', characterBackground: '', constraints: [], examples: [] },
         prompt: { templates: [], slots: [], compression: { enabled: false, trigger: 'tokenLimit', threshold: 2048, strategy: 'summary', preserveKeys: [] }, errorHandling: { onSlotMissing: 'useDefault', onCompressionFail: 'retry' } },
         knowledge: { documents: { files: [], maxSize: 10485760, allowedFormats: ['.txt', '.md', '.pdf'] }, faq: { items: [], importSource: 'manual' }, retention: { enabled: false, strategy: 'internalize', updateFrequency: 'realtime' }, knowledgeBase: { type: 'internal', internalSources: [], externalAPIs: [] }, knowledgeGraph: { enabled: false, autoGenerate: false, updateTrigger: 'manual', visualization: false } },
         tools: { recommendedTools: [], selectedTools: [], usagePolicy: { requireConfirmation: false, loggingLevel: 'basic' } },
         mentor: { enabled: false, mentor: { id: '', name: '', role: '' }, reporting: { enabled: false, schedule: 'weekly', method: 'email', template: '' }, supervision: { reviewDecisions: false, approvalRequired: [], escalationRules: [] } }
-      };
+      });
+
+      // 使用当前实际配置作为全局默认，如果没有则使用空默认配置
+      const globalDefaults: AdvancedConfig = advancedConfig ? {
+        ...createDefaultConfig(),
+        ...advancedConfig
+      } : createDefaultConfig();
 
       const multiDomainConfig: MultiDomainConfig = {
         enabled: true,
@@ -846,9 +865,11 @@ export const useCreationStore = create<CreationState & CreationActions>()(
     // 领域管理
     addDomain: (domainData) => {
       const now = new Date().toISOString();
+      // 生成更可靠的唯一ID：时间戳 + 随机数
+      const uniqueId = `domain_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const newDomain: DomainConfig = {
         ...domainData,
-        id: `domain_${Date.now()}`,
+        id: uniqueId,
         createdAt: now,
         updatedAt: now,
         advancedConfig: get().multiDomainConfig?.globalDefaults || {
@@ -992,43 +1013,24 @@ export const useCreationStore = create<CreationState & CreationActions>()(
       }
     },
 
-    // 配置继承和覆盖
-    inheritFromGlobal: (domainId, configType) => {
-      const { multiDomainConfig } = get();
-      if (multiDomainConfig) {
-        const globalConfig = multiDomainConfig.globalDefaults[configType];
-        const domain = get().getDomain(domainId);
-        if (domain && globalConfig) {
-          get().updateDomain(domainId, {
-            advancedConfig: {
-              ...domain.advancedConfig,
-              [configType]: globalConfig
+
+    updateGlobalDefaults: (config) => {
+      set((state) => {
+        if (state.multiDomainConfig) {
+          return {
+            multiDomainConfig: {
+              ...state.multiDomainConfig,
+              globalDefaults: {
+                ...state.multiDomainConfig.globalDefaults,
+                ...config
+              }
             }
-          });
+          };
         }
-      }
+        return state;
+      });
     },
 
-    resetDomainConfig: (domainId, configType) => {
-      // 重置指定配置类型为默认值
-      const domain = get().getDomain(domainId);
-      if (domain) {
-        const defaultConfigs = {
-          persona: { systemPrompt: '', characterBackground: '', constraints: [], examples: [] },
-          prompt: { templates: [], slots: [], compression: { enabled: false, trigger: 'tokenLimit', threshold: 2048, strategy: 'summary', preserveKeys: [] }, errorHandling: { onSlotMissing: 'useDefault', onCompressionFail: 'retry' } },
-          knowledge: { documents: { files: [], maxSize: 10485760, allowedFormats: ['.txt', '.md', '.pdf'] }, faq: { items: [], importSource: 'manual' }, retention: { enabled: false, strategy: 'internalize', updateFrequency: 'realtime' }, knowledgeBase: { type: 'internal', internalSources: [], externalAPIs: [] }, knowledgeGraph: { enabled: false, autoGenerate: false, updateTrigger: 'manual', visualization: false } },
-          tools: { recommendedTools: [], selectedTools: [], usagePolicy: { requireConfirmation: false, loggingLevel: 'basic' } },
-          mentor: { enabled: false, mentor: { id: '', name: '', role: '' }, reporting: { enabled: false, schedule: 'weekly', method: 'email', template: '' }, supervision: { reviewDecisions: false, approvalRequired: [], escalationRules: [] } }
-        };
-
-        get().updateDomain(domainId, {
-          advancedConfig: {
-            ...domain.advancedConfig,
-            [configType]: defaultConfigs[configType]
-          }
-        });
-      }
-    },
 
     // 领域验证
     validateDomain: async (id) => {

@@ -5,10 +5,23 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Minus, FileText, MessageSquare, AlertTriangle } from 'lucide-react';
 import { useCreationStore } from '../../../stores/creationStore';
-import type { DialogueExample } from '../../../types';
+import type { DialogueExample, AdvancedConfig } from '../../../types';
 
-const PersonaConfig: React.FC = () => {
-  const { advancedConfig, updateAdvancedConfig } = useCreationStore();
+// Props接口定义
+interface PersonaConfigProps {
+  config?: AdvancedConfig['persona'];
+  onChange?: (updates: Partial<AdvancedConfig['persona']>) => void;
+}
+
+const PersonaConfig: React.FC<PersonaConfigProps> = ({ config, onChange }) => {
+  const store = useCreationStore();
+
+  // 判断是领域模式还是全局模式
+  const isGlobalMode = !config && !onChange;
+  const actualConfig = config || store.advancedConfig?.persona;
+  const actualOnChange = onChange || ((updates: Partial<AdvancedConfig['persona']>) => {
+    store.updateAdvancedConfig({ persona: { ...store.advancedConfig?.persona, ...updates } });
+  });
 
   // 本地状态
   const [localPersona, setLocalPersona] = useState({
@@ -16,19 +29,27 @@ const PersonaConfig: React.FC = () => {
     characterBackground: '',
     constraints: [''],
     examples: [] as DialogueExample[],
-    ...advancedConfig?.persona
+    ...actualConfig
   });
 
-  // 同步到store
+  // 同步配置变化
+  useEffect(() => {
+    if (actualConfig) {
+      setLocalPersona(prev => ({
+        ...prev,
+        ...actualConfig
+      }));
+    }
+  }, [actualConfig]);
+
+  // 同步到配置
   useEffect(() => {
     const timer = setTimeout(() => {
-      updateAdvancedConfig({
-        persona: localPersona
-      });
+      actualOnChange(localPersona);
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [localPersona, updateAdvancedConfig]);
+  }, [localPersona]);
 
   // 系统提示词模板
   const promptTemplates = [

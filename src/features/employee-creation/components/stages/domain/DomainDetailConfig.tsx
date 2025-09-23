@@ -3,7 +3,7 @@
  */
 
 import React, { useState } from 'react';
-import { Edit2, Save, RotateCcw, User, FileText, BookOpen, Wrench, Users, CheckCircle, AlertCircle } from 'lucide-react';
+import { Edit2, Save, RotateCcw, User, FileText, BookOpen, Wrench, Users, CheckCircle, AlertCircle, X } from 'lucide-react';
 import { useCreationStore } from '../../../stores/creationStore';
 import PersonaConfig from '../advanced/PersonaConfig';
 import PromptConfig from '../advanced/PromptConfig';
@@ -41,13 +41,16 @@ const DomainDetailConfig: React.FC<DomainDetailConfigProps> = ({
     updateDomainPrompt,
     updateDomainKnowledge,
     updateDomainTools,
-    updateDomainMentor,
-    inheritFromGlobal,
-    resetDomainConfig
+    updateDomainMentor
   } = useCreationStore();
 
   const [activeTab, setActiveTab] = useState<string>('basic');
   const [isEditingBasic, setIsEditingBasic] = useState(false);
+  const [showToast, setShowToast] = useState<{
+    message: string;
+    type: 'success' | 'error';
+  } | null>(null);
+
   const [basicData, setBasicData] = useState({
     name: domain.name,
     description: domain.description,
@@ -56,6 +59,12 @@ const DomainDetailConfig: React.FC<DomainDetailConfigProps> = ({
     keywords: domain.keywords?.join(', ') || '',
     semanticTopics: domain.semanticTopics?.join(', ') || ''
   });
+
+  // 显示toast提示
+  const showToastMessage = (message: string, type: 'success' | 'error' = 'success') => {
+    setShowToast({ message, type });
+    setTimeout(() => setShowToast(null), 3000);
+  };
 
   // Tab配置定义
   const configTabs: ConfigTab[] = [
@@ -356,30 +365,6 @@ const DomainDetailConfig: React.FC<DomainDetailConfigProps> = ({
 
     return (
       <div className="space-y-4">
-        {/* 配置操作栏 */}
-        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-700">领域专属配置</span>
-            {getTabCompletionStatus(activeTab) && (
-              <CheckCircle className="h-4 w-4 text-green-600" />
-            )}
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => inheritFromGlobal(domain.id, configKey)}
-              className="text-xs px-3 py-1 border border-gray-300 text-gray-600 rounded hover:bg-gray-100 transition-colors"
-            >
-              继承全局配置
-            </button>
-            <button
-              onClick={() => resetDomainConfig(domain.id, configKey)}
-              className="text-xs px-3 py-1 border border-gray-300 text-gray-600 rounded hover:bg-gray-100 transition-colors"
-            >
-              重置为默认
-            </button>
-          </div>
-        </div>
-
         {/* 配置组件 */}
         <CurrentComponent
           config={currentConfig}
@@ -391,6 +376,40 @@ const DomainDetailConfig: React.FC<DomainDetailConfigProps> = ({
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg h-full flex flex-col">
+      {/* Toast提示 */}
+      {showToast && (
+        <div className="fixed top-4 right-4 z-50 max-w-sm">
+          <div className={`rounded-lg p-4 shadow-lg ${
+            showToast.type === 'success'
+              ? 'bg-green-50 border border-green-200'
+              : 'bg-red-50 border border-red-200'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {showToast.type === 'success' ? (
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 text-red-600" />
+                )}
+                <span className={`text-sm font-medium ${
+                  showToast.type === 'success' ? 'text-green-800' : 'text-red-800'
+                }`}>
+                  {showToast.message}
+                </span>
+              </div>
+              <button
+                onClick={() => setShowToast(null)}
+                className={`p-1 rounded-full hover:bg-opacity-20 ${
+                  showToast.type === 'success' ? 'hover:bg-green-600' : 'hover:bg-red-600'
+                }`}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 头部：领域基本信息 */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between">

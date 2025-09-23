@@ -5,10 +5,25 @@
 import React, { useState } from 'react';
 import { Users, Calendar, FileText, AlertTriangle } from 'lucide-react';
 import { useCreationStore } from '../../../stores/creationStore';
+import type { AdvancedConfig } from '../../../types';
 
-const MentorConfig: React.FC = () => {
-  const { advancedConfig, updateAdvancedConfig } = useCreationStore();
-  const [isEnabled, setIsEnabled] = useState(advancedConfig?.mentor?.enabled || false);
+// Props接口定义
+interface MentorConfigProps {
+  config?: AdvancedConfig['mentor'];
+  onChange?: (updates: Partial<AdvancedConfig['mentor']>) => void;
+}
+
+const MentorConfig: React.FC<MentorConfigProps> = ({ config, onChange }) => {
+  const store = useCreationStore();
+
+  // 判断是领域模式还是全局模式
+  const isGlobalMode = !config && !onChange;
+  const actualConfig = config || store.actualConfig;
+  const actualOnChange = onChange || ((updates: Partial<AdvancedConfig['mentor']>) => {
+    store.updateAdvancedConfig({ mentor: { ...store.actualConfig, ...updates } });
+  });
+
+  const [isEnabled, setIsEnabled] = useState(actualConfig?.enabled || false);
 
   // 可用导师列表（模拟数据）
   const availableMentors = [
@@ -111,11 +126,9 @@ const MentorConfig: React.FC = () => {
 
   // 更新配置
   const updateMentorConfig = (updates: any) => {
-    updateAdvancedConfig({
-      mentor: {
-        ...advancedConfig?.mentor,
-        ...updates
-      }
+    actualOnChange({
+      ...actualConfig,
+      ...updates
     });
   };
 
@@ -198,7 +211,7 @@ const MentorConfig: React.FC = () => {
                   type="checkbox"
                   onChange={(e) => updateMentorConfig({
                     reporting: {
-                      ...advancedConfig?.mentor?.reporting,
+                      ...actualConfig?.reporting,
                       enabled: e.target.checked
                     }
                   })}
@@ -213,7 +226,7 @@ const MentorConfig: React.FC = () => {
                   <select
                     onChange={(e) => updateMentorConfig({
                       reporting: {
-                        ...advancedConfig?.mentor?.reporting,
+                        ...actualConfig?.reporting,
                         schedule: e.target.value
                       }
                     })}
@@ -236,7 +249,7 @@ const MentorConfig: React.FC = () => {
                         value="email"
                         onChange={(e) => updateMentorConfig({
                           reporting: {
-                            ...advancedConfig?.mentor?.reporting,
+                            ...actualConfig?.reporting,
                             method: e.target.value
                           }
                         })}
@@ -282,7 +295,7 @@ const MentorConfig: React.FC = () => {
                       const template = reportTemplates.find(t => t.id === e.target.value);
                       updateMentorConfig({
                         reporting: {
-                          ...advancedConfig?.mentor?.reporting,
+                          ...actualConfig?.reporting,
                           template: template?.content || ''
                         }
                       });
@@ -314,7 +327,7 @@ const MentorConfig: React.FC = () => {
                   type="checkbox"
                   onChange={(e) => updateMentorConfig({
                     supervision: {
-                      ...advancedConfig?.mentor?.supervision,
+                      ...actualConfig?.supervision,
                       reviewDecisions: e.target.checked
                     }
                   })}
@@ -341,14 +354,14 @@ const MentorConfig: React.FC = () => {
                         type="checkbox"
                         className="w-4 h-4 text-blue-600"
                         onChange={(e) => {
-                          const currentList = advancedConfig?.mentor?.supervision?.approvalRequired || [];
+                          const currentList = actualConfig?.supervision?.approvalRequired || [];
                           const newList = e.target.checked
                             ? [...currentList, operation]
                             : currentList.filter(op => op !== operation);
 
                           updateMentorConfig({
                             supervision: {
-                              ...advancedConfig?.mentor?.supervision,
+                              ...actualConfig?.supervision,
                               approvalRequired: newList
                             }
                           });
@@ -398,13 +411,13 @@ const MentorConfig: React.FC = () => {
               <div>
                 <span className="font-medium text-gray-700">导师：</span>
                 <p className="text-gray-600">
-                  {advancedConfig?.mentor?.mentor?.name || '未选择'}
+                  {actualConfig?.mentor?.name || '未选择'}
                 </p>
               </div>
               <div>
                 <span className="font-medium text-gray-700">汇报周期：</span>
                 <p className="text-gray-600">
-                  {advancedConfig?.mentor?.reporting?.enabled
+                  {actualConfig?.reporting?.enabled
                     ? (advancedConfig.mentor.reporting.schedule || '未设置')
                     : '已禁用'
                   }
@@ -413,7 +426,7 @@ const MentorConfig: React.FC = () => {
               <div>
                 <span className="font-medium text-gray-700">监督模式：</span>
                 <p className="text-gray-600">
-                  {advancedConfig?.mentor?.supervision?.reviewDecisions
+                  {actualConfig?.supervision?.reviewDecisions
                     ? '启用决策审查'
                     : '自主运行'
                   }

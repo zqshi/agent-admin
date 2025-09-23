@@ -5,9 +5,23 @@
 import React, { useState } from 'react';
 import { Upload, FileText, HelpCircle, Database, GitBranch, Settings, Plus, Eye, Download, Trash2, Copy, CheckCircle } from 'lucide-react';
 import { useCreationStore } from '../../../stores/creationStore';
+import type { AdvancedConfig } from '../../../types';
 
-const KnowledgeConfig: React.FC = () => {
-  const { advancedConfig, updateAdvancedConfig } = useCreationStore();
+// Props接口定义
+interface KnowledgeConfigProps {
+  config?: AdvancedConfig['knowledge'];
+  onChange?: (updates: Partial<AdvancedConfig['knowledge']>) => void;
+}
+
+const KnowledgeConfig: React.FC<KnowledgeConfigProps> = ({ config, onChange }) => {
+  const store = useCreationStore();
+
+  // 判断是领域模式还是全局模式
+  const isGlobalMode = !config && !onChange;
+  const actualConfig = config || store.advancedConfig?.knowledge;
+  const actualOnChange = onChange || ((updates: Partial<AdvancedConfig['knowledge']>) => {
+    store.updateAdvancedConfig({ knowledge: { ...store.advancedConfig?.knowledge, ...updates } });
+  });
   const [activeTab, setActiveTab] = useState<'documents' | 'faq' | 'settings'>('documents');
 
   // 文档上传状态
@@ -186,7 +200,7 @@ const KnowledgeConfig: React.FC = () => {
   // 添加FAQ
   const handleAddFAQ = () => {
     const newFAQ = {
-      id: Date.now().toString(),
+      id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       question: '',
       answer: '',
       category: '其他',

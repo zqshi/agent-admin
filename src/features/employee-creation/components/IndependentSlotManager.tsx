@@ -83,7 +83,7 @@ const IndependentSlotManager: React.FC<IndependentSlotManagerProps> = ({
 
   const createNewSlot = () => {
     const newSlot: SlotDefinition = {
-      id: `slot_${Date.now()}`,
+      id: `slot_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       name: '新建Slot',
       description: '',
       type: 'user',
@@ -114,7 +114,7 @@ const IndependentSlotManager: React.FC<IndependentSlotManagerProps> = ({
   const addPresetSlot = (preset: typeof slotPresets[0]) => {
     const newSlot: SlotDefinition = {
       ...preset,
-      id: `${preset.id}_${Date.now()}`
+      id: `${preset.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     };
     onSlotsChange([...slots, newSlot]);
     setShowPresets(false);
