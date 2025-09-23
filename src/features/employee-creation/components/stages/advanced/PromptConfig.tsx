@@ -136,13 +136,8 @@ const PromptConfig: React.FC<PromptConfigProps> = ({ config, onChange }) => {
     }
   }, [activeTab, slotSearchQuery, slotFilterRole, slotFilterOrigin, showEphemeralSlots]);
 
-  // 获取模板数据 - 使用兼容适配器
-  const templates = getCompatibleTemplates();
-
-  const [selectedTemplate, setSelectedTemplate] = useState<PromptTemplate | null>(null);
-  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<PromptTemplate | null>(null);
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  // 直接使用PromptManagement数据
+  const prompts = getAllPrompts();
 
   // 压缩策略
   const [compressionStrategies] = useState<CompressionStrategy[]>([
@@ -172,92 +167,26 @@ const PromptConfig: React.FC<PromptConfigProps> = ({ config, onChange }) => {
     }
   ]);
 
-  // 处理模板选择
-  const handleTemplateSelect = (template: PromptTemplate) => {
-    setSelectedTemplate(template);
-  };
-
-  // 应用模板
-  const handleApplyTemplate = (template: PromptTemplate) => {
-    // 更新配置中的prompt配置
+  // 处理Prompt选择和应用
+  const handlePromptSelect = (prompt: PromptManagement) => {
     const newPromptConfig = {
-      templates: [{
-        id: template.id,
-        name: template.name,
-        category: template.category,
-        basePrompt: template.content,
-        variables: template.slots.map(slot => ({
-          name: slot.name,
-          type: 'string',
-          description: (slot as any).description || '',
-          required: slot.required,
-          defaultValue: slot.defaultValue
-        }))
-      }],
-      slots: template.slots.map(slot => ({
-        name: slot.name,
-        source: 'user' as const,
-        injectionTiming: 'onStart' as const,
-        injectionOrder: 1,
-        required: slot.required,
-        defaultValue: slot.defaultValue
-      })),
-      compression: {
-        enabled: false,
-        trigger: 'tokenLimit',
-        threshold: 4000,
-        strategy: 'summary',
-        preserveKeys: []
-      },
-      errorHandling: {
-        onSlotMissing: 'useDefault',
-        onCompressionFail: 'fallback'
+      current: {
+        promptId: prompt.id,
+        content: prompt.content,
+        variables: {}
       }
     };
 
+    // 应用到当前配置
     actualOnChange(newPromptConfig);
 
-    // 初始化slot值
-    const initialSlotValues: Record<string, any> = {};
-    template.slots.forEach(slot => {
-      initialSlotValues[slot.name] = slot.defaultValue || '';
-    });
-    setSlotValues(initialSlotValues);
+    // 增加使用计数
+    incrementPromptUsage(prompt.id);
 
-    // 增加模板使用计数
-    incrementTemplateUsage(template.id);
-
-    // 如果模板有预设的slot值，可以自动填充到基础信息或核心特征中
-    // 这里可以根据模板类型和slot名称智能映射到相应的字段
-    const { updateBasicInfo, updateCoreFeatures } = useCreationStore.getState();
-
-    // 尝试从模板内容中提取角色信息
-    if (template.category === '客服') {
-      updateCoreFeatures({
-        personality: {
-          friendliness: template.content.includes('耐心') ? 8 : 7,
-          professionalism: 8,
-          patience: template.content.includes('耐心') ? 9 : 7,
-          empathy: 8
-        }
-      });
-    } else if (template.category === '技术') {
-      updateCoreFeatures({
-        personality: {
-          friendliness: 6,
-          professionalism: 9,
-          patience: 7,
-          empathy: 6
-        }
-      });
-    }
-
-    // 显示应用成功提示
-    setShowSuccessMessage(`已成功应用模板：${template.name}`);
-    setTimeout(() => setShowSuccessMessage(null), 3000);
+    showSuccess(`已应用Prompt"${prompt.name}"`);
   };
 
-  // 模板预览（使用当前slot值）
+  // Prompt预览（使用当前slot值）
   const renderTemplatePreview = (template: PromptTemplate) => {
     let preview = template.content;
     template.slots.forEach(slot => {
@@ -528,119 +457,6 @@ const PromptConfig: React.FC<PromptConfigProps> = ({ config, onChange }) => {
         </nav>
       </div>
 
-      {/* 模板管理 */}
-      {activeTab === 'templates' && (
-        <div className="space-y-6">
-          {/* 头部操作 */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-lg font-semibold text-gray-900">Prompt模板库</h4>
-              <p className="text-sm text-gray-600">选择或创建适合的Prompt模板</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setIsImportModalOpen(true)}
-                className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-              >
-                <Upload className="h-4 w-4" />
-                导入模板
-              </button>
-              <button
-                onClick={() => setIsTemplateModalOpen(true)}
-                className="flex items-center gap-2 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-              >
-                <Plus className="h-4 w-4" />
-                新建模板
-              </button>
-            </div>
-          </div>
-
-          {/* 模板网格 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {templates.map(template => (
-              <div
-                key={template.id}
-                className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                  selectedTemplate?.id === template.id
-                    ? 'border-purple-500 bg-purple-50'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                }`}
-                onClick={() => handleTemplateSelect(template)}
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <h5 className="font-medium text-gray-900 mb-1">{template.name}</h5>
-                    <p className="text-sm text-gray-600 mb-2">{template.description}</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                        {template.category}
-                      </span>
-                      {template.isBuiltIn && (
-                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
-                          内置
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // 预览模板
-                      }}
-                      className="p-1 text-gray-400 hover:text-gray-600"
-                      title="预览"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </button>
-                    {!template.isBuiltIn && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingTemplate(template);
-                          setIsTemplateModalOpen(true);
-                        }}
-                        className="p-1 text-gray-400 hover:text-gray-600"
-                        title="编辑"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <div className="text-xs text-gray-500 mb-3">
-                  使用次数: {template.usageCount} • Slot数量: {template.slots.length}
-                </div>
-
-                {selectedTemplate?.id === template.id && (
-                  <div className="border-t pt-3 mt-3">
-                    <button
-                      onClick={() => handleApplyTemplate(template)}
-                      className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-                    >
-                      <CheckCircle className="h-4 w-4" />
-                      应用此模板
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* 模板预览 */}
-          {selectedTemplate && (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-              <h5 className="font-medium text-gray-900 mb-3">模板预览</h5>
-              <div className="bg-white border rounded-lg p-4">
-                <pre className="text-sm text-gray-700 whitespace-pre-wrap">
-                  {renderTemplatePreview(selectedTemplate)}
-                </pre>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Prompt管理 */}
       {activeTab === 'prompts' && (
@@ -1482,177 +1298,6 @@ const PromptConfig: React.FC<PromptConfigProps> = ({ config, onChange }) => {
       )}
 
       {/* 业务场景 */}
-      {activeTab === 'scenarios' && (
-        <div className="space-y-6">
-          {/* 头部操作 */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-lg font-semibold text-gray-900">业务场景管理</h4>
-              <p className="text-sm text-gray-600">根据业务场景自动检测和注入合适的Slots</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={autoDetectionEnabled}
-                  onChange={(e) => setAutoDetectionEnabled(e.target.checked)}
-                  className="w-4 h-4 text-purple-600"
-                />
-                启用自动检测
-              </label>
-              <button
-                onClick={() => {
-                  // TODO: 测试场景检测
-                  handleDetectScenario('用户咨询产品价格信息');
-                }}
-                className="flex items-center gap-2 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-              >
-                <Eye className="h-4 w-4" />
-                测试检测
-              </button>
-            </div>
-          </div>
-
-          {/* 当前场景显示 */}
-          {currentScenario && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h5 className="font-medium text-blue-900 mb-2">检测到场景: {currentScenario.name}</h5>
-                  <p className="text-sm text-blue-700 mb-3">{currentScenario.description}</p>
-                  <div className="text-sm">
-                    <span className="text-blue-600">置信度: </span>
-                    <span className="font-medium">{Math.round(currentScenario.confidence * 100)}%</span>
-                  </div>
-
-                  {currentScenario.recommendedSlots && currentScenario.recommendedSlots.length > 0 && (
-                    <div className="mt-3">
-                      <span className="text-sm text-blue-600 font-medium">推荐Slots:</span>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {currentScenario.recommendedSlots.map((rec: any, index: number) => (
-                          <span key={index} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                            {rec.slotId} (优先级: {rec.priority})
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={handleApplyScenarioSlots}
-                  className="ml-4 flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  <CheckCircle className="h-4 w-4" />
-                  应用推荐
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* 场景检测器 */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <h5 className="font-medium text-gray-900 mb-4">场景检测器</h5>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">测试输入</label>
-                <textarea
-                  placeholder="输入用户对话内容进行场景检测..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                  rows={3}
-                  onChange={(e) => {
-                    if (autoDetectionEnabled) {
-                      handleDetectScenario(e.target.value);
-                    }
-                  }}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  {autoDetectionEnabled ? '自动检测已启用，输入时会实时检测场景' : '手动模式，需要点击检测按钮'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* 预设场景列表 */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <h5 className="font-medium text-gray-900 mb-4">预设业务场景</h5>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                {
-                  name: '客户咨询',
-                  description: '用户询问产品信息、价格等',
-                  keywords: ['价格', '产品', '咨询', '了解'],
-                  recommendedSlots: ['user_intent', 'product_category', 'price_range']
-                },
-                {
-                  name: '技术支持',
-                  description: '用户遇到技术问题需要帮助',
-                  keywords: ['问题', '错误', '不能用', '故障'],
-                  recommendedSlots: ['issue_type', 'error_message', 'user_environment']
-                },
-                {
-                  name: '投诉处理',
-                  description: '用户对服务或产品不满',
-                  keywords: ['投诉', '不满意', '问题', '退款'],
-                  recommendedSlots: ['complaint_type', 'order_id', 'satisfaction_level']
-                },
-                {
-                  name: '订单查询',
-                  description: '用户查询订单状态',
-                  keywords: ['订单', '状态', '查询', '物流'],
-                  recommendedSlots: ['order_id', 'phone_number', 'order_status']
-                }
-              ].map((scenario, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4">
-                  <h6 className="font-medium text-gray-900 mb-2">{scenario.name}</h6>
-                  <p className="text-sm text-gray-600 mb-3">{scenario.description}</p>
-
-                  <div className="mb-3">
-                    <span className="text-xs text-gray-500">关键词:</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {scenario.keywords.map(keyword => (
-                        <span key={keyword} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                          {keyword}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mb-3">
-                    <span className="text-xs text-gray-500">推荐Slots:</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {scenario.recommendedSlots.map(slot => (
-                        <span key={slot} className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">
-                          {slot}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      const mockScenario = {
-                        ...scenario,
-                        confidence: 0.85,
-                        recommendedSlots: scenario.recommendedSlots.map(slotId => ({
-                          slotId,
-                          priority: Math.floor(Math.random() * 5) + 1,
-                          reason: `匹配${scenario.name}场景`
-                        }))
-                      };
-                      setCurrentScenario(mockScenario);
-                    }}
-                    className="w-full text-sm px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-                  >
-                    模拟此场景
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 压缩策略 */}
       {activeTab === 'compression' && (
         <div className="space-y-6">
           <div>
