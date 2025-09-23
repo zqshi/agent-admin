@@ -187,12 +187,6 @@ const PromptConfig: React.FC<PromptConfigProps> = ({ config, onChange }) => {
   };
 
   // Prompt预览（使用当前slot值）
-  const renderTemplatePreview = (template: PromptTemplate) => {
-    let preview = template.content;
-    template.slots.forEach(slot => {
-      const value = slotValues[slot.name] || slot.defaultValue || `{${slot.name}}`;
-      preview = preview.replace(new RegExp(`{{${slot.name}}}`, 'g'), value);
-    });
     return preview;
   };
 
@@ -1297,199 +1291,17 @@ const PromptConfig: React.FC<PromptConfigProps> = ({ config, onChange }) => {
         </div>
       )}
 
-      {/* 业务场景 */}
+      {/* 压缩策略 */}
       {activeTab === 'compression' && (
         <div className="space-y-6">
           <div>
             <h4 className="text-lg font-semibold text-gray-900 mb-2">上下文压缩策略</h4>
             <p className="text-sm text-gray-600">
-              当对话上下文超出模型限制时，自动应用压缩策略。支持压缩历史记录和原始信息溯源。
+              配置对话上下文压缩规则，当上下文超出限制时自动应用压缩策略。
             </p>
           </div>
 
-          {/* 压缩溯源机制 */}
-          <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-            <h5 className="font-medium text-green-900 mb-4">
-              <Database className="h-4 w-4 inline mr-2" />
-              压缩溯源机制
-            </h5>
-            <p className="text-sm text-green-700 mb-4">
-              每次压缩都会保留原始信息的索引映射，支持从压缩信息溯源到完整的原始对话内容。
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* 压缩历史记录 */}
-              <div>
-                <h6 className="text-sm font-medium text-gray-700 mb-3">压缩历史记录</h6>
-                <div className="space-y-3 max-h-48 overflow-y-auto">
-                  {[
-                    {
-                      id: '1',
-                      timestamp: '2024-01-15 14:30:25',
-                      strategy: '智能截断',
-                      originalTokens: 4500,
-                      compressedTokens: 2000,
-                      compressionRatio: 0.44,
-                      preservedSections: ['最近3轮对话', '用户关键信息', '当前任务上下文']
-                    },
-                    {
-                      id: '2',
-                      timestamp: '2024-01-15 14:25:12',
-                      strategy: '语义摘要',
-                      originalTokens: 3800,
-                      compressedTokens: 1500,
-                      compressionRatio: 0.39,
-                      preservedSections: ['核心意图', '关键实体', '决策点']
-                    },
-                    {
-                      id: '3',
-                      timestamp: '2024-01-15 14:20:45',
-                      strategy: '语义压缩',
-                      originalTokens: 5200,
-                      compressedTokens: 1800,
-                      compressionRatio: 0.35,
-                      preservedSections: ['完整语义结构', '重要时间节点', '状态变更']
-                    }
-                  ].map((record) => (
-                    <div key={record.id} className="bg-white border border-gray-200 rounded-lg p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-900">{record.strategy}</span>
-                        <span className="text-xs text-gray-500">{record.timestamp}</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 mb-2">
-                        <div>原始: {record.originalTokens} tokens</div>
-                        <div>压缩: {record.compressedTokens} tokens</div>
-                        <div className="col-span-2">
-                          压缩率: <span className="font-medium text-green-600">{Math.round(record.compressionRatio * 100)}%</span>
-                        </div>
-                      </div>
-                      <div className="text-xs text-gray-500 mb-2">
-                        <span className="font-medium">保留内容:</span>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {record.preservedSections.map(section => (
-                            <span key={section} className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-xs">
-                              {section}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setShowSuccessMessage(`正在加载压缩记录 ${record.id} 的原始内容...`);
-                          setTimeout(() => setShowSuccessMessage(null), 3000);
-                        }}
-                        className="w-full text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-                      >
-                        查看原始内容
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* 溯源查看器 */}
-              <div>
-                <h6 className="text-sm font-medium text-gray-700 mb-3">溯源查看器</h6>
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                  <div className="mb-3">
-                    <label className="block text-xs font-medium text-gray-700 mb-2">选择压缩片段进行溯源</label>
-                    <select className="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg">
-                      <option value="">选择要查看的压缩片段...</option>
-                      <option value="summary_1">用户询问产品价格相关信息</option>
-                      <option value="summary_2">技术支持问题处理流程</option>
-                      <option value="summary_3">订单状态查询对话</option>
-                    </select>
-                  </div>
-
-                  {/* 溯源结果示例 */}
-                  <div className="border-t border-gray-200 pt-3">
-                    <div className="text-xs text-gray-600 mb-2">
-                      <span className="font-medium">原始位置:</span> 对话轮次 #15-18 (2024-01-15 14:25:30)
-                    </div>
-                    <div className="text-xs text-gray-600 mb-2">
-                      <span className="font-medium">压缩前内容:</span>
-                    </div>
-                    <div className="bg-gray-50 border border-gray-200 rounded p-2 text-xs text-gray-700 mb-3 max-h-32 overflow-y-auto">
-                      用户: 我想了解一下你们的企业版价格，我们公司大概有200人...
-                      <br />
-                      助手: 感谢您的咨询！针对200人规模的企业，我们有专门的企业版套餐...
-                      <br />
-                      用户: 这个价格包含哪些功能呢？
-                      <br />
-                      助手: 企业版包含以下功能：1. 无限用户数量...
-                    </div>
-                    <div className="text-xs text-gray-600 mb-2">
-                      <span className="font-medium">压缩后内容:</span>
-                    </div>
-                    <div className="bg-blue-50 border border-blue-200 rounded p-2 text-xs text-blue-700">
-                      用户咨询200人规模企业版价格和功能详情，已提供企业版套餐信息
-                    </div>
-
-                    {/* 溯源操作 */}
-                    <div className="flex gap-2 mt-3">
-                      <button className="flex-1 text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">
-                        恢复原始片段
-                      </button>
-                      <button className="flex-1 text-xs px-2 py-1 border border-gray-300 text-gray-700 rounded hover:bg-gray-50">
-                        导出对比
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 溯源配置 */}
-            <div className="mt-6 p-4 bg-white border border-gray-200 rounded-lg">
-              <h6 className="text-sm font-medium text-gray-700 mb-3">溯源配置选项</h6>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-2">历史记录保留期限</label>
-                  <select className="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg">
-                    <option value="7">7天</option>
-                    <option value="30">30天</option>
-                    <option value="90">90天</option>
-                    <option value="365">1年</option>
-                    <option value="-1">永久保留</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-2">索引粒度</label>
-                  <select className="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg">
-                    <option value="sentence">句子级别</option>
-                    <option value="paragraph">段落级别</option>
-                    <option value="turn">对话轮次</option>
-                    <option value="topic">主题片段</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-2">存储策略</label>
-                  <select className="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg">
-                    <option value="memory">内存缓存</option>
-                    <option value="local">本地存储</option>
-                    <option value="database">数据库</option>
-                    <option value="cloud">云端备份</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="mt-4 space-y-2">
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" className="w-4 h-4 text-green-600" defaultChecked />
-                  启用自动溯源索引生成
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" className="w-4 h-4 text-green-600" defaultChecked />
-                  保留关键实体和时间戳映射
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" className="w-4 h-4 text-green-600" />
-                  允许用户手动标记重要片段
-                </label>
-              </div>
-            </div>
-          </div>
-
+          {/* 压缩策略配置 */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {compressionStrategies.map(strategy => (
               <div
@@ -1501,7 +1313,12 @@ const PromptConfig: React.FC<PromptConfigProps> = ({ config, onChange }) => {
                     <h5 className="font-medium text-gray-900 mb-1">{strategy.name}</h5>
                     <p className="text-sm text-gray-600 mb-2">{strategy.description}</p>
                   </div>
-                  <input type="radio" name="compression-strategy" className="mt-1" />
+                  <input
+                    type="radio"
+                    name="compression-strategy"
+                    className="mt-1"
+                    defaultChecked={strategy.id === '1'}
+                  />
                 </div>
 
                 <div className="space-y-2 text-sm">
@@ -1524,9 +1341,9 @@ const PromptConfig: React.FC<PromptConfigProps> = ({ config, onChange }) => {
             ))}
           </div>
 
-          {/* 高级设置 */}
+          {/* 高级压缩设置 */}
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-            <h5 className="font-medium text-gray-900 mb-4">高级压缩设置</h5>
+            <h5 className="font-medium text-gray-900 mb-4">压缩配置</h5>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -1535,7 +1352,9 @@ const PromptConfig: React.FC<PromptConfigProps> = ({ config, onChange }) => {
                 </label>
                 <input
                   type="number"
-                  defaultValue="3000"
+                  defaultValue="4000"
+                  min="1000"
+                  max="10000"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">
@@ -1549,7 +1368,7 @@ const PromptConfig: React.FC<PromptConfigProps> = ({ config, onChange }) => {
                 </label>
                 <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
                   <option value="0.5">50% - 激进压缩</option>
-                  <option value="0.7">70% - 平衡压缩</option>
+                  <option value="0.7" selected>70% - 平衡压缩</option>
                   <option value="0.8">80% - 保守压缩</option>
                 </select>
               </div>
@@ -1561,13 +1380,26 @@ const PromptConfig: React.FC<PromptConfigProps> = ({ config, onChange }) => {
                 <span className="text-sm text-gray-700">保留最近的对话轮次</span>
               </label>
               <label className="flex items-center gap-2">
-                <input type="checkbox" className="w-4 h-4 text-purple-600" />
+                <input type="checkbox" className="w-4 h-4 text-purple-600" defaultChecked />
                 <span className="text-sm text-gray-700">优先保留重要信息（姓名、时间等）</span>
               </label>
               <label className="flex items-center gap-2">
                 <input type="checkbox" className="w-4 h-4 text-purple-600" defaultChecked />
                 <span className="text-sm text-gray-700">启用智能摘要生成</span>
               </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" className="w-4 h-4 text-purple-600" />
+                <span className="text-sm text-gray-700">记录压缩历史用于溯源</span>
+              </label>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                保存配置
+              </button>
+              <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                重置为默认
+              </button>
             </div>
           </div>
         </div>
