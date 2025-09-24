@@ -237,7 +237,7 @@ const ToolConfig: React.FC<ToolConfigProps> = ({ config, onChange }) => {
                   <span>{tool.icon}</span>
                   {tool.name}
                   {isToolSelected(toolId) && (
-                    <Check className="h-3 w-3 text-green-600" />
+                    <Check key="check-icon" className="h-3 w-3 text-green-600" />
                   )}
                 </span>
               );
@@ -339,7 +339,7 @@ const ToolConfig: React.FC<ToolConfigProps> = ({ config, onChange }) => {
                           </span>
                         )}
                         {isSelected && (
-                          <Check className="h-5 w-5 text-blue-600" />
+                          <Check key="selected-check" className="h-5 w-5 text-blue-600" />
                         )}
                       </div>
                     </div>
@@ -397,9 +397,12 @@ const ToolConfig: React.FC<ToolConfigProps> = ({ config, onChange }) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">日志级别</label>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+              <select
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                defaultValue="basic"
+              >
                 <option value="none">不记录</option>
-                <option value="basic" selected>基础日志</option>
+                <option value="basic">基础日志</option>
                 <option value="detailed">详细日志</option>
               </select>
             </div>

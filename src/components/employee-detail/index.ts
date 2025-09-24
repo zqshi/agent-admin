@@ -9,3 +9,5 @@ export { default as MetricsSection } from './MetricsSection';
 export { default as KnowledgeManagement } from './KnowledgeManagement';
 export { default as AdvancedConfigSection } from './AdvancedConfigSection';
 export { ConfigVersionManager } from './ConfigVersionManager';
+export { default as ConfigurationCenter } from './ConfigurationCenter';
+export { default as EnhancedMetricsSection } from './EnhancedMetricsSection';

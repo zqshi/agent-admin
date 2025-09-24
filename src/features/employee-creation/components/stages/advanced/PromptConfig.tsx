@@ -1173,9 +1173,12 @@ const PromptConfig: React.FC<PromptConfigProps> = ({ config, onChange }) => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   压缩保留比例
                 </label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  defaultValue="0.7"
+                >
                   <option value="0.5">50% - 激进压缩</option>
-                  <option value="0.7" selected>70% - 平衡压缩</option>
+                  <option value="0.7">70% - 平衡压缩</option>
                   <option value="0.8">80% - 保守压缩</option>
                 </select>
               </div>

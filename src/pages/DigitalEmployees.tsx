@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus,
-  MoreHorizontal,
   User,
   Settings,
   Trash2,
@@ -274,15 +273,6 @@ const DigitalEmployees = () => {
                           title="删除"
                         >
                           <Trash2 className="h-4 w-4" />
-                        </Button>
-                        
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-gray-400 hover:text-gray-600 hover:bg-gray-50"
-                          title="更多操作"
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </div>
                     </td>

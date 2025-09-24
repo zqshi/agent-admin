@@ -189,7 +189,7 @@ export const KnowledgeEvolutionTimeline: React.FC<KnowledgeEvolutionTimelineProp
     const config = EVENT_TYPE_CONFIG[event.type];
     const categoryConfig = CATEGORY_CONFIG[event.category];
     const impactConfig = IMPACT_CONFIG[event.impact];
-    const IconComponent = config.icon;
+    const IconComponent = config?.icon || BookOpen;
 
     return (
       <div className="relative">
@@ -203,7 +203,7 @@ export const KnowledgeEvolutionTimeline: React.FC<KnowledgeEvolutionTimelineProp
           {/* 时间轴节点 */}
           <div className={cn(
             "flex items-center justify-center w-12 h-12 rounded-full",
-            config.color,
+            config?.color || "bg-gray-500",
             "text-white shadow-lg z-10"
           )}>
             <IconComponent className="w-5 h-5" />
@@ -213,7 +213,7 @@ export const KnowledgeEvolutionTimeline: React.FC<KnowledgeEvolutionTimelineProp
           <Card
             className={cn(
               "flex-1 cursor-pointer hover:shadow-md transition-all",
-              config.bgColor
+              config?.bgColor || "bg-gray-50"
             )}
             onClick={() => onEventClick?.(event)}
           >
@@ -221,11 +221,11 @@ export const KnowledgeEvolutionTimeline: React.FC<KnowledgeEvolutionTimelineProp
               {/* 事件头部 */}
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
-                  <Badge className={categoryConfig.color}>
-                    {categoryConfig.label}
+                  <Badge className={categoryConfig?.color || "bg-gray-100 text-gray-600"}>
+                    {categoryConfig?.label || "未分类"}
                   </Badge>
-                  <Badge className={impactConfig.color}>
-                    {impactConfig.label}影响
+                  <Badge className={impactConfig?.color || "bg-gray-100 text-gray-600"}>
+                    {impactConfig?.label || "未知"}影响
                   </Badge>
                 </div>
                 <span className="text-sm text-gray-500">
@@ -234,7 +234,7 @@ export const KnowledgeEvolutionTimeline: React.FC<KnowledgeEvolutionTimelineProp
               </div>
 
               {/* 事件标题和描述 */}
-              <h4 className={cn("font-semibold mb-1", config.textColor)}>
+              <h4 className={cn("font-semibold mb-1", config?.textColor || "text-gray-800")}>
                 {event.title}
               </h4>
               <p className="text-sm text-gray-600 mb-3">
@@ -245,20 +245,20 @@ export const KnowledgeEvolutionTimeline: React.FC<KnowledgeEvolutionTimelineProp
               <div className="grid grid-cols-3 gap-4 mb-3">
                 <div className="text-center">
                   <div className="text-xs text-gray-500">知识增长</div>
-                  <div className="font-medium">{event.metrics.knowledgeGain}%</div>
+                  <div className="font-medium">{event.metrics?.knowledgeGain || 0}%</div>
                 </div>
                 <div className="text-center">
                   <div className="text-xs text-gray-500">置信度</div>
-                  <div className="font-medium">{event.metrics.confidence}%</div>
+                  <div className="font-medium">{event.metrics?.confidence || 0}%</div>
                 </div>
                 <div className="text-center">
                   <div className="text-xs text-gray-500">适用性</div>
-                  <div className="font-medium">{event.metrics.applicability}%</div>
+                  <div className="font-medium">{event.metrics?.applicability || 0}%</div>
                 </div>
               </div>
 
               {/* 相关概念标签 */}
-              {event.relatedConcepts.length > 0 && (
+              {event.relatedConcepts && event.relatedConcepts.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-2">
                   {event.relatedConcepts.slice(0, 3).map(concept => (
                     <Badge key={concept} variant="secondary" className="text-xs">

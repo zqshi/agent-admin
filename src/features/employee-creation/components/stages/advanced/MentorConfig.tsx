@@ -667,7 +667,7 @@ const MentorConfig: React.FC<MentorConfigProps> = ({ config, onChange }) => {
                 <span className="font-medium text-gray-700">汇报周期：</span>
                 <p className="text-gray-600">
                   {actualConfig?.reporting?.enabled
-                    ? (advancedConfig.mentor.reporting.schedule || '未设置')
+                    ? (actualConfig.reporting?.schedule || '未设置')
                     : '已禁用'
                   }
                 </p>

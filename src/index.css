@@ -201,14 +201,14 @@
   /* 简化输入框样式 */
   .input {
     @apply w-full px-3 py-2 text-sm border border-gray-200 rounded-md
-           focus:ring-2 focus:ring-primary focus:border-transparent
+           focus:ring-2 focus:ring-blue-500 focus:border-transparent
            placeholder:text-gray-400 disabled:bg-gray-50 disabled:text-gray-500;
     background-color: white;
     transition: border-color 0.2s ease;
   }
 
   .input-error {
-    @apply border-error focus:ring-error;
+    @apply border-red-500 focus:ring-red-500;
   }
   
   /* 苹果风格标签样式 */
@@ -219,7 +219,7 @@
   }
   
   .label-required::after {
-    @apply text-error;
+    @apply text-red-500;
     content: ' *';
   }
   
