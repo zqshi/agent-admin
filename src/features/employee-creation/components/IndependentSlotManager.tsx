@@ -16,6 +16,7 @@ interface IndependentSlotManagerProps {
   // 新增属性
   showAdvancedFields?: boolean;
   showRegistryControls?: boolean;
+  showExportButton?: boolean; // 新增：控制是否显示导出按钮
   onRegisterSlot?: (slot: EnhancedSlotDefinition) => Promise<boolean>;
   onUnregisterSlot?: (slotId: string) => Promise<boolean>;
 }
@@ -27,6 +28,7 @@ const IndependentSlotManager: React.FC<IndependentSlotManagerProps> = ({
   className = '',
   showAdvancedFields = true,
   showRegistryControls = false,
+  showExportButton = true, // 默认显示导出按钮，在创建数字员工场景下设为false
   onRegisterSlot,
   onUnregisterSlot
 }) => {
@@ -290,15 +292,17 @@ const IndependentSlotManager: React.FC<IndependentSlotManagerProps> = ({
             />
           </label>
 
-          <button
-            type="button"
-            onClick={exportSlots}
-            disabled={disabled || slots.length === 0}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-          >
-            <Download className="h-4 w-4 mr-1" />
-            导出
-          </button>
+          {showExportButton && (
+            <button
+              type="button"
+              onClick={exportSlots}
+              disabled={disabled || slots.length === 0}
+              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            >
+              <Download className="h-4 w-4 mr-1" />
+              导出
+            </button>
+          )}
 
           {/* 注册表功能 */}
           {showRegistryControls && (

@@ -3,7 +3,7 @@
  */
 
 import React, { useState } from 'react';
-import { Users, Calendar, FileText, AlertTriangle } from 'lucide-react';
+import { Users, Calendar, FileText, AlertTriangle, Search, ChevronRight, ChevronDown, UserCheck } from 'lucide-react';
 import { useCreationStore } from '../../../stores/creationStore';
 import type { AdvancedConfig } from '../../../types';
 
@@ -24,6 +24,99 @@ const MentorConfig: React.FC<MentorConfigProps> = ({ config, onChange }) => {
   });
 
   const [isEnabled, setIsEnabled] = useState(actualConfig?.enabled || false);
+
+  // 组织架构树选择状态
+  const [showOrgTree, setShowOrgTree] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(['root', 'tech', 'product']));
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+
+  // Mock组织架构数据
+  const orgTree = {
+    id: 'root',
+    name: '科技公司',
+    type: 'company',
+    children: [
+      {
+        id: 'tech',
+        name: '技术部',
+        type: 'department',
+        children: [
+          {
+            id: 'frontend',
+            name: '前端组',
+            type: 'team',
+            users: [
+              { id: 'u001', name: '张三', role: '高级前端工程师', avatar: '👨‍💻' },
+              { id: 'u002', name: '李四', role: '前端技术专家', avatar: '👩‍💻' },
+              { id: 'u003', name: '王五', role: '前端架构师', avatar: '👨‍🎨' }
+            ]
+          },
+          {
+            id: 'backend',
+            name: '后端组',
+            type: 'team',
+            users: [
+              { id: 'u004', name: '赵六', role: '后端工程师', avatar: '👨‍💼' },
+              { id: 'u005', name: '钱七', role: '系统架构师', avatar: '👩‍💼' },
+              { id: 'u006', name: '孙八', role: 'DevOps工程师', avatar: '🔧' }
+            ]
+          },
+          {
+            id: 'ai',
+            name: 'AI算法组',
+            type: 'team',
+            users: [
+              { id: 'u007', name: '周九', role: 'AI工程师', avatar: '🤖' },
+              { id: 'u008', name: '吴十', role: '机器学习专家', avatar: '🧠' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'product',
+        name: '产品部',
+        type: 'department',
+        children: [
+          {
+            id: 'pm',
+            name: '产品经理组',
+            type: 'team',
+            users: [
+              { id: 'u009', name: '郑十一', role: '产品经理', avatar: '📋' },
+              { id: 'u010', name: '王十二', role: '高级产品经理', avatar: '📊' }
+            ]
+          },
+          {
+            id: 'design',
+            name: '设计组',
+            type: 'team',
+            users: [
+              { id: 'u011', name: '李十三', role: 'UI设计师', avatar: '🎨' },
+              { id: 'u012', name: '张十四', role: 'UX设计师', avatar: '✨' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'operation',
+        name: '运营部',
+        type: 'department',
+        children: [
+          {
+            id: 'marketing',
+            name: '市场营销组',
+            type: 'team',
+            users: [
+              { id: 'u013', name: '陈十五', role: '市场专员', avatar: '📈' },
+              { id: 'u014', name: '杨十六', role: '营销总监', avatar: '💼' }
+            ]
+          }
+        ]
+      }
+    ]
+  };
 
   // 可用导师列表（模拟数据）
   const availableMentors = [
@@ -138,6 +231,58 @@ const MentorConfig: React.FC<MentorConfigProps> = ({ config, onChange }) => {
     updateMentorConfig({ enabled });
   };
 
+  // 组织架构树相关函数
+  const toggleNode = (nodeId: string) => {
+    const newExpanded = new Set(expandedNodes);
+    if (newExpanded.has(nodeId)) {
+      newExpanded.delete(nodeId);
+    } else {
+      newExpanded.add(nodeId);
+    }
+    setExpandedNodes(newExpanded);
+  };
+
+  const toggleUserSelection = (userId: string) => {
+    if (selectedUsers.includes(userId)) {
+      setSelectedUsers(prev => prev.filter(id => id !== userId));
+    } else {
+      setSelectedUsers(prev => [...prev, userId]);
+    }
+  };
+
+  // 获取所有用户（用于搜索）
+  const getAllUsers = (node: any): any[] => {
+    let users: any[] = node.users || [];
+    if (node.children) {
+      node.children.forEach((child: any) => {
+        users = users.concat(getAllUsers(child));
+      });
+    }
+    return users;
+  };
+
+  const allUsers = getAllUsers(orgTree);
+
+  // 用户搜索功能
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (query.trim() === '') {
+      setSearchResults([]);
+      return;
+    }
+
+    const filtered = allUsers.filter(user =>
+      user.name.toLowerCase().includes(query.toLowerCase()) ||
+      user.role.toLowerCase().includes(query.toLowerCase())
+    );
+    setSearchResults(filtered);
+  };
+
+  // 获取选中用户的信息
+  const getSelectedUsersInfo = () => {
+    return allUsers.filter(user => selectedUsers.includes(user.id));
+  };
+
   return (
     <div className="space-y-6">
       {/* 启用开关 */}
@@ -163,39 +308,143 @@ const MentorConfig: React.FC<MentorConfigProps> = ({ config, onChange }) => {
         <>
           {/* 导师选择 */}
           <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-              <Users className="h-5 w-5 text-blue-600" />
-              导师选择
-            </h4>
-
-            <div className="grid grid-cols-1 gap-4">
-              {availableMentors.map(mentor => (
-                <label
-                  key={mentor.id}
-                  className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                <Users className="h-5 w-5 text-blue-600" />
+                导师选择
+              </h4>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowOrgTree(!showOrgTree)}
+                  className="flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
-                  <input
-                    type="radio"
-                    name="mentor"
-                    value={mentor.id}
-                    onChange={(e) => updateMentorConfig({
-                      mentor: {
-                        id: mentor.id,
-                        name: mentor.name,
-                        role: mentor.role
-                      }
-                    })}
-                    className="w-4 h-4 text-blue-600"
-                  />
-                  <span className="text-2xl">{mentor.avatar}</span>
-                  <div className="flex-1">
-                    <h5 className="font-medium text-gray-900">{mentor.name}</h5>
-                    <p className="text-sm text-gray-600">{mentor.role}</p>
-                    <p className="text-xs text-gray-500 mt-1">{mentor.description}</p>
-                  </div>
-                </label>
-              ))}
+                  <Users className="h-4 w-4" />
+                  {showOrgTree ? '显示预设导师' : '从组织架构选择'}
+                </button>
+                {selectedUsers.length > 0 && (
+                  <span className="text-sm text-blue-600">
+                    已选择 {selectedUsers.length} 人
+                  </span>
+                )}
+              </div>
             </div>
+
+            {!showOrgTree ? (
+              /* 预设导师列表 */
+              <div className="grid grid-cols-1 gap-4">
+                {availableMentors.map(mentor => (
+                  <label
+                    key={mentor.id}
+                    className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                  >
+                    <input
+                      type="radio"
+                      name="mentor"
+                      value={mentor.id}
+                      onChange={(e) => updateMentorConfig({
+                        mentor: {
+                          id: mentor.id,
+                          name: mentor.name,
+                          role: mentor.role
+                        }
+                      })}
+                      className="w-4 h-4 text-blue-600"
+                    />
+                    <span className="text-2xl">{mentor.avatar}</span>
+                    <div className="flex-1">
+                      <h5 className="font-medium text-gray-900">{mentor.name}</h5>
+                      <p className="text-sm text-gray-600">{mentor.role}</p>
+                      <p className="text-xs text-gray-500 mt-1">{mentor.description}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              /* 组织架构树选择 */
+              <div className="space-y-4">
+                {/* 搜索框 */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="搜索用户姓名或职位..."
+                  />
+                </div>
+
+                {/* 搜索结果 */}
+                {searchQuery && searchResults.length > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <h6 className="text-sm font-medium text-blue-900 mb-2">搜索结果</h6>
+                    <div className="space-y-2">
+                      {searchResults.map(user => (
+                        <label
+                          key={user.id}
+                          className="flex items-center gap-3 p-2 hover:bg-blue-100 rounded cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedUsers.includes(user.id)}
+                            onChange={() => toggleUserSelection(user.id)}
+                            className="w-4 h-4 text-blue-600"
+                          />
+                          <span className="text-lg">{user.avatar}</span>
+                          <div>
+                            <span className="text-sm font-medium text-gray-900">{user.name}</span>
+                            <p className="text-xs text-gray-600">{user.role}</p>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 组织架构树 */}
+                <div className="border border-gray-200 rounded-lg max-h-96 overflow-y-auto">
+                  <OrgTreeNode
+                    node={orgTree}
+                    level={0}
+                    expandedNodes={expandedNodes}
+                    selectedUsers={selectedUsers}
+                    onToggleNode={toggleNode}
+                    onToggleUser={toggleUserSelection}
+                  />
+                </div>
+
+                {/* 已选择的用户 */}
+                {selectedUsers.length > 0 && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h6 className="text-sm font-medium text-green-900 mb-3">
+                      已选择的导师 ({selectedUsers.length})
+                    </h6>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {getSelectedUsersInfo().map(user => (
+                        <div
+                          key={user.id}
+                          className="flex items-center justify-between p-2 bg-white border border-green-200 rounded"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm">{user.avatar}</span>
+                            <div>
+                              <span className="text-sm font-medium">{user.name}</span>
+                              <p className="text-xs text-gray-600">{user.role}</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => toggleUserSelection(user.id)}
+                            className="text-red-500 hover:text-red-700 text-sm"
+                          >
+                            移除
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* 汇报配置 */}
@@ -456,6 +705,108 @@ const MentorConfig: React.FC<MentorConfigProps> = ({ config, onChange }) => {
           </div>
         </div>
       </div>
+    </div>
+  );
+};
+
+// 组织架构树节点组件
+interface OrgTreeNodeProps {
+  node: any;
+  level: number;
+  expandedNodes: Set<string>;
+  selectedUsers: string[];
+  onToggleNode: (nodeId: string) => void;
+  onToggleUser: (userId: string) => void;
+}
+
+const OrgTreeNode: React.FC<OrgTreeNodeProps> = ({
+  node,
+  level,
+  expandedNodes,
+  selectedUsers,
+  onToggleNode,
+  onToggleUser
+}) => {
+  const isExpanded = expandedNodes.has(node.id);
+  const hasChildren = node.children && node.children.length > 0;
+  const hasUsers = node.users && node.users.length > 0;
+
+  return (
+    <div>
+      {/* 节点标题 */}
+      <div
+        className={`flex items-center gap-2 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100`}
+        style={{ paddingLeft: `${level * 20 + 12}px` }}
+      >
+        {hasChildren && (
+          <button
+            onClick={() => onToggleNode(node.id)}
+            className="flex items-center justify-center w-4 h-4 text-gray-500 hover:text-gray-700"
+          >
+            {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+          </button>
+        )}
+
+        <div className="flex items-center gap-2">
+          <span className="text-sm">
+            {node.type === 'company' ? '🏢' :
+             node.type === 'department' ? '🏛️' :
+             node.type === 'team' ? '👥' : '📁'}
+          </span>
+          <span className="text-sm font-medium text-gray-900">{node.name}</span>
+          {hasUsers && (
+            <span className="text-xs text-gray-500">({node.users.length}人)</span>
+          )}
+        </div>
+      </div>
+
+      {/* 展开的内容 */}
+      {isExpanded && (
+        <div>
+          {/* 用户列表 */}
+          {hasUsers && (
+            <div style={{ paddingLeft: `${(level + 1) * 20 + 12}px` }}>
+              {node.users.map((user: any) => (
+                <label
+                  key={user.id}
+                  className="flex items-center gap-3 p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-50"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedUsers.includes(user.id)}
+                    onChange={() => onToggleUser(user.id)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-lg">{user.avatar}</span>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-900">{user.name}</span>
+                      {selectedUsers.includes(user.id) && (
+                        <UserCheck className="h-4 w-4 text-green-500" />
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-600">{user.role}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
+
+          {/* 子节点 */}
+          {hasChildren &&
+            node.children.map((child: any) => (
+              <OrgTreeNode
+                key={child.id}
+                node={child}
+                level={level + 1}
+                expandedNodes={expandedNodes}
+                selectedUsers={selectedUsers}
+                onToggleNode={onToggleNode}
+                onToggleUser={onToggleUser}
+              />
+            ))}
+        </div>
+      )}
     </div>
   );
 };

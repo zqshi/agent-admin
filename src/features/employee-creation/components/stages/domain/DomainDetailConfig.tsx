@@ -445,26 +445,26 @@ const DomainDetailConfig: React.FC<DomainDetailConfigProps> = ({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`relative flex items-center gap-2 px-4 py-3 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 ${
+                className={`relative flex items-start gap-2 px-4 py-4 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 ${
                   isActive
                     ? 'border-indigo-500 text-indigo-600 bg-indigo-50'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                 }`}
               >
-                <Icon className="h-4 w-4" />
-                <div className="text-left">
-                  <div className="flex items-center gap-2">
-                    <span>{tab.title}</span>
+                <Icon className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                <div className="text-left min-w-0 flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold">{tab.title}</span>
                     {isCompleted && (
-                      <CheckCircle className="h-3 w-3 text-green-600" />
+                      <CheckCircle className="h-3 w-3 text-green-600 flex-shrink-0" />
                     )}
                     {tab.isOptional && (
-                      <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">
+                      <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full flex-shrink-0">
                         可选
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-gray-400 hidden sm:block">
+                  <div className="text-xs text-gray-400 leading-tight">
                     {tab.description}
                   </div>
                 </div>
