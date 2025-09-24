@@ -137,7 +137,7 @@ const Dashboard = () => {
   return (
     <PageLayout>
       <PageHeader 
-        title="智能观测仪表盘" 
+        title="仪表盘" 
         subtitle="基于L1/L2/L3指标体系的全链路数字员工智能监控"
       >
         <div className="flex items-center gap-3">

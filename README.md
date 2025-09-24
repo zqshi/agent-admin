@@ -7,6 +7,8 @@
   ![TypeScript](https://img.shields.io/badge/TypeScript-5.0.2-3178C6?style=flat-square&logo=typescript)
   ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.3.3-38B2AC?style=flat-square&logo=tailwind-css)
   ![Vite](https://img.shields.io/badge/Vite-4.4.5-646CFF?style=flat-square&logo=vite)
+  ![Recharts](https://img.shields.io/badge/Recharts-2.7.2-FF6384?style=flat-square&logo=chartjs)
+  ![Zustand](https://img.shields.io/badge/Zustand-5.0.8-764ABC?style=flat-square)
   ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 </div>
 
@@ -19,9 +21,12 @@ KingSoft 是一个企业级数字员工智能管理平台，专为基于 LLM+MCP
 - **🎯 实时监控仪表盘** - 多维度系统健康监控，Token成本分析，服务状态实时展示
 - **👥 数字员工管理** - 完整生命周期管理，支持记忆系统、知识图谱、导师汇报机制
 - **🔍 会话查询追溯** - 智能搜索与筛选，对话流可视化，用户行为分析
-- **🧪 A/B 测试管理** - 贝叶斯统计引擎，三层指标体系，可解释性AI洞察分析  
+- **🧪 A/B 测试管理** - 贝叶斯统计引擎，三层指标体系，可解释性AI洞察分析
 - **📊 数据分析报表** - 多维筛选系统，成本分析，错误监控，性能优化建议
 - **🛠️ MCP工具管理** - 工具全生命周期管理，多协议支持，安全沙箱机制
+- **🚀 Prompt工程平台** - 模板库管理、Slot注入、实时预览、上下文压缩
+- **⚙️ 系统设置中心** - 个人信息管理、系统配置、主题切换、通知设置
+- **🧠 上下文工程** - 智能压缩策略、记忆模块管理、模块序列化配置
 
 ## 🚀 快速开始
 
@@ -35,8 +40,8 @@ KingSoft 是一个企业级数字员工智能管理平台，专为基于 LLM+MCP
 
 1. **克隆项目**
    ```bash
-   git clone https://github.com/your-org/cogvision-admin.git
-   cd cogvision-admin
+   git clone https://github.com/your-org/kingsoft-admin.git
+   cd kingsoft-admin
    ```
 
 2. **安装依赖**
@@ -70,38 +75,51 @@ npm run test         # 运行测试用例
 ## 📁 项目结构
 
 ```
-admin1/
+admin/
 ├── public/                     # 静态资源
 ├── src/
-│   ├── components/            # 业务组件
-│   │   ├── ui/               # 基础UI组件库 (52个组件)
+│   ├── components/            # 业务组件 (20+ 组件)
+│   │   ├── ui/               # 基础UI组件库 (50+ 组件)
 │   │   │   ├── PageLayout.tsx    # 页面布局
 │   │   │   ├── Card.tsx          # 卡片组件
 │   │   │   ├── MetricCard.tsx    # 指标卡片
 │   │   │   ├── FilterSection.tsx # 筛选组件
 │   │   │   └── index.ts          # 统一导出
-│   │   ├── CreateDigitalEmployee.tsx  # 员工创建组件
-│   │   ├── ExperimentWizard.tsx       # 实验向导
+│   │   ├── ContextEngineering.tsx    # 上下文工程组件
 │   │   ├── CreateMCPTool.tsx         # 工具创建组件
+│   │   ├── ExperimentWizard.tsx      # 实验向导
+│   │   ├── PrivateRoute.tsx          # 路由守卫
+│   │   ├── Layout.tsx                # 布局组件
 │   │   └── ToolTestConsole.tsx       # 测试控制台
-│   ├── pages/                # 六大核心页面
+│   ├── pages/                # 核心页面模块 (11个页面)
 │   │   ├── Dashboard.tsx         # 实时监控仪表盘
 │   │   ├── DigitalEmployees.tsx  # 数字员工管理
-│   │   ├── Sessions.tsx          # 会话查询追溯
+│   │   ├── SessionsEnhanced.tsx  # 增强会话查询
 │   │   ├── ABTestingEnhanced.tsx # A/B测试管理 (贝叶斯统计)
 │   │   ├── Analytics.tsx         # 数据分析报表
-│   │   └── ToolManagement.tsx    # MCP工具管理
-│   ├── types/                # TypeScript类型定义 (752行)
-│   │   └── index.ts              # 完整的业务类型体系
+│   │   ├── ToolManagement.tsx    # MCP工具管理
+│   │   ├── PromptEngineering.tsx # Prompt工程平台
+│   │   ├── Settings.tsx          # 系统设置中心
+│   │   └── Login.tsx             # 登录页面
+│   ├── contexts/             # React上下文
+│   │   └── AuthContext.tsx       # 身份认证上下文
+│   ├── features/             # 功能模块
+│   │   └── prompt-engineering/   # Prompt工程功能
+│   ├── hooks/                # 自定义Hook
+│   ├── types/                # TypeScript类型定义 (62K+ 行代码)
+│   │   ├── index.ts              # 核心业务类型
+│   │   ├── system-config.ts      # 系统配置类型
+│   │   └── traffic-management.ts # 流量管理类型
 │   ├── data/                 # 模拟数据系统
 │   │   ├── mockData.ts           # 仪表盘和会话数据
 │   │   ├── mockDigitalEmployees.ts  # 员工管理数据
 │   │   ├── mockToolsData.ts      # MCP工具数据
 │   │   └── realtimeData.ts       # 实时数据模拟
+│   ├── services/             # 服务层
 │   ├── utils/                # 工具函数
 │   │   ├── cn.ts                 # 样式工具
 │   │   └── toolStateMachine.ts   # 工具状态机
-│   └── styles/               # 样式系统
+│   └── lib/                  # 第三方库配置
 ├── docs/                     # 完整项目文档
 │   ├── 产品需求文档-KingSoft数字员工管理平台.md  # V2.0更新版
 │   ├── 技术架构设计.md
@@ -120,19 +138,27 @@ admin1/
 ## 🎨 技术栈
 
 ### 前端框架
-- **React 18** - 现代化的用户界面库
-- **TypeScript** - 类型安全的 JavaScript 超集
-- **Vite** - 快速的构建工具和开发服务器
+- **React 18.2.0** - 现代化的用户界面库
+- **TypeScript 5.0.2** - 类型安全的 JavaScript 超集
+- **Vite 4.4.5** - 快速的构建工具和开发服务器
 
 ### UI 与样式
-- **Tailwind CSS** - 实用优先的 CSS 框架
-- **Lucide React** - 精美的图标库
-- **React Router** - 声明式路由
+- **Tailwind CSS 3.3.3** - 实用优先的 CSS 框架
+- **Radix UI** - 无障碍组件库 (Tabs, Progress 等)
+- **Lucide React 0.263.1** - 精美的图标库
+- **React Router DOM 6.8.1** - 声明式路由
+
+### 状态管理与工具
+- **Zustand 5.0.8** - 轻量级状态管理
+- **Immer 10.1.3** - 不可变状态更新
+- **Recharts 2.7.2** - 响应式图表库
+- **date-fns 2.30.0** - 现代化日期处理
+- **clsx & tailwind-merge** - 条件样式工具
 
 ### 开发工具
 - **ESLint** - 代码质量检查
-- **Prettier** - 代码格式化
-- **PostCSS** - CSS 后处理器
+- **TypeScript ESLint** - TypeScript 代码规范
+- **PostCSS & Autoprefixer** - CSS 后处理器
 
 ## 🏗️ 核心功能模块
 
@@ -206,7 +232,7 @@ admin1/
 - **错误分析监控** - 五大错误类型分布、趋势指示、根因分析
 - **智能状态识别** - 失败率色彩编码（>5%红色、2-5%黄色、<2%绿色）
 
-### 6. 🛠️ MCP工具管理 (ToolManagement) 
+### 6. 🛠️ MCP工具管理 (ToolManagement)
 > **实现路径：** `src/pages/ToolManagement.tsx`
 
 <div align="center">
@@ -220,6 +246,38 @@ admin1/
 - **实时测试控制台** - 交互式测试、日志监控、性能分析
 - **能力自动发现** - 工具启动后自动检测功能、JSON Schema验证
 - **版本管理系统** - 多版本并存、一键回滚、变更历史追踪
+
+### 7. 🚀 Prompt工程平台 (PromptEngineering)
+> **实现路径：** `src/pages/PromptEngineering.tsx`
+
+**🎯 专业级Prompt工程功能：**
+- **模板库管理** - Prompt模板创建、分类、版本控制
+- **Slot动态注入** - 参数化Prompt，支持静态/动态slot配置
+- **实时预览系统** - 所见即所得的Prompt效果预览
+- **配置模式切换** - 简单/高级配置模式，适应不同用户需求
+- **上下文压缩** - 智能压缩策略，优化token使用效率
+- **模板导入导出** - 批量管理和团队协作功能
+
+### 8. ⚙️ 系统设置中心 (Settings)
+> **实现路径：** `src/pages/Settings.tsx`
+
+**📋 完整系统配置管理：**
+- **个人信息管理** - 用户头像、姓名、邮箱、角色设置
+- **系统参数配置** - 数据库连接、API端点、服务配置
+- **UI主题设置** - 暗色/明亮主题切换、语言选择
+- **通知设置** - 邮件通知、浏览器推送、工作时间设定
+- **数据导入导出** - 配置备份、一键还原、迁移工具
+- **安全设置** - 密码修改、双因子认证、会话管理
+
+### 9. 🧠 上下文工程 (ContextEngineering)
+> **实现路径：** `src/components/ContextEngineering.tsx`
+
+**🔧 智能上下文管理：**
+- **压缩策略配置** - 截断、摘要、提取多种压缩算法
+- **触发条件设置** - 基于轮次、token数量的智能触发
+- **Slot注入管理** - 动态参数注入、错误处理机制
+- **模块序列化** - 自定义模块执行顺序和依赖关系
+- **记忆系统集成** - 跨会话记忆读写、事实提取
 
 ## 🔐 权限管理
 
@@ -267,10 +325,10 @@ npm run build
 ### Docker 部署
 ```bash
 # 构建镜像
-docker build -t cogvision-admin .
+docker build -t kingsoft-admin .
 
 # 运行容器
-docker run -p 80:80 cogvision-admin
+docker run -p 80:80 kingsoft-admin
 ```
 
 ### Kubernetes 部署
@@ -299,55 +357,65 @@ kubectl apply -f k8s/
 
 ## 📈 路线图
 
-### 🎯 V2.0 - 企业级平台 (当前版本 ✅)
+### 🎯 V2.1 - 智能工程平台 (当前版本 ✅)
 > **基于实际实现的完整功能清单**
 
 #### 核心页面模块 (100%完成)
 - [x] **实时监控仪表盘** - 四大指标、Token成本分析、系统健康监控
-- [x] **数字员工管理** - 记忆系统、知识图谱、导师汇报机制  
-- [x] **会话查询追溯** - 智能搜索、对话流可视化、用户映射
+- [x] **数字员工管理** - 记忆系统、知识图谱、导师汇报机制、身份认证
+- [x] **增强会话查询** - 智能搜索、对话流可视化、用户映射、会话详情
 - [x] **A/B测试管理** - 贝叶斯统计、三层指标、可解释性分析
 - [x] **数据分析中心** - 多维筛选、成本分析、错误监控
 - [x] **MCP工具管理** - 全生命周期、多协议支持、安全沙箱
+- [x] **Prompt工程平台** - 模板库、Slot注入、实时预览、上下文压缩
+- [x] **系统设置中心** - 个人信息、系统配置、主题切换、通知管理
+- [x] **身份认证系统** - 用户登录、权限控制、会话管理
 
-#### 技术架构特性 (100%完成)  
-- [x] **52个UI组件** - 完整设计系统、响应式布局
-- [x] **752行类型定义** - 完整TypeScript类型体系
-- [x] **企业级数据模型** - 记忆系统、知识图谱、工具管理
+#### 技术架构特性 (100%完成)
+- [x] **50+个UI组件** - 完整设计系统、响应式布局
+- [x] **62K+行代码** - 完整TypeScript类型体系和业务实现
+- [x] **企业级数据模型** - 记忆系统、知识图谱、工具管理、系统配置
 - [x] **贝叶斯统计引擎** - 科学A/B测试分析能力
 - [x] **模块化架构** - 高度解耦的组件系统
+- [x] **Context工程系统** - 智能压缩、Slot管理、模块序列化
+- [x] **状态管理系统** - Zustand集成、Immer不可变更新
 
 #### 用户体验优化 (100%完成)
 - [x] **实时搜索筛选** - 多维度智能搜索
 - [x] **交互式可视化** - 动态图表、进度条、状态指示
 - [x] **移动端适配** - 完整的响应式设计
 - [x] **无障碍支持** - 语义化HTML、键盘导航
+- [x] **主题系统** - 暗色/明亮模式切换
+- [x] **多语言支持** - 国际化基础设施
 
-### 🚀 V2.1 - 智能化增强 (规划中)
-- [ ] **智能告警系统** - 基于机器学习的异常检测
-- [ ] **自动优化建议** - AI驱动的性能优化建议  
-- [ ] **高级图表集成** - Recharts/D3.js可视化升级
-- [ ] **实时协作功能** - 多用户协同操作
+### 🚀 V2.2 - 高级智能化 (规划中)
+- [ ] **智能告警系统** - 基于机器学习的异常检测和预警
+- [ ] **AI驱动优化** - 自动化Prompt优化建议和性能调优
+- [ ] **高级数据可视化** - D3.js深度集成、交互式大屏展示
+- [ ] **实时协作平台** - WebSocket多用户实时协作、共享Prompt编辑
+- [ ] **性能监控增强** - APM集成、实时性能分析、资源优化
 
-### 🔮 V2.2 - 生态扩展 (未来愿景)
-- [ ] **多租户架构** - 企业级SaaS支持
-- [ ] **插件生态系统** - 第三方工具集成框架
-- [ ] **国际化支持** - 多语言界面和时区支持  
-- [ ] **开放API平台** - 完整的开发者生态
+### 🔮 V2.3 - 企业生态 (未来构望)
+- [ ] **多租户SaaS架构** - 组织级数据隔离、计费系统、资源管理
+- [ ] **插件生态平台** - 第三方工具集成框架、API市场、SDK开发套件
+- [ ] **全球化部署** - 多地域部署、CDN加速、本地化数据处理
+- [ ] **开放生态API** - GraphQL API、Webhook系统、第三方集成平台
+- [ ] **企业级安全** - SSO集成、权限细化控制、审计日志、数据加密
 
-### 🎨 V3.0 - AI Native平台 (长期愿景)
-- [ ] **AI Assistant集成** - 平台内置智能助手
-- [ ] **自动化运维** - 智能故障诊断和修复
-- [ ] **预测性分析** - 基于历史数据的趋势预测
-- [ ] **知识图谱AI** - 自动化知识提取和关联
+### 🎨 V3.0 - AI Native智能平台 (长期愿景)
+- [ ] **平台内置AI助手** - 智能问答、操作建议、问题诊断助手
+- [ ] **自主运维系统** - 自动故障检测、智能修复、系统自治
+- [ ] **预测分析引擎** - 用户行为预测、趋势分析、业务智能建议
+- [ ] **知识图谱AI** - 自动化知识提取、关系挖掘、智能关联推荐
+- [ ] **对话AI优化** - 实时指令优化、上下文感知增强、多模态交互
 
 ## 🐛 问题反馈
 
 如果您遇到任何问题或有改进建议，请通过以下方式联系我们：
 
-- [GitHub Issues](https://github.com/your-org/cogvision-admin/issues)
-- [技术支持邮箱](mailto:support@cogvision.com)
-- [在线文档](https://docs.cogvision.com)
+- [GitHub Issues](https://github.com/your-org/kingsoft-admin/issues)
+- [技术支持邮箱](mailto:support@kingsoft.com)
+- [在线文档](https://docs.kingsoft.com)
 
 ## 📄 许可证
 
@@ -366,5 +434,5 @@ kubectl apply -f k8s/
 <div align="center">
   <p>由 ❤️ 制作 | © 2024 KingSoft Team</p>
   
-  [![Star History Chart](https://api.star-history.com/svg?repos=your-org/cogvision-admin&type=Date)](https://star-history.com/#your-org/cogvision-admin&Date)
+  [![Star History Chart](https://api.star-history.com/svg?repos=your-org/kingsoft-admin&type=Date)](https://star-history.com/#your-org/kingsoft-admin&Date)
 </div>

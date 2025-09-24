@@ -38,8 +38,6 @@ const DigitalEmployeeDetail: React.FC = () => {
   // 状态管理
   const [employee, setEmployee] = useState<DigitalEmployee | null>(null);
   const [activeTab, setActiveTab] = useState<'config' | 'knowledge' | 'metrics' | 'evolution'>('config');
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedEmployee, setEditedEmployee] = useState<DigitalEmployee | null>(null);
   const [loading, setLoading] = useState(true);
 
   // 加载员工数据
@@ -63,40 +61,12 @@ const DigitalEmployeeDetail: React.FC = () => {
     }
   }, [id, navigate]);
 
-  // 编辑操作处理
-  const handleEdit = () => {
-    setIsEditing(true);
-    setEditedEmployee(employee ? { ...employee } : null);
-  };
-
-  const handleSave = () => {
-    if (editedEmployee) {
-      setEmployee(editedEmployee);
-      setIsEditing(false);
-      // 这里可以添加API调用来保存数据
-      console.log('保存员工信息:', editedEmployee);
-    }
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
-    setEditedEmployee(null);
-  };
-
-  const handleFieldChange = (field: string, value: any) => {
-    if (editedEmployee) {
-      setEditedEmployee({
-        ...editedEmployee,
-        [field]: value
-      });
-    }
-  };
 
   // 状态徽章样式
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       active: { label: '运行中', variant: 'success' as const },
-      disabled: { label: '已停用', variant: 'warning' as const },
+      disabled: { label: '已停用', variant: 'secondary' as const },
       retired: { label: '已下线', variant: 'neutral' as const }
     };
 
@@ -125,12 +95,6 @@ const DigitalEmployeeDetail: React.FC = () => {
         return (
           <ConfigurationCenter
             employee={employee}
-            editedEmployee={editedEmployee}
-            isEditing={isEditing}
-            onEdit={handleEdit}
-            onSave={handleSave}
-            onCancel={handleCancel}
-            onFieldChange={handleFieldChange}
             getStatusBadge={getStatusBadge}
           />
         );
@@ -314,32 +278,6 @@ const DigitalEmployeeDetail: React.FC = () => {
           >
             导出配置
           </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleEdit}
-            disabled={isEditing}
-          >
-            {isEditing ? '编辑中' : '编辑'}
-          </Button>
-          {isEditing && (
-            <>
-              <Button
-                variant="success"
-                size="sm"
-                onClick={handleSave}
-              >
-                保存
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCancel}
-              >
-                取消
-              </Button>
-            </>
-          )}
         </div>
       </div>
 

@@ -28,15 +28,10 @@ import PromptConfig from '../../features/employee-creation/components/stages/adv
 import ToolConfig from '../../features/employee-creation/components/stages/advanced/ToolConfig';
 import MentorConfig from '../../features/employee-creation/components/stages/advanced/MentorConfig';
 import { ConfigVersionManager } from './ConfigVersionManager';
+import EditableConfigSection from './EditableConfigSection';
 
 interface ConfigurationCenterProps {
   employee: DigitalEmployee;
-  editedEmployee: DigitalEmployee | null;
-  isEditing: boolean;
-  onEdit: () => void;
-  onSave: () => void;
-  onCancel: () => void;
-  onFieldChange: (field: keyof DigitalEmployee, value: any) => void;
   getStatusBadge: (status: string) => React.ReactNode;
 }
 
@@ -54,12 +49,6 @@ interface ConfigSection {
 
 const ConfigurationCenter: React.FC<ConfigurationCenterProps> = ({
   employee,
-  editedEmployee,
-  isEditing,
-  onEdit,
-  onSave,
-  onCancel,
-  onFieldChange,
   getStatusBadge
 }) => {
   const [activeSection, setActiveSection] = useState<string>('basic-info');
@@ -71,7 +60,7 @@ const ConfigurationCenter: React.FC<ConfigurationCenterProps> = ({
 
   // 检查配置完成状态
   const getCompletionStatus = (sectionId: string): boolean => {
-    const currentEmployee = editedEmployee || employee;
+    const currentEmployee = employee;
 
     switch (sectionId) {
       case 'basic-info':
@@ -178,7 +167,7 @@ const ConfigurationCenter: React.FC<ConfigurationCenterProps> = ({
 
   // 获取当前配置数据（用于高级配置）
   const getAdvancedConfig = () => {
-    const currentEmployee = editedEmployee || employee;
+    const currentEmployee = employee;
     return {
       persona: {
         systemPrompt: currentEmployee.persona?.systemPrompt || '',
@@ -224,68 +213,37 @@ const ConfigurationCenter: React.FC<ConfigurationCenterProps> = ({
     };
   };
 
-  // 处理配置更新
+  // 处理配置更新 - 临时禁用，等待重构为独立编辑状态
   const handleConfigChange = (configType: string, updates: any) => {
-    if (isEditing && onFieldChange) {
-      switch (configType) {
-        case 'persona':
-          onFieldChange('persona', { ...employee.persona, ...updates });
-          break;
-        case 'prompt':
-          onFieldChange('promptConfig', updates);
-          break;
-        case 'mentor':
-          if (updates.enabled) {
-            onFieldChange('mentorConfig', {
-              mentorId: updates.mentor.id,
-              mentorName: updates.mentor.name,
-              reportingCycle: updates.reporting.schedule,
-              reportingMethod: updates.reporting.method
-            });
-          } else {
-            onFieldChange('mentorConfig', undefined);
-          }
-          break;
-        case 'tools':
-          onFieldChange('permissions', {
-            ...employee.permissions,
-            allowedTools: updates.selectedTools
-          });
-          break;
-      }
-    }
+    // TODO: 重构为独立的编辑状态管理
+    console.log('配置更新:', configType, updates);
   };
 
   // 渲染配置内容
   const renderSectionContent = () => {
-    const currentEmployee = editedEmployee || employee;
+    const currentEmployee = employee;
 
     switch (activeSection) {
       case 'basic-info':
         return (
           <BasicInfoSection
             employee={employee}
-            editedEmployee={editedEmployee}
-            isEditing={isEditing}
-            onEdit={onEdit}
-            onSave={onSave}
-            onCancel={onCancel}
-            onFieldChange={onFieldChange}
             getStatusBadge={getStatusBadge}
           />
         );
 
       case 'persona':
         return (
-          <div className="bg-white p-6 rounded-lg border border-gray-200">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <User className="h-6 w-6 text-purple-600" />
-                <div>
-                  <h4 className="text-lg font-semibold">人设定义</h4>
-                  <p className="text-sm text-gray-600">设定数字员工的角色特征、性格和行为模式</p>
-                </div>
-              </div>
+          <EditableConfigSection
+            title="人设定义"
+            description="设定数字员工的角色特征、性格和行为模式"
+            icon={User}
+            iconColor="text-purple-600"
+            onSave={async (data) => {
+              // TODO: 实现保存persona配置的API调用
+              console.log('保存persona配置:', data);
+            }}
+            rightActions={
               <button
                 onClick={() => setActiveSection('prompt')}
                 className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm"
@@ -293,12 +251,21 @@ const ConfigurationCenter: React.FC<ConfigurationCenterProps> = ({
                 <FileText className="h-4 w-4" />
                 查看Prompt配置
               </button>
-            </div>
-            <PersonaConfig
-              config={getAdvancedConfig().persona}
-              onChange={(updates) => handleConfigChange('persona', updates)}
-            />
-          </div>
+            }
+          >
+            {(isEditing, onSave) => (
+              <div className={isEditing ? '' : 'pointer-events-none opacity-75'}>
+                <PersonaConfig
+                  config={getAdvancedConfig().persona}
+                  onChange={(updates) => {
+                    if (isEditing) {
+                      onSave(updates);
+                    }
+                  }}
+                />
+              </div>
+            )}
+          </EditableConfigSection>
         );
 
       case 'prompt':
@@ -316,7 +283,7 @@ const ConfigurationCenter: React.FC<ConfigurationCenterProps> = ({
                 {/* 当前人设摘要 */}
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 text-purple-700 rounded-lg text-sm">
                   <User className="h-4 w-4" />
-                  <span>当前人设: {(editedEmployee || employee).persona?.systemPrompt ? '已配置' : '未配置'}</span>
+                  <span>当前人设: {employee.persona?.systemPrompt ? '已配置' : '未配置'}</span>
                 </div>
                 <button
                   onClick={() => setActiveSection('persona')}
@@ -421,11 +388,6 @@ const ConfigurationCenter: React.FC<ConfigurationCenterProps> = ({
           <h3 className="text-lg font-semibold text-gray-900">配置中心</h3>
           <p className="text-sm text-gray-600">统一管理数字员工的所有配置项</p>
         </div>
-        {isEditing && (
-          <span className="ml-auto bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
-            编辑模式
-          </span>
-        )}
       </div>
 
       <div className="grid grid-cols-12 gap-6">
