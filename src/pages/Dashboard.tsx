@@ -403,7 +403,7 @@ const Dashboard = () => {
             icon={Users}
             trend="up"
             trendValue="+12%"
-            color="blue"
+            color="primary"
           />
           
           <MetricCard
@@ -412,7 +412,7 @@ const Dashboard = () => {
             icon={CheckCircle}
             trend="up"
             trendValue="+3.2%"
-            color="green"
+            color="success"
           />
           
           <MetricCard
@@ -421,7 +421,7 @@ const Dashboard = () => {
             icon={Clock}
             trend="down"
             trendValue="-15%"
-            color="green"
+            color="success"
           />
           
           <MetricCard
@@ -430,7 +430,7 @@ const Dashboard = () => {
             icon={Coins}
             trend="down"
             trendValue="-8%"
-            color="green"
+            color="success"
           />
         </div>
 

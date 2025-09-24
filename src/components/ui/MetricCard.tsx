@@ -8,23 +8,22 @@ export interface MetricCardProps {
   icon?: React.ComponentType<{ className?: string }>;
   trend?: 'up' | 'down';
   trendValue?: string;
-  color?: 'blue' | 'green' | 'red' | 'yellow' | 'purple';
+  color?: 'primary' | 'success' | 'error' | 'neutral';
   className?: string;
 }
 
 const MetricCard = React.forwardRef<HTMLDivElement, MetricCardProps>(
-  ({ title, value, icon: Icon, trend, trendValue, color = 'blue', className, ...props }, ref) => {
+  ({ title, value, icon: Icon, trend, trendValue, color = 'neutral', className, ...props }, ref) => {
     const iconColorClasses = {
-      blue: 'bg-primary-50 text-primary-600',
-      green: 'bg-success-50 text-success-600',
-      red: 'bg-error-50 text-error-600',
-      yellow: 'bg-warning-50 text-warning-600',
-      purple: 'bg-purple-50 text-purple-600'
+      primary: 'bg-gray-100 text-primary',
+      success: 'bg-gray-100 text-success',
+      error: 'bg-gray-100 text-error',
+      neutral: 'bg-gray-100 text-gray-600'
     };
 
     const trendColorClasses = {
-      up: 'text-success-600',
-      down: 'text-error-600'
+      up: 'text-success',
+      down: 'text-error'
     };
 
     return (

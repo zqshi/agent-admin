@@ -1,9 +1,9 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
-import { cn } from '../../utils/cn';
+import { cn } from '@/lib/utils';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'ghost';
+  variant?: 'default' | 'primary' | 'secondary' | 'success' | 'error' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   children: React.ReactNode;
@@ -14,10 +14,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const baseClasses = 'btn';
     
     const variantClasses = {
+      default: 'btn-primary',
       primary: 'btn-primary',
-      secondary: 'btn-secondary', 
+      secondary: 'btn-secondary',
       success: 'btn-success',
-      warning: 'btn-warning',
       error: 'btn-error',
       ghost: 'btn-ghost'
     };

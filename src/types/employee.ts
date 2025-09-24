@@ -258,6 +258,8 @@ export interface GraphRelation {
   type: string;
   properties: Record<string, any>;
   confidence: number;
+  strength?: number;
+  label?: string;
 }
 
 export interface MemoryEntry {
@@ -279,6 +281,25 @@ export interface PromptEngineeringConfig {
   templateName?: string;
   basePrompt: string;
   slots: SlotDefinition[];
+  templates?: Array<{
+    id: string;
+    name: string;
+    content: string;
+    category: string;
+  }>;
+  compression?: {
+    enabled: boolean;
+    strategy: 'adaptive' | 'truncate' | 'summarize';
+    triggerThreshold?: number;
+    preserveQuality?: boolean;
+    maxCompressionRatio?: number;
+  };
+  errorHandling?: {
+    enabled: boolean;
+    retryCount: number;
+    fallbackResponse: string;
+    logErrors: boolean;
+  };
   injectionStrategy?: InjectionStrategy;
   compressionConfig?: CompressionConfig;
   contextConfig?: {
@@ -312,7 +333,10 @@ export interface InjectionStrategy {
 
 export interface CompressionConfig {
   enabled: boolean;
-  strategy: 'truncate' | 'summarize' | 'compress';
+  strategy: 'truncate' | 'summarize' | 'compress' | 'adaptive';
   maxTokens: number;
   preserveImportant: boolean;
+  triggerThreshold?: number;
+  preserveQuality?: boolean;
+  maxCompressionRatio?: number;
 }

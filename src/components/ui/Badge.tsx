@@ -1,25 +1,26 @@
 import React from 'react';
-import { cn } from '../../utils/cn';
+import { cn } from '@/lib/utils';
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'success' | 'warning' | 'error' | 'info' | 'gray';
+  variant?: 'default' | 'secondary' | 'outline' | 'success' | 'error' | 'neutral';
   children: React.ReactNode;
 }
 
 const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
-  ({ className, variant = 'gray', children, ...props }, ref) => {
+  ({ className, variant = 'default', children, ...props }, ref) => {
     const variantClasses = {
-      success: 'badge-success',
-      warning: 'badge-warning',
-      error: 'badge-error',
-      info: 'badge-info',
-      gray: 'badge-gray'
+      default: 'badge text-gray-900 bg-white shadow-base',
+      secondary: 'badge text-gray-600 bg-gray-100',
+      outline: 'badge text-gray-600 bg-transparent border border-gray-200',
+      success: 'badge text-white bg-success shadow-base',
+      error: 'badge text-white bg-error shadow-base',
+      neutral: 'badge text-gray-600 bg-gray-100'
     };
 
     return (
       <div
         ref={ref}
-        className={cn('badge', variantClasses[variant], className)}
+        className={cn(variantClasses[variant], className)}
         {...props}
       >
         {children}

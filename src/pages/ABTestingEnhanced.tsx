@@ -461,28 +461,28 @@ const ABTestingEnhancedUpdated: React.FC = () => {
                 title="总实验"
                 value={stats.total}
                 icon={BarChart3}
-                color="blue"
+                color="primary"
               />
               
               <MetricCard
                 title="进行中"
                 value={stats.running}
                 icon={Play}
-                color="green"
+                color="success"
               />
               
               <MetricCard
                 title="AI创建"
                 value={stats.aiCreated}
                 icon={Bot}
-                color="purple"
+                color="neutral"
               />
               
               <MetricCard
                 title="总支出"
                 value={`$${stats.totalBudget.toFixed(0)}`}
                 icon={DollarSign}
-                color="yellow"
+                color="neutral"
               />
             </div>
             

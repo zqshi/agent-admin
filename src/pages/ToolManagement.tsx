@@ -20,17 +20,17 @@ import {
 } from '../components/ui';
 
 // 状态映射
-const getStatusBadgeVariant = (status: MCPToolStatus): 'success' | 'warning' | 'error' | 'info' | 'gray' => {
+const getStatusBadgeVariant = (status: MCPToolStatus): 'success' | 'error' | 'neutral' => {
   const variants = {
-    draft: 'gray' as const,
-    configuring: 'info' as const,
-    testing: 'warning' as const,
-    pending_release: 'info' as const,
+    draft: 'neutral' as const,
+    configuring: 'neutral' as const,
+    testing: 'neutral' as const,
+    pending_release: 'neutral' as const,
     published: 'success' as const,
     maintenance: 'error' as const,
-    retired: 'gray' as const
+    retired: 'neutral' as const
   };
-  return variants[status] || 'gray';
+  return variants[status] || 'neutral';
 };
 
 // 状态中文映射
@@ -280,28 +280,28 @@ const ToolManagement: React.FC = () => {
             title="总工具数"
             value={mockToolUsageStats.totalTools}
             icon={Settings}
-            color="blue"
+            color="primary"
           />
           
           <MetricCard
             title="已发布"
             value={mockToolUsageStats.publishedTools}
             icon={Play}
-            color="green"
+            color="success"
           />
           
           <MetricCard
             title="测试中"
             value={mockToolUsageStats.testingTools}
             icon={Pause}
-            color="yellow"
+            color="neutral"
           />
           
           <MetricCard
             title="平均响应时间"
             value={`${mockToolUsageStats.avgResponseTime}ms`}
             icon={Eye}
-            color="purple"
+            color="neutral"
           />
         </div>
 
@@ -382,7 +382,7 @@ const ToolManagement: React.FC = () => {
                         </p>
                         <div className="flex flex-wrap gap-1 mt-2">
                           {tool.tags.slice(0, 3).map((tag, index) => (
-                            <Badge key={index} variant="info">
+                            <Badge key={index} variant="neutral">
                               {tag}
                             </Badge>
                           ))}

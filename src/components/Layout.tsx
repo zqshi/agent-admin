@@ -52,13 +52,13 @@ const Layout = ({ children }: LayoutProps) => {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-25">
+    <div className="flex h-screen bg-gray-50">
       {/* 苹果风格侧边栏 */}
-      <div className="w-64 bg-white shadow-apple border-r border-gray-100" style={{backdropFilter: 'blur(20px)', backgroundColor: 'rgba(255, 255, 255, 0.95)'}}>
+      <div className="w-64 bg-white shadow-base" style={{backgroundColor: '#FFFFFF'}}>
         {/* 苹果风格 Logo */}
         <div className="flex items-center px-8 py-6 border-b border-gray-100">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-600 shadow-lg">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl shadow-base" style={{backgroundColor: '#0066FF'}}>
               <Brain className="h-7 w-7 text-white" />
             </div>
             <div>
@@ -81,8 +81,8 @@ const Layout = ({ children }: LayoutProps) => {
                   cn(
                     'flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all duration-300',
                     isActive
-                      ? 'bg-primary-50 text-primary-700 shadow-apple'
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-gray-100 text-gray-900 shadow-base'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                   )
                 }
                 style={{
@@ -98,7 +98,7 @@ const Layout = ({ children }: LayoutProps) => {
         </nav>
         
         {/* 苹果风格底部设置 */}
-        <div className="absolute bottom-0 left-0 w-64 p-6 border-t border-gray-100 bg-white" style={{backdropFilter: 'blur(20px)', backgroundColor: 'rgba(255, 255, 255, 0.95)'}}>
+        <div className="absolute bottom-0 left-0 w-64 p-6 border-t border-gray-100 bg-white">
           <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 rounded-xl w-full transition-all duration-300" style={{fontWeight: 500, letterSpacing: '-0.005em'}}>
             <Settings className="h-5 w-5 flex-shrink-0" />
             <span>设置</span>

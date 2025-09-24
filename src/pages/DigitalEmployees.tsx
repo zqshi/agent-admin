@@ -144,28 +144,28 @@ const DigitalEmployees = () => {
             title="总数字员工"
             value={employees.length}
             icon={User}
-            color="blue"
+            color="primary"
           />
           
           <MetricCard
             title="运行中"
             value={employees.filter(e => e.status === 'active').length}
             icon={Play}
-            color="green"
+            color="success"
           />
           
           <MetricCard
             title="已禁用"
             value={employees.filter(e => e.status === 'disabled').length}
             icon={Pause}
-            color="yellow"
+            color="neutral"
           />
           
           <MetricCard
             title="活跃部门"
             value={departments.length}
             icon={Building2}
-            color="purple"
+            color="neutral"
           />
         </div>
 
