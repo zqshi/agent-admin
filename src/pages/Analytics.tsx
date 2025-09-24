@@ -268,7 +268,7 @@ const Analytics = () => {
             <RefreshCw className="h-4 w-4" />
             刷新
           </Button>
-          <Button variant="secondary">
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white">
             <Download className="h-4 w-4" />
             导出
           </Button>

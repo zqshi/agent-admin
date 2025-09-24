@@ -18,6 +18,7 @@ import { errorHandler, generateSessionId, getUserAgent } from '../services/error
 // 导入UI组件
 import { PageLayout, PageHeader, PageContent } from '../components/ui/PageLayout';
 import { MetricCard } from '../components/ui/MetricCard';
+import { Button } from '../components/ui/Button';
 
 // 导入类型定义
 import { ABTest } from '../types';
@@ -400,23 +401,23 @@ const ABTestingEnhancedUpdated: React.FC = () => {
       >
         {/* 主要操作按钮 */}
         <div className="flex items-center gap-3">
-          <button
+          <Button
             onClick={() => setShowCreateExperiment(true)}
             disabled={systemConfig.experimentCreation.requiresHumanCreation === false}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="h-4 w-4" />
             创建实验
-          </button>
+          </Button>
           
-          <button
+          <Button
             onClick={() => setShowNLExperimentCreator(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg"
+            className="bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg"
           >
             <Wand2 className="h-4 w-4" />
             <Sparkles className="h-3 w-3" />
             智能创建
-          </button>
+          </Button>
           
           {!systemConfig.experimentCreation.requiresHumanCreation && (
             <div className="flex items-center gap-1 px-3 py-2 bg-purple-100 text-purple-800 rounded-lg text-sm">

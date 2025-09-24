@@ -263,7 +263,10 @@ const ToolManagement: React.FC = () => {
         title="工具管理"
         subtitle="MCP协议工具的全生命周期管理"
       >
-        <Button onClick={() => setShowCreateModal(true)}>
+        <Button
+          onClick={() => setShowCreateModal(true)}
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+        >
           <Plus className="h-4 w-4" />
           注册新工具
         </Button>
