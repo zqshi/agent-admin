@@ -5,7 +5,7 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import SessionsEnhanced from './pages/SessionsEnhanced';
 import DigitalEmployees from './pages/DigitalEmployees';
-import DigitalEmployeeDetail from './pages/DigitalEmployeeDetail';
+import DigitalEmployeeDetail from './pages/DigitalEmployeeDetailRefactored';
 import ABTestingEnhanced from './pages/ABTestingEnhanced';
 import Analytics from './pages/Analytics';
 import ToolManagement from './pages/ToolManagement';

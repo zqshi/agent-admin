@@ -3,21 +3,17 @@
  */
 
 import React, { useState } from 'react';
-import { Settings, User, FileText, BookOpen, Wrench, Users, CheckCircle, Brain, Sparkles } from 'lucide-react';
+import { Settings, User, FileText, BookOpen, Users, CheckCircle, Brain, Sparkles, Layers } from 'lucide-react';
 import type { DigitalEmployee } from '../../types/employee';
 
 // 导入创建流程的配置组件
-import PersonaConfig from '../../features/employee-creation/components/stages/advanced/PersonaConfig';
 import PromptConfig from '../../features/employee-creation/components/stages/advanced/PromptConfig';
 import KnowledgeConfig from '../../features/employee-creation/components/stages/advanced/KnowledgeConfig';
-import ToolConfig from '../../features/employee-creation/components/stages/advanced/ToolConfig';
 import MentorConfig from '../../features/employee-creation/components/stages/advanced/MentorConfig';
+import DomainManagement from './DomainManagement';
 
 interface AdvancedConfigSectionProps {
   employee: DigitalEmployee;
-  editedEmployee: DigitalEmployee | null;
-  isEditing: boolean;
-  onFieldChange: (field: keyof DigitalEmployee, value: any) => void;
 }
 
 // 高级配置Tab定义
@@ -32,24 +28,43 @@ interface AdvancedTab {
 }
 
 const AdvancedConfigSection: React.FC<AdvancedConfigSectionProps> = ({
-  employee,
-  editedEmployee,
-  isEditing,
-  onFieldChange
+  employee
 }) => {
+  // 内部编辑状态管理
+  const [isInternalEditing, setIsInternalEditing] = useState(false);
+  const [internalEditedEmployee, setInternalEditedEmployee] = useState<DigitalEmployee | null>(null);
+
   // 当前活跃的Tab
-  const [activeTab, setActiveTab] = useState<string>('persona');
+  const [activeTab, setActiveTab] = useState<string>('prompt');
+
+  // 内部编辑控制方法
+  const handleInternalEdit = () => {
+    setIsInternalEditing(true);
+    setInternalEditedEmployee({ ...employee });
+  };
+
+  const handleInternalSave = () => {
+    if (internalEditedEmployee) {
+      // 这里应该调用API保存数据
+      console.log('保存高级配置:', internalEditedEmployee);
+
+      // 实际项目中这里应该调用API更新员工数据
+      // await updateEmployeeAdvancedConfig(employee.id, internalEditedEmployee);
+
+      setIsInternalEditing(false);
+      setInternalEditedEmployee(null);
+    }
+  };
+
+  const handleInternalCancel = () => {
+    setIsInternalEditing(false);
+    setInternalEditedEmployee(null);
+  };
 
   // 模拟高级配置数据结构 - 从员工数据中提取
   const getAdvancedConfig = () => {
-    const currentEmployee = editedEmployee || employee;
+    const currentEmployee = internalEditedEmployee || employee;
     return {
-      persona: {
-        systemPrompt: currentEmployee.persona?.systemPrompt || '',
-        characterBackground: '',
-        constraints: [],
-        examples: currentEmployee.persona?.exampleDialogues || []
-      },
       prompt: {
         templates: currentEmployee.promptConfig?.templates || [],
         slots: currentEmployee.promptConfig?.slots || [],
@@ -71,11 +86,6 @@ const AdvancedConfigSection: React.FC<AdvancedConfigSectionProps> = ({
         retention: { enabled: false, strategy: 'internalize' as const, updateFrequency: 'realtime' as const },
         knowledgeBase: { type: 'internal' as const, internalSources: [], externalAPIs: [] },
         knowledgeGraph: { enabled: false, autoGenerate: false, updateTrigger: 'manual' as const, visualization: false }
-      },
-      tools: {
-        recommendedTools: [],
-        selectedTools: currentEmployee.permissions?.allowedTools || [],
-        usagePolicy: { requireConfirmation: false, loggingLevel: 'basic' as const }
       },
       mentor: {
         enabled: !!currentEmployee.mentorConfig,
@@ -100,14 +110,10 @@ const AdvancedConfigSection: React.FC<AdvancedConfigSectionProps> = ({
     const advancedConfig = getAdvancedConfig();
 
     switch (tabId) {
-      case 'persona':
-        return advancedConfig.persona?.systemPrompt?.length > 0;
       case 'prompt':
         return advancedConfig.prompt?.templates?.length > 0;
       case 'knowledge':
         return advancedConfig.knowledge?.faq?.items?.length > 0;
-      case 'tools':
-        return advancedConfig.tools?.selectedTools?.length > 0;
       case 'mentor':
         return advancedConfig.mentor?.enabled === true;
       default:
@@ -118,16 +124,8 @@ const AdvancedConfigSection: React.FC<AdvancedConfigSectionProps> = ({
   // Tab配置定义
   const advancedTabs: AdvancedTab[] = [
     {
-      id: 'persona',
-      title: '人设配置',
-      description: '系统提示词、角色背景、行为约束',
-      icon: User,
-      component: PersonaConfig,
-      isOptional: false
-    },
-    {
       id: 'prompt',
-      title: 'Prompt配置',
+      title: 'Prompt工程',
       description: '模板管理、Slot注入、压缩策略',
       icon: FileText,
       component: PromptConfig,
@@ -142,14 +140,15 @@ const AdvancedConfigSection: React.FC<AdvancedConfigSectionProps> = ({
       component: KnowledgeConfig,
       isOptional: true
     },
-    {
-      id: 'tools',
-      title: '工具管理',
-      description: '工具选择、权限配置、使用策略',
-      icon: Wrench,
-      component: ToolConfig,
-      isOptional: true
-    },
+    ...(employee.enableMultiDomain ? [{
+      id: 'domains',
+      title: '领域管理',
+      description: '多领域配置、路由策略、权重分配',
+      icon: Layers,
+      component: DomainManagement,
+      isOptional: true,
+      badge: '多领域'
+    }] : []),
     {
       id: 'mentor',
       title: '导师机制',
@@ -173,51 +172,102 @@ const AdvancedConfigSection: React.FC<AdvancedConfigSectionProps> = ({
   const handleConfigChange = (configType: string, updates: any) => {
     // 这里需要将配置更新映射到员工数据结构
     // 实际项目中可能需要更复杂的映射逻辑
-    if (isEditing && onFieldChange) {
+    if (isInternalEditing && internalEditedEmployee) {
       // 根据配置类型更新对应的员工字段
       switch (configType) {
-        case 'persona':
-          onFieldChange('persona', { ...employee.persona, ...updates });
-          break;
         case 'prompt':
-          onFieldChange('promptConfig', updates);
+          setInternalEditedEmployee({
+            ...internalEditedEmployee,
+            promptConfig: updates
+          });
+          break;
+        case 'knowledge':
+          // 处理知识配置更新
+          if (updates.faq) {
+            setInternalEditedEmployee({
+              ...internalEditedEmployee,
+              knowledgeBase: {
+                ...internalEditedEmployee.knowledgeBase,
+                faqItems: updates.faq.items
+              }
+            });
+          }
+          break;
+        case 'domains':
+          setInternalEditedEmployee({
+            ...internalEditedEmployee,
+            multiDomainConfig: updates
+          });
           break;
         case 'mentor':
           if (updates.enabled) {
-            onFieldChange('mentorConfig', {
-              mentorId: updates.mentor.id,
-              mentorName: updates.mentor.name,
-              reportingCycle: updates.reporting.schedule,
-              reportingMethod: updates.reporting.method
+            setInternalEditedEmployee({
+              ...internalEditedEmployee,
+              mentorConfig: {
+                mentorId: updates.mentor.id,
+                mentorName: updates.mentor.name,
+                reportingCycle: updates.reporting.schedule,
+                reportingMethod: updates.reporting.method
+              }
             });
           } else {
-            onFieldChange('mentorConfig', undefined);
+            setInternalEditedEmployee({
+              ...internalEditedEmployee,
+              mentorConfig: undefined
+            });
           }
           break;
-        // 其他配置类型...
       }
     }
   };
 
   return (
     <div className="bg-white p-6 rounded-lg border border-gray-200">
-      <div className="flex items-center gap-3 mb-6">
-        <Brain className="h-6 w-6 text-blue-600" />
-        <h3 className="text-lg font-semibold text-gray-900">智能洞察</h3>
-        <div className="flex items-center gap-2">
-          {isEditing && (
-            <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
-              编辑模式
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <Settings className="h-6 w-6 text-blue-600" />
+          <h3 className="text-lg font-semibold text-gray-900">高级技术配置</h3>
+          <div className="flex items-center gap-2">
+            {isInternalEditing && (
+              <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
+                编辑模式
+              </span>
+            )}
+            <span className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 px-2 py-1 rounded-full text-xs">
+              技术配置
             </span>
-          )}
-          <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">
-            高级配置
-          </span>
+          </div>
         </div>
+        {!isInternalEditing ? (
+          <button
+            onClick={handleInternalEdit}
+            className="text-blue-600 hover:text-blue-700 flex items-center gap-1 px-3 py-2 border border-blue-200 rounded-lg hover:bg-blue-50"
+          >
+            <Settings className="h-4 w-4" />
+            编辑
+          </button>
+        ) : (
+          <div className="flex gap-2">
+            <button
+              onClick={handleInternalCancel}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center gap-1"
+            >
+              <Users className="h-4 w-4" />
+              取消
+            </button>
+            <button
+              onClick={handleInternalSave}
+              className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-1"
+            >
+              <CheckCircle className="h-4 w-4" />
+              保存
+            </button>
+          </div>
+        )}
       </div>
 
       <p className="text-gray-600 mb-6">
-        深度配置数字员工的智能能力，包括Prompt工程、多领域管理、导师机制等高级功能。
+        专业的技术配置选项，包括Prompt工程、知识管理、工具集成、多领域管理、导师机制等高级功能。
       </p>
 
       {/* Tab导航 */}
@@ -294,7 +344,22 @@ const AdvancedConfigSection: React.FC<AdvancedConfigSectionProps> = ({
 
         {/* 当前Tab内容 */}
         <div className="px-2">
-          {!isEditing ? (
+          {activeTab === 'domains' ? (
+            // 领域管理使用特殊的组件
+            <CurrentComponent
+              employee={employee}
+              editedEmployee={internalEditedEmployee}
+              isEditing={isInternalEditing}
+              onFieldChange={(field: keyof DigitalEmployee, value: any) => {
+                if (internalEditedEmployee) {
+                  setInternalEditedEmployee({
+                    ...internalEditedEmployee,
+                    [field]: value
+                  });
+                }
+              }}
+            />
+          ) : !isInternalEditing ? (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
               <p className="text-sm text-gray-600 mb-2">
                 📖 查看模式：显示当前配置信息

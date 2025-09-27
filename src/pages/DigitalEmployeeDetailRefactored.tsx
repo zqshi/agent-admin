@@ -1,25 +1,47 @@
 /**
  * 重构后的数字员工详情页面
- * 使用拆分的组件提高可维护性
+ * 支持单领域和多领域双模式架构
  */
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Settings, Database, Brain, Activity, Sparkles, TrendingUp } from 'lucide-react';
+import {
+  ArrowLeft,
+  Settings,
+  Database,
+  Brain,
+  Activity,
+  Sparkles,
+  TrendingUp,
+  BarChart3,
+  Eye,
+  Layers,
+  Network,
+  PieChart
+} from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { DigitalEmployee } from '../types/employee';
 import { mockDigitalEmployees } from '../data/mockDigitalEmployees';
+import { useToast, ToastContainer, DataSourceIndicator } from '../components/common';
 import {
   BasicInfoSection,
   PersonaSection,
   PermissionsSection,
   MetricsSection,
-  KnowledgeManagement,
   AdvancedConfigSection,
-  ConfigVersionManager
+  InsightsCenter,
+  RoleDefinitionSection,
+  CapabilityConfigSection,
+  KnowledgeAssetsSection,
+  RoutingStrategySection,
+  ConfigurationHub,
+  KnowledgeInsightCenter,
+  ResponsibilitySection
 } from '../components/employee-detail';
-import { KnowledgeGraphViewer, KnowledgeEvolutionTimeline } from '../components/knowledge';
+import DomainManagement from '../components/employee-detail/DomainManagement';
+import CoreFeaturesDisplay from '../components/employee-detail/CoreFeaturesDisplay';
+import { KnowledgeGraphViewer } from '../components/knowledge';
 
 const DigitalEmployeeDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -27,16 +49,15 @@ const DigitalEmployeeDetail: React.FC = () => {
 
   // 状态管理
   const [employee, setEmployee] = useState<DigitalEmployee | null>(null);
-  const [activeTab, setActiveTab] = useState<'config' | 'knowledge' | 'metrics' | 'insights' | 'evolution'>('config');
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedEmployee, setEditedEmployee] = useState<DigitalEmployee | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('overview');
+  const [selectedDomainId, setSelectedDomainId] = useState<string>('global');
   const [loading, setLoading] = useState(true);
+  const { messages, toast, removeToast } = useToast();
 
   // 加载员工数据
   useEffect(() => {
     const loadEmployee = () => {
       setLoading(true);
-      // 模拟API调用
       setTimeout(() => {
         const foundEmployee = mockDigitalEmployees.find(emp => emp.id === id);
         if (foundEmployee) {
@@ -53,34 +74,20 @@ const DigitalEmployeeDetail: React.FC = () => {
     }
   }, [id, navigate]);
 
-  // 编辑处理函数
-  const handleEdit = () => {
-    setIsEditing(true);
-    setEditedEmployee(employee ? { ...employee } : null);
-  };
-
-  const handleSave = () => {
-    if (editedEmployee) {
-      setEmployee(editedEmployee);
-      setIsEditing(false);
-      setEditedEmployee(null);
-      // 这里应该调用API保存数据
-      console.log('保存员工数据:', editedEmployee);
+  // 处理知识图谱节点点击
+  const handleNodeClick = (node: any) => {
+    console.log('知识图谱节点被点击:', node);
+    if (node.type === 'concept') {
+      toast.info('概念详情', `${node.name} - 置信度: ${(node.confidence * 100).toFixed(1)}%`);
+    } else {
+      toast.info('节点信息', `${node.name} - 详细信息可在右侧面板查看`);
     }
   };
 
-  const handleCancel = () => {
-    setIsEditing(false);
-    setEditedEmployee(null);
-  };
-
-  const handleFieldChange = (field: keyof DigitalEmployee, value: any) => {
-    if (editedEmployee) {
-      setEditedEmployee({
-        ...editedEmployee,
-        [field]: value
-      });
-    }
+  // 处理知识图谱边点击
+  const handleEdgeClick = (edge: any) => {
+    console.log('知识图谱边被点击:', edge);
+    toast.info('关系信息', `${edge.type} - 强度: ${edge.weight} - ${edge.label || '无标签'}`);
   };
 
   // 状态标签组件
@@ -100,251 +107,128 @@ const DigitalEmployeeDetail: React.FC = () => {
     );
   };
 
-  // Tab配置
-  const tabs = [
-    { id: 'config', label: '配置管理', icon: Settings, description: '基础信息、人设、权限配置' },
-    { id: 'knowledge', label: '知识库', icon: Database, description: '文档、FAQ、自学知识管理' },
-    { id: 'metrics', label: '运行统计', icon: Activity, description: '性能指标、使用统计' },
-    { id: 'insights', label: '智能洞察', icon: Brain, description: '高级配置、Prompt工程、多领域管理', isNew: true },
-    { id: 'evolution', label: '能力演化', icon: Sparkles, description: '知识图谱、演化历史、沉淀策略', isNew: true }
-  ];
+  // 获取统一的Tab配置
+  const getTabs = () => {
+    return [
+      {
+        id: 'overview',
+        label: '总览',
+        icon: Eye,
+        description: '基础信息、状态概览、核心特征展示',
+        type: 'overview'
+      },
+      {
+        id: 'domain-management',
+        label: '领域管理',
+        icon: Layers,
+        description: '多领域配置、路由策略、领域权重管理',
+        type: 'domain'
+      },
+      {
+        id: 'configuration',
+        label: '配置中心',
+        icon: Settings,
+        description: '人设、Prompt、工具、导师等详细配置',
+        type: 'config'
+      },
+      {
+        id: 'knowledge-insights',
+        label: '知识洞察',
+        icon: Network,
+        description: '跨领域知识图谱、智能分析洞察',
+        type: 'knowledge'
+      },
+      {
+        id: 'operational-metrics',
+        label: '运营指标',
+        icon: BarChart3,
+        description: '性能监控、对话分析、优化建议',
+        type: 'metrics'
+      }
+    ];
+  };
+
+  const tabs = getTabs();
 
   // 渲染Tab内容
   const renderTabContent = () => {
     if (!employee) return null;
 
     switch (activeTab) {
-      case 'config':
+      case 'overview':
         return (
           <div className="space-y-6">
             <BasicInfoSection
               employee={employee}
-              editedEmployee={editedEmployee}
-              isEditing={isEditing}
-              onEdit={handleEdit}
-              onSave={handleSave}
-              onCancel={handleCancel}
-              onFieldChange={handleFieldChange}
               getStatusBadge={getStatusBadge}
             />
-            <PersonaSection
+            <ResponsibilitySection
               employee={employee}
-              editedEmployee={editedEmployee}
-              isEditing={isEditing}
-              onFieldChange={handleFieldChange}
+              onEmployeeChange={(updatedEmployee) => {
+                setEmployee(updatedEmployee);
+                toast.success('职责配置更新', '员工职责配置已保存');
+              }}
             />
-            <PermissionsSection
+            <CoreFeaturesDisplay
               employee={employee}
-              editedEmployee={editedEmployee}
-              isEditing={isEditing}
-              onFieldChange={handleFieldChange}
-            />
-          </div>
-        );
-
-      case 'knowledge':
-        return <KnowledgeManagement employee={employee} />;
-
-      case 'metrics':
-        return <MetricsSection employee={employee} />;
-
-      case 'insights':
-        return (
-          <div className="space-y-6">
-            <Tabs defaultValue="config" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="config">高级配置</TabsTrigger>
-                <TabsTrigger value="version">版本管理</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="config" className="mt-6">
-                <AdvancedConfigSection
-                  employee={employee}
-                  editedEmployee={editedEmployee}
-                  isEditing={isEditing}
-                  onFieldChange={handleFieldChange}
-                />
-              </TabsContent>
-
-              <TabsContent value="version" className="mt-6">
-                <ConfigVersionManager
-                  employee={employee}
-                  onVersionRestore={(version) => {
-                    console.log('恢复版本:', version);
-                    // 这里可以实现版本恢复逻辑
-                    // 通常会调用API来恢复指定版本的配置
-                  }}
-                  onSuggestionApply={(suggestion) => {
-                    console.log('应用建议:', suggestion);
-                    // 这里可以实现智能建议应用逻辑
-                    // 根据建议类型执行相应的配置更新
-                  }}
-                />
-              </TabsContent>
-            </Tabs>
-          </div>
-        );
-
-      case 'evolution':
-        // 生成模拟的知识演化事件数据
-        const mockEvolutionEvents = [
-          {
-            id: '1',
-            timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7天前
-            type: 'learning' as const,
-            category: 'knowledge' as const,
-            title: '学习新的技术文档',
-            description: '通过分析用户上传的React Hook文档，掌握了新的状态管理模式',
-            source: '用户文档上传',
-            impact: 'medium' as const,
-            metrics: {
-              knowledgeGain: 85,
-              confidence: 78,
-              applicability: 92
-            },
-            relatedConcepts: ['React Hooks', '状态管理', '函数式组件'],
-            tags: ['前端开发', 'React'],
-            evidences: [
-              { type: 'document' as const, reference: 'react-hooks-guide.pdf', score: 0.85 },
-              { type: 'performance' as const, reference: '问答准确率提升12%', score: 0.78 }
-            ]
-          },
-          {
-            id: '2',
-            timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5天前
-            type: 'interaction' as const,
-            category: 'experience' as const,
-            title: '处理复杂用户查询',
-            description: '成功解决了关于微服务架构设计的复杂问题，获得用户高分评价',
-            source: '用户对话',
-            impact: 'high' as const,
-            metrics: {
-              knowledgeGain: 65,
-              confidence: 88,
-              applicability: 95
-            },
-            relatedConcepts: ['微服务架构', 'API设计', '分布式系统'],
-            tags: ['后端架构', '系统设计'],
-            evidences: [
-              { type: 'conversation' as const, reference: 'conversation-#2847', score: 0.95 },
-              { type: 'feedback' as const, reference: '用户评分5/5星', score: 1.0 }
-            ]
-          },
-          {
-            id: '3',
-            timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3天前
-            type: 'synthesis' as const,
-            category: 'insight' as const,
-            title: '跨领域知识融合',
-            description: '将前端组件设计原理与后端API设计模式相结合，形成了全栈开发的新见解',
-            source: '自主学习',
-            impact: 'high' as const,
-            metrics: {
-              knowledgeGain: 92,
-              confidence: 82,
-              applicability: 87
-            },
-            relatedConcepts: ['全栈开发', '组件设计', 'API设计', '系统架构'],
-            tags: ['全栈', '架构设计', '最佳实践'],
-            evidences: [
-              { type: 'performance' as const, reference: '跨领域问题解答率提升25%', score: 0.87 }
-            ]
-          },
-          {
-            id: '4',
-            timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2天前
-            type: 'refinement' as const,
-            category: 'skill' as const,
-            title: '优化代码生成能力',
-            description: '基于用户反馈，改进了JavaScript代码生成的质量和可读性',
-            source: '反馈学习',
-            impact: 'medium' as const,
-            metrics: {
-              knowledgeGain: 58,
-              confidence: 85,
-              applicability: 90
-            },
-            relatedConcepts: ['代码生成', 'JavaScript', '代码质量'],
-            tags: ['代码生成', 'JavaScript', '优化'],
-            evidences: [
-              { type: 'feedback' as const, reference: '代码质量反馈改善', score: 0.85 },
-              { type: 'performance' as const, reference: '代码可读性评分提升18%', score: 0.90 }
-            ]
-          },
-          {
-            id: '5',
-            timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1天前
-            type: 'milestone' as const,
-            category: 'knowledge' as const,
-            title: '达成专业领域里程碑',
-            description: '在Web开发领域的综合能力评估中达到专家级水平',
-            source: '能力评估',
-            impact: 'high' as const,
-            metrics: {
-              knowledgeGain: 0, // 里程碑事件不直接增加知识
-              confidence: 95,
-              applicability: 98
-            },
-            relatedConcepts: ['Web开发', '专业技能', '综合能力'],
-            tags: ['里程碑', 'Web开发', '专家级'],
-            evidences: [
-              { type: 'performance' as const, reference: '专业能力评估报告', score: 0.95 }
-            ]
-          }
-        ];
-
-        return (
-          <div className="space-y-6">
-            {/* 知识图谱 */}
-            <div className="bg-white rounded-lg border border-gray-200">
-              <KnowledgeGraphViewer
-                data={employee.knowledgeBase?.knowledgeGraph ? {
-                  nodes: employee.knowledgeBase.knowledgeGraph.entities.map(entity => ({
-                    id: entity.id,
-                    name: entity.name,
-                    type: entity.type as any,
-                    x: Math.random() * 600 + 100,
-                    y: Math.random() * 400 + 100,
-                    size: 20 + Math.random() * 15,
-                    confidence: entity.confidence || 0.8,
-                    properties: entity.properties
-                  })),
-                  edges: employee.knowledgeBase.knowledgeGraph.relations.map(relation => ({
-                    id: relation.id,
-                    source: relation.sourceId,
-                    target: relation.targetId,
-                    type: relation.type as any,
-                    weight: relation.strength || 0.5,
-                    label: relation.label
-                  })),
-                  metadata: {
-                    totalNodes: employee.knowledgeBase.knowledgeGraph.entities.length,
-                    totalEdges: employee.knowledgeBase.knowledgeGraph.relations.length,
-                    lastUpdated: employee.knowledgeBase.knowledgeGraph.lastUpdated
-                  }
-                } : null}
-                height={500}
-                interactive={true}
-                showControls={true}
-                onNodeClick={(node) => console.log('Node clicked:', node)}
-                onEdgeClick={(edge) => console.log('Edge clicked:', edge)}
-              />
-            </div>
-
-            {/* 知识演化时间轴 */}
-            <KnowledgeEvolutionTimeline
-              employeeId={employee.id}
-              events={mockEvolutionEvents}
-              onEventClick={(event) => {
-                console.log('Evolution event clicked:', event);
-                // 这里可以添加事件详情查看逻辑
+              onEmployeeChange={(updatedEmployee) => {
+                setEmployee(updatedEmployee);
+                toast.success('核心特征更新', '人格配置已保存');
               }}
             />
           </div>
         );
 
+      case 'domain-management':
+        return (
+          <DomainManagement
+            employee={employee}
+            onEmployeeChange={(updatedEmployee) => {
+              setEmployee(updatedEmployee);
+              toast.success('领域配置更新', '多领域配置已保存');
+            }}
+          />
+        );
+
+      case 'configuration':
+        return (
+          <ConfigurationHub
+            employee={employee}
+            selectedDomainId={selectedDomainId}
+            onDomainChange={setSelectedDomainId}
+            onEmployeeChange={(updatedEmployee) => {
+              setEmployee(updatedEmployee);
+              toast.success('配置更新成功', '员工配置已保存');
+            }}
+          />
+        );
+
+      case 'knowledge-insights':
+        return (
+          <KnowledgeInsightCenter
+            employee={employee}
+            onNodeClick={handleNodeClick}
+            onEdgeClick={handleEdgeClick}
+          />
+        );
+
+      case 'operational-metrics':
+        return (
+          <div className="space-y-6">
+            <MetricsSection employee={employee} />
+            <InsightsCenter employee={employee} />
+          </div>
+        );
+
       default:
-        return null;
+        return (
+          <div className="flex items-center justify-center h-64 text-gray-500">
+            <div className="text-center">
+              <Brain className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <p>该功能正在开发中</p>
+            </div>
+          </div>
+        );
     }
   };
 
@@ -392,8 +276,8 @@ const DigitalEmployeeDetail: React.FC = () => {
                 <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
                   <Brain className="h-8 w-8 text-blue-600" />
                   {employee.name}
-                  <span className="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    升级版本
+                  <span className="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    优化版本
                   </span>
                 </h1>
                 <p className="text-sm text-gray-500 mt-1">
@@ -419,22 +303,21 @@ const DigitalEmployeeDetail: React.FC = () => {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                     isActive
                       ? 'border-blue-500 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  <Icon className="h-5 w-5" />
-                  <span className="hidden sm:inline flex items-center gap-2">
-                    {tab.label}
-                    {(tab as any).isNew && (
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        新
-                      </span>
-                    )}
-                  </span>
+                  {React.isValidElement(Icon) ? Icon : <Icon className="h-5 w-5" />}
+                  <span>{tab.label}</span>
+                  {/* 数据来源指示器 */}
+                  <DataSourceIndicator
+                    type={tab.type === 'config' ? 'config' : 'operational'}
+                    size="sm"
+                    variant="dot"
+                  />
                 </button>
               );
             })}
@@ -442,18 +325,13 @@ const DigitalEmployeeDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* 主要内容 */}
+      {/* 主内容区域 */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Tab描述 */}
-        <div className="mb-6">
-          <p className="text-gray-600">
-            {tabs.find(tab => tab.id === activeTab)?.description}
-          </p>
-        </div>
-
-        {/* Tab内容 */}
         {renderTabContent()}
       </div>
+
+      {/* Toast通知容器 */}
+      <ToastContainer messages={messages} onClose={removeToast} />
     </div>
   );
 };

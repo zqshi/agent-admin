@@ -3,6 +3,9 @@
  * 消除原有的类型重复和冗余
  */
 
+// 导入核心特征类型
+import type { PersonalityTraits, WorkStyle, CommunicationStyle, MBTIProfile, PersonalityConfigMode } from '../features/employee-creation/types';
+
 // 员工状态枚举
 export type EmployeeStatus = 'active' | 'disabled' | 'retired';
 export type EmployeeWorkStatus = 'idle' | 'busy' | 'offline';
@@ -23,7 +26,9 @@ export interface BaseEmployee {
 export interface EmployeePersona {
   systemPrompt: string;
   personality: string;
+  characterBackground?: string;  // 角色背景故事
   responsibilities: string[];
+  constraints?: string[];        // 行为约束
   exampleDialogues?: ConversationExample[];
 }
 
@@ -74,6 +79,131 @@ export interface MemorySystemConfig {
   emotionalMemory: MemoryEntry[];
 }
 
+// 领域专属配置 - 支持配置继承和覆盖
+export interface DomainSpecificConfig {
+  // 人设配置覆盖
+  persona?: Partial<EmployeePersona>;
+
+  // Prompt工程配置覆盖
+  promptConfig?: Partial<PromptEngineeringConfig>;
+
+  // 权限配置覆盖
+  permissions?: Partial<EmployeePermissions>;
+
+  // 导师配置覆盖
+  mentorConfig?: Partial<MentorConfiguration>;
+
+  // 知识库配置覆盖
+  knowledgeBase?: Partial<EmployeeKnowledgeBase>;
+
+  // 核心特征配置覆盖
+  coreFeatures?: Partial<{
+    personality: PersonalityTraits;
+    workStyle: WorkStyle;
+    communication: CommunicationStyle;
+    mbtiProfile?: MBTIProfile;
+    personalityMode?: PersonalityConfigMode;
+  }>;
+
+  // 其他自定义配置
+  customConfig?: Record<string, any>;
+}
+
+// 配置继承策略
+export type ConfigInheritanceStrategy = 'merge' | 'override' | 'extend';
+
+// 配置继承元数据
+export interface ConfigInheritanceMeta {
+  strategy: ConfigInheritanceStrategy;
+  priority: number; // 优先级，数值越大优先级越高
+  inheritFromGlobal: boolean;
+  overrideFields?: string[]; // 指定要覆盖的字段
+  mergeFields?: string[]; // 指定要合并的字段
+}
+
+// 扩展后的多领域配置
+export interface DomainConfig {
+  // 基础元信息
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  weight: number;
+  enabled: boolean;
+  isDefault: boolean;
+
+  // 路由相关配置
+  keywords: string[];
+  semanticTopics: string[];
+
+  // 领域专属配置
+  domainConfig?: DomainSpecificConfig;
+
+  // 配置继承元数据
+  inheritanceMeta?: ConfigInheritanceMeta;
+
+  // 向后兼容的高级配置字段
+  advancedConfig?: any;
+}
+
+// 路由策略
+export type RoutingStrategy = 'weighted' | 'semantic' | 'keyword' | 'hybrid';
+
+// 配置解析结果 - 全局配置与领域配置合并后的结果
+export interface ResolvedEmployeeConfig {
+  // 解析后的最终配置
+  persona: EmployeePersona;
+  promptConfig?: PromptEngineeringConfig;
+  permissions: EmployeePermissions;
+  mentorConfig?: MentorConfiguration;
+  knowledgeBase: EmployeeKnowledgeBase;
+  coreFeatures?: {
+    personality: PersonalityTraits;
+    workStyle: WorkStyle;
+    communication: CommunicationStyle;
+    mbtiProfile?: MBTIProfile;
+    personalityMode?: PersonalityConfigMode;
+  };
+
+  // 配置来源追踪
+  configSource: {
+    global: string[]; // 来自全局配置的字段
+    domain: string[]; // 来自领域配置的字段
+    merged: string[]; // 合并的字段
+  };
+
+  // 应用的领域ID
+  appliedDomainId?: string;
+}
+
+// 多领域配置
+export interface MultiDomainConfig {
+  enabled: boolean;
+  domains: DomainConfig[];
+  routingStrategy: RoutingStrategy;
+  defaultDomainId?: string;
+  maxConcurrentDomains: number;
+  routingConfig: {
+    keywordSensitivity: number;
+    semanticThreshold: number;
+    contextWeight: number;
+  };
+}
+
+// 配置解析工具类型
+export type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
+
+// 配置合并工具类型
+export type ConfigMergeResult<T> = {
+  config: T;
+  sources: {
+    field: keyof T;
+    source: 'global' | 'domain' | 'merged';
+  }[];
+};
+
 // 数字员工完整定义（用于管理界面）
 export interface DigitalEmployee extends BaseEmployee {
   status: EmployeeStatus;
@@ -87,8 +217,62 @@ export interface DigitalEmployee extends BaseEmployee {
   knowledgeBase: EmployeeKnowledgeBase;
   memorySystem?: MemorySystemConfig;
 
+  // 核心特征配置
+  coreFeatures?: {
+    personality: PersonalityTraits;      // 性格特征
+    workStyle: WorkStyle;                // 工作风格
+    communication: CommunicationStyle;   // 沟通特征
+    mbtiProfile?: MBTIProfile;          // MBTI配置
+    personalityMode?: PersonalityConfigMode; // 配置模式
+  };
+
+  // 多领域配置
+  enableMultiDomain?: boolean;
+  multiDomainConfig?: MultiDomainConfig;
+
   // 运行指标
   metrics: EmployeeMetrics;
+
+  // 配置解析缓存（运行时使用）
+  _resolvedConfigs?: Map<string, ResolvedEmployeeConfig>;
+}
+
+// 配置解析器选项
+export interface ConfigResolverOptions {
+  domainId?: string;
+  strategy?: ConfigInheritanceStrategy;
+  includeDisabledDomains?: boolean;
+  customMergeRules?: Record<string, (global: any, domain: any) => any>;
+}
+
+// 配置变更记录
+export interface ConfigChangeRecord {
+  id: string;
+  timestamp: string;
+  domainId?: string;
+  changes: {
+    field: string;
+    oldValue: any;
+    newValue: any;
+    source: 'global' | 'domain';
+  }[];
+  operator: string;
+  reason?: string;
+}
+
+// 配置验证结果
+export interface ConfigValidationResult {
+  isValid: boolean;
+  errors: {
+    field: string;
+    message: string;
+    severity: 'error' | 'warning';
+  }[];
+  warnings: {
+    field: string;
+    message: string;
+    suggestion?: string;
+  }[];
 }
 
 // 数字员工运行时状态（用于实时监控）

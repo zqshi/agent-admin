@@ -49,15 +49,39 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
   return (
     <div className="bg-white p-6 rounded-lg border border-gray-200">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">基础信息</h3>
-        {!isEditing && (
+        <div className="flex items-center gap-3">
+          <h3 className="text-lg font-semibold text-gray-900">基础信息</h3>
+          {isEditing && (
+            <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
+              编辑模式
+            </span>
+          )}
+        </div>
+        {!isEditing ? (
           <button
             onClick={handleEdit}
-            className="text-blue-600 hover:text-blue-700 flex items-center gap-1"
+            className="text-blue-600 hover:text-blue-700 flex items-center gap-1 px-3 py-2 border border-blue-200 rounded-lg hover:bg-blue-50"
           >
             <Edit3 className="h-4 w-4" />
             编辑
           </button>
+        ) : (
+          <div className="flex gap-2">
+            <button
+              onClick={handleCancel}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center gap-1"
+            >
+              <X className="h-4 w-4" />
+              取消
+            </button>
+            <button
+              onClick={handleSave}
+              className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-1"
+            >
+              <Save className="h-4 w-4" />
+              保存
+            </button>
+          </div>
         )}
       </div>
 
@@ -133,25 +157,6 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
         )}
       </div>
 
-      {/* 编辑操作按钮 */}
-      {isEditing && (
-        <div className="flex justify-end gap-3 mt-4">
-          <button
-            onClick={handleCancel}
-            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center gap-1"
-          >
-            <X className="h-4 w-4" />
-            取消
-          </button>
-          <button
-            onClick={handleSave}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-1"
-          >
-            <Save className="h-4 w-4" />
-            保存
-          </button>
-        </div>
-      )}
     </div>
   );
 };
