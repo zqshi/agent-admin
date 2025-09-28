@@ -17,11 +17,13 @@ import { Tooltip } from '../common';
 interface CoreFeaturesDisplayProps {
   employee: DigitalEmployee;
   onEmployeeChange?: (updatedEmployee: DigitalEmployee) => void;
+  readOnly?: boolean;
 }
 
 const CoreFeaturesDisplay: React.FC<CoreFeaturesDisplayProps> = ({
   employee,
-  onEmployeeChange
+  onEmployeeChange,
+  readOnly = false
 }) => {
   // 独立编辑状态
   const [isInternalEditing, setIsInternalEditing] = useState(false);
@@ -426,37 +428,39 @@ const CoreFeaturesDisplay: React.FC<CoreFeaturesDisplayProps> = ({
             </span>
           )}
         </div>
-        {!isInternalEditing ? (
-          <button
-            onClick={handleInternalEdit}
-            className="text-blue-600 hover:text-blue-700 flex items-center gap-1 px-3 py-2 border border-blue-200 rounded-lg hover:bg-blue-50"
-          >
-            <Edit3 className="h-4 w-4" />
-            编辑
-          </button>
-        ) : (
-          <div className="flex gap-2">
+        {!readOnly && (
+          !isInternalEditing ? (
             <button
-              onClick={handleInternalCancel}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center gap-1"
+              onClick={handleInternalEdit}
+              className="text-blue-600 hover:text-blue-700 flex items-center gap-1 px-3 py-2 border border-blue-200 rounded-lg hover:bg-blue-50"
             >
-              <X className="h-4 w-4" />
-              取消
+              <Edit3 className="h-4 w-4" />
+              编辑
             </button>
-            <button
-              onClick={handleInternalSave}
-              className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-1"
-            >
-              <Save className="h-4 w-4" />
-              保存
-            </button>
-          </div>
+          ) : (
+            <div className="flex gap-2">
+              <button
+                onClick={handleInternalCancel}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center gap-1"
+              >
+                <X className="h-4 w-4" />
+                取消
+              </button>
+              <button
+                onClick={handleInternalSave}
+                className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-1"
+              >
+                <Save className="h-4 w-4" />
+                保存
+              </button>
+            </div>
+          )
         )}
       </div>
 
       <div className="space-y-6">
       {/* 配置模式切换（仅在编辑模式下显示） */}
-      {isInternalEditing && (
+      {!readOnly && isInternalEditing && (
         <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-6">
           <h4 className="text-lg font-semibold text-gray-900 mb-4">人格配置模式</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

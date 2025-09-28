@@ -31,7 +31,6 @@ import {
   MetricsSection,
   AdvancedConfigSection,
   InsightsCenter,
-  RoleDefinitionSection,
   CapabilityConfigSection,
   KnowledgeAssetsSection,
   RoutingStrategySection,
@@ -107,28 +106,21 @@ const DigitalEmployeeDetail: React.FC = () => {
     );
   };
 
-  // 获取统一的Tab配置
+  // 获取统一的Tab配置（优化后版本）
   const getTabs = () => {
     return [
       {
         id: 'overview',
         label: '总览',
         icon: Eye,
-        description: '基础信息、状态概览、核心特征展示',
+        description: '基础信息、职责配置、核心特征展示',
         type: 'overview'
-      },
-      {
-        id: 'domain-management',
-        label: '领域管理',
-        icon: Layers,
-        description: '多领域配置、路由策略、领域权重管理',
-        type: 'domain'
       },
       {
         id: 'configuration',
         label: '配置中心',
         icon: Settings,
-        description: '人设、Prompt、工具、导师等详细配置',
+        description: '领域管理、人设配置、能力设置、权限安全',
         type: 'config'
       },
       {
@@ -171,36 +163,35 @@ const DigitalEmployeeDetail: React.FC = () => {
             />
             <CoreFeaturesDisplay
               employee={employee}
-              onEmployeeChange={(updatedEmployee) => {
-                setEmployee(updatedEmployee);
-                toast.success('核心特征更新', '人格配置已保存');
-              }}
+              readOnly={true}
             />
           </div>
         );
 
-      case 'domain-management':
-        return (
-          <DomainManagement
-            employee={employee}
-            onEmployeeChange={(updatedEmployee) => {
-              setEmployee(updatedEmployee);
-              toast.success('领域配置更新', '多领域配置已保存');
-            }}
-          />
-        );
-
       case 'configuration':
         return (
-          <ConfigurationHub
-            employee={employee}
-            selectedDomainId={selectedDomainId}
-            onDomainChange={setSelectedDomainId}
-            onEmployeeChange={(updatedEmployee) => {
-              setEmployee(updatedEmployee);
-              toast.success('配置更新成功', '员工配置已保存');
-            }}
-          />
+          <div className="space-y-6">
+            {/* 领域管理整合到配置中心 - 仅在启用多领域时显示 */}
+            {employee.enableMultiDomain && (
+              <DomainManagement
+                employee={employee}
+                onEmployeeChange={(updatedEmployee) => {
+                  setEmployee(updatedEmployee);
+                  toast.success('领域配置更新', '多领域配置已保存');
+                }}
+                hideListAndDetails={true}
+              />
+            )}
+            <ConfigurationHub
+              employee={employee}
+              selectedDomainId={selectedDomainId}
+              onDomainChange={setSelectedDomainId}
+              onEmployeeChange={(updatedEmployee) => {
+                setEmployee(updatedEmployee);
+                toast.success('配置更新成功', '员工配置已保存');
+              }}
+            />
+          </div>
         );
 
       case 'knowledge-insights':

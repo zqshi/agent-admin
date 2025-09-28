@@ -4,16 +4,28 @@
  */
 
 import React, { useState } from 'react';
-import { Brain, Edit3, Save, X, Settings, Wrench, Users, Plus, Minus, FileText, Zap } from 'lucide-react';
+import { Brain, Edit3, Save, X, Settings, Wrench, Users, Plus, Minus, FileText, Zap, Shield, Database, Lock, Layers, ChevronDown, ChevronUp, ArrowDown } from 'lucide-react';
 import type { DigitalEmployee, PromptEngineeringConfig, MentorConfiguration } from '../../types/employee';
 import { DataSourceIndicator } from '../common';
 
 interface CapabilityConfigSectionProps {
   employee: DigitalEmployee;
+  selectedDomainId?: string;
+  domainConfig?: any; // 当前选中领域的配置
+  activeTab?: string; // 新增：指定要显示的具体配置Tab
+  editedEmployee?: DigitalEmployee | null;
+  isEditing?: boolean;
+  onFieldChange?: (field: any, value: any) => void;
 }
 
 const CapabilityConfigSection: React.FC<CapabilityConfigSectionProps> = ({
-  employee
+  employee,
+  selectedDomainId = 'global',
+  domainConfig,
+  activeTab,
+  editedEmployee,
+  isEditing,
+  onFieldChange
 }) => {
   // 独立编辑状态管理
   const [isInternalEditing, setIsInternalEditing] = useState(false);
@@ -21,6 +33,61 @@ const CapabilityConfigSection: React.FC<CapabilityConfigSectionProps> = ({
 
   // 当前活跃的配置Tab
   const [activeCapabilityTab, setActiveCapabilityTab] = useState<string>('prompt');
+
+  // 判断是否为领域配置
+  const isDomainConfig = selectedDomainId !== 'global';
+
+  // 获取当前领域信息
+  const getCurrentDomain = () => {
+    if (!isDomainConfig || !employee.multiDomainConfig?.domains) return null;
+    return employee.multiDomainConfig.domains.find(d => d.id === selectedDomainId) || null;
+  };
+
+  const currentDomain = getCurrentDomain();
+
+  // 配置继承状态
+  const [showInheritanceInfo, setShowInheritanceInfo] = useState(false);
+
+  // 检查字段是否被领域配置覆盖
+  const isFieldOverridden = (fieldPath: string) => {
+    if (!isDomainConfig || !currentDomain?.domainConfig) return false;
+
+    const pathParts = fieldPath.split('.');
+    let obj = currentDomain.domainConfig;
+
+    for (const part of pathParts) {
+      if (obj && obj[part] !== undefined) {
+        obj = obj[part];
+      } else {
+        return false;
+      }
+    }
+
+    return obj !== undefined;
+  };
+
+  // 配置来源指示器组件
+  const ConfigSourceIndicator: React.FC<{ fieldPath: string; label?: string }> = ({ fieldPath, label }) => {
+    if (!isDomainConfig) return null;
+
+    const isOverridden = isFieldOverridden(fieldPath);
+
+    return (
+      <div className="flex items-center gap-1">
+        {isOverridden ? (
+          <span className="flex items-center gap-1 text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded">
+            <Layers className="h-3 w-3" />
+            领域覆盖
+          </span>
+        ) : (
+          <span className="flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+            <ArrowDown className="h-3 w-3" />
+            继承全局
+          </span>
+        )}
+      </div>
+    );
+  };
 
   // 内部编辑控制方法
   const handleInternalEdit = () => {
@@ -47,7 +114,35 @@ const CapabilityConfigSection: React.FC<CapabilityConfigSectionProps> = ({
     return internalEditedEmployee || employee;
   };
 
+  // 获取当前配置数据（支持领域配置覆盖）
+  const getCurrentConfig = () => {
+    const baseEmployee = getCurrentEmployee();
+
+    if (isDomainConfig && currentDomain?.domainConfig) {
+      // 领域配置：合并全局配置和领域覆盖配置
+      return {
+        promptConfig: {
+          ...baseEmployee.promptConfig,
+          ...currentDomain.domainConfig.promptConfig
+        },
+        permissions: {
+          ...baseEmployee.permissions,
+          ...currentDomain.domainConfig.permissions
+        },
+        mentorConfig: currentDomain.domainConfig.mentorConfig || baseEmployee.mentorConfig
+      };
+    } else {
+      // 全局配置：直接使用员工配置
+      return {
+        promptConfig: baseEmployee.promptConfig,
+        permissions: baseEmployee.permissions,
+        mentorConfig: baseEmployee.mentorConfig
+      };
+    }
+  };
+
   const currentEmployee = getCurrentEmployee();
+  const currentConfig = getCurrentConfig();
 
   // 更新字段值
   const updateField = (field: keyof DigitalEmployee, value: any) => {
@@ -84,7 +179,13 @@ const CapabilityConfigSection: React.FC<CapabilityConfigSectionProps> = ({
       id: 'tools',
       title: '工具管理',
       icon: Wrench,
-      description: '允许工具、资源权限、操作限制'
+      description: '工具权限、使用策略、配置管理'
+    },
+    {
+      id: 'permissions',
+      title: '权限安全',
+      icon: Settings,
+      description: '资源访问、知识权限、安全策略'
     },
     {
       id: 'mentor',
@@ -96,7 +197,7 @@ const CapabilityConfigSection: React.FC<CapabilityConfigSectionProps> = ({
 
   // 渲染Prompt工程配置
   const renderPromptConfig = () => {
-    const promptConfig = currentEmployee.promptConfig || {
+    const promptConfig = currentConfig.promptConfig || {
       mode: 'simple' as const,
       basePrompt: '',
       slots: [],
@@ -135,7 +236,10 @@ const CapabilityConfigSection: React.FC<CapabilityConfigSectionProps> = ({
 
         {/* 基础提示词 */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">基础提示词</label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-medium text-gray-700">基础提示词</label>
+            <ConfigSourceIndicator fieldPath="promptConfig.basePrompt" />
+          </div>
           {isInternalEditing ? (
             <textarea
               value={promptConfig.basePrompt}
@@ -235,7 +339,7 @@ const CapabilityConfigSection: React.FC<CapabilityConfigSectionProps> = ({
 
   // 渲染工具管理配置
   const renderToolsConfig = () => {
-    const permissions = currentEmployee.permissions || {
+    const permissions = currentConfig.permissions || {
       allowedTools: [],
       resourceAccess: [],
       knowledgeManagement: { canSelfLearn: false, canModifyKnowledge: false }
@@ -246,7 +350,10 @@ const CapabilityConfigSection: React.FC<CapabilityConfigSectionProps> = ({
         {/* 允许的工具 */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <label className="block text-sm font-medium text-gray-700">允许使用的工具</label>
+            <div className="flex items-center gap-2">
+              <label className="block text-sm font-medium text-gray-700">允许使用的工具</label>
+              <ConfigSourceIndicator fieldPath="permissions.allowedTools" />
+            </div>
             {isInternalEditing && (
               <button
                 onClick={() => {
@@ -300,53 +407,99 @@ const CapabilityConfigSection: React.FC<CapabilityConfigSectionProps> = ({
           </div>
         </div>
 
+        {/* 工具使用策略 */}
+        <div className="bg-purple-50 p-4 rounded-lg">
+          <h4 className="font-medium text-purple-900 mb-3">工具使用策略</h4>
+          <div className="space-y-2 text-sm text-purple-700">
+            <div>• 工具调用需要实时权限验证</div>
+            <div>• 支持工具使用频率限制</div>
+            <div>• 自动记录工具使用日志</div>
+            <div>• 异常调用自动中断并报告</div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // 渲染权限安全配置
+  const renderPermissionsConfig = () => {
+    const permissions = currentConfig.permissions || {
+      allowedTools: [],
+      resourceAccess: [],
+      knowledgeManagement: { canSelfLearn: false, canModifyKnowledge: false }
+    };
+
+    return (
+      <div className="space-y-6">
+        {/* 资源访问权限 */}
+        <div className="bg-blue-50 p-4 rounded-lg">
+          <h4 className="font-medium text-blue-900 mb-3 flex items-center gap-2">
+            <Database className="h-4 w-4" />
+            资源访问权限
+          </h4>
+          <div className="space-y-3">
+            {permissions.resourceAccess && permissions.resourceAccess.length > 0 ? (
+              permissions.resourceAccess.map((resource, index) => (
+                <div key={index} className="bg-white p-3 rounded border border-blue-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-gray-900">{resource.resourceName}</span>
+                    <span className={`text-xs px-2 py-1 rounded ${
+                      resource.accessLevel === 'admin' ? 'bg-red-100 text-red-700' :
+                      resource.accessLevel === 'write' ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-green-100 text-green-700'
+                    }`}>
+                      {resource.accessLevel}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    类型: {resource.resourceType}
+                  </div>
+                  {resource.restrictions && resource.restrictions.length > 0 && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      限制: {resource.restrictions.join(', ')}
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="text-gray-500 text-sm italic">暂未配置资源访问权限</div>
+            )}
+          </div>
+        </div>
+
         {/* 知识管理权限 */}
         <div className="bg-green-50 p-4 rounded-lg">
-          <h4 className="font-medium text-green-900 mb-3">知识管理权限</h4>
+          <h4 className="font-medium text-green-900 mb-3 flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            知识管理权限
+          </h4>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-green-800">允许自主学习</span>
-              {isInternalEditing ? (
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={permissions.knowledgeManagement.canSelfLearn}
-                    onChange={(e) => updateNestedField('permissions', 'knowledgeManagement', {
-                      ...permissions.knowledgeManagement,
-                      canSelfLearn: e.target.checked
-                    })}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              ) : (
-                <span className={`text-sm ${permissions.knowledgeManagement.canSelfLearn ? 'text-green-600' : 'text-gray-500'}`}>
-                  {permissions.knowledgeManagement.canSelfLearn ? '已启用' : '已禁用'}
-                </span>
-              )}
+              <span className={`text-sm ${permissions.knowledgeManagement.canSelfLearn ? 'text-green-600' : 'text-gray-500'}`}>
+                {permissions.knowledgeManagement.canSelfLearn ? '已启用' : '已禁用'}
+              </span>
             </div>
-
             <div className="flex items-center justify-between">
               <span className="text-sm text-green-800">允许修改知识库</span>
-              {isInternalEditing ? (
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={permissions.knowledgeManagement.canModifyKnowledge}
-                    onChange={(e) => updateNestedField('permissions', 'knowledgeManagement', {
-                      ...permissions.knowledgeManagement,
-                      canModifyKnowledge: e.target.checked
-                    })}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              ) : (
-                <span className={`text-sm ${permissions.knowledgeManagement.canModifyKnowledge ? 'text-green-600' : 'text-gray-500'}`}>
-                  {permissions.knowledgeManagement.canModifyKnowledge ? '已启用' : '已禁用'}
-                </span>
-              )}
+              <span className={`text-sm ${permissions.knowledgeManagement.canModifyKnowledge ? 'text-green-600' : 'text-gray-500'}`}>
+                {permissions.knowledgeManagement.canModifyKnowledge ? '已启用' : '已禁用'}
+              </span>
             </div>
+          </div>
+        </div>
+
+        {/* 安全策略 */}
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+            <Lock className="h-4 w-4" />
+            安全策略
+          </h4>
+          <div className="space-y-2 text-sm text-gray-600">
+            <div>• 工具使用需经过权限验证</div>
+            <div>• 敏感资源访问记录审计日志</div>
+            <div>• 知识库修改需要管理员审批</div>
+            <div>• 自动检测异常操作并报告</div>
           </div>
         </div>
       </div>
@@ -355,7 +508,7 @@ const CapabilityConfigSection: React.FC<CapabilityConfigSectionProps> = ({
 
   // 渲染导师机制配置
   const renderMentorConfig = () => {
-    const mentorConfig = currentEmployee.mentorConfig || null;
+    const mentorConfig = currentConfig.mentorConfig || null;
 
     return (
       <div className="space-y-6">
@@ -483,11 +636,15 @@ const CapabilityConfigSection: React.FC<CapabilityConfigSectionProps> = ({
 
   // 渲染Tab内容
   const renderTabContent = () => {
-    switch (activeCapabilityTab) {
+    const tabToRender = activeTab || activeCapabilityTab;
+
+    switch (tabToRender) {
       case 'prompt':
         return renderPromptConfig();
       case 'tools':
         return renderToolsConfig();
+      case 'permissions':
+        return renderPermissionsConfig();
       case 'mentor':
         return renderMentorConfig();
       default:
@@ -495,22 +652,102 @@ const CapabilityConfigSection: React.FC<CapabilityConfigSectionProps> = ({
     }
   };
 
+  // 如果指定了activeTab，直接渲染对应内容，不显示Tab导航，但包含编辑功能
+  if (activeTab) {
+    const tabInfo = capabilityTabs.find(tab => tab.id === activeTab);
+
+    return (
+      <div className="bg-white p-6 rounded-lg border border-gray-200">
+        {/* 标题和编辑按钮 */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            {tabInfo && <tabInfo.icon className="h-6 w-6 text-blue-600" />}
+            <h3 className="text-lg font-semibold text-gray-900">
+              {tabInfo?.title || '配置'}
+              {isDomainConfig && ` - ${currentDomain?.name || '未知'}领域`}
+            </h3>
+            <DataSourceIndicator type="config" variant="dot" size="sm" />
+            {isDomainConfig && (
+              <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-medium">
+                领域特定
+              </span>
+            )}
+            {!isDomainConfig && (
+              <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
+                全局配置
+              </span>
+            )}
+            {isInternalEditing && (
+              <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
+                编辑模式
+              </span>
+            )}
+          </div>
+
+          {!isInternalEditing ? (
+            <button
+              onClick={handleInternalEdit}
+              className="text-blue-600 hover:text-blue-700 flex items-center gap-1 px-3 py-2 border border-blue-200 rounded-lg hover:bg-blue-50"
+            >
+              <Edit3 className="h-4 w-4" />
+              编辑
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <button
+                onClick={handleInternalCancel}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center gap-1"
+              >
+                <X className="h-4 w-4" />
+                取消
+              </button>
+              <button
+                onClick={handleInternalSave}
+                className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-1"
+              >
+                <Save className="h-4 w-4" />
+                保存
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* 配置内容 */}
+        <div>
+          {renderTabContent()}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white p-6 rounded-lg border border-gray-200">
       {/* 标题和编辑按钮 */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Brain className="h-6 w-6 text-blue-600" />
-          <h3 className="text-lg font-semibold text-gray-900">能力配置</h3>
+          <h3 className="text-lg font-semibold text-gray-900">
+            {isDomainConfig ? `${currentDomain?.name || '未知'} 领域能力配置` : '全局能力配置'}
+          </h3>
           <DataSourceIndicator type="config" variant="dot" size="sm" />
-          {isInternalEditing && (
+          {isDomainConfig && (
+            <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-medium">
+              领域特定
+            </span>
+          )}
+          {!isDomainConfig && (
             <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
+              全局配置
+            </span>
+          )}
+          {currentlyEditing && (
+            <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
               编辑模式
             </span>
           )}
         </div>
 
-        {!isInternalEditing ? (
+        {!currentlyEditing ? (
           <button
             onClick={handleInternalEdit}
             className="text-blue-600 hover:text-blue-700 flex items-center gap-1 px-3 py-2 border border-blue-200 rounded-lg hover:bg-blue-50"
@@ -539,8 +776,56 @@ const CapabilityConfigSection: React.FC<CapabilityConfigSectionProps> = ({
       </div>
 
       <p className="text-gray-600 mb-6">
-        配置数字员工的核心能力，包括提示词工程、工具权限和导师监督机制。
+        {isDomainConfig
+          ? `配置 ${currentDomain?.name || '当前'} 领域的专属能力，包括领域特定的提示词工程、工具权限和导师监督机制。这些配置将覆盖或补充全局配置。`
+          : '配置数字员工的全局核心能力，作为所有领域的基础配置。包括提示词工程、工具权限和导师监督机制。'
+        }
       </p>
+
+      {/* 配置继承信息（仅领域配置时显示） */}
+      {isDomainConfig && (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+          <button
+            onClick={() => setShowInheritanceInfo(!showInheritanceInfo)}
+            className="flex items-center justify-between w-full text-left"
+          >
+            <div className="flex items-center gap-2">
+              <Layers className="h-4 w-4 text-gray-600" />
+              <span className="font-medium text-gray-900">配置继承信息</span>
+              <span className="text-xs text-gray-500">
+                显示当前领域配置与全局配置的关系
+              </span>
+            </div>
+            {showInheritanceInfo ? (
+              <ChevronUp className="h-4 w-4 text-gray-500" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-gray-500" />
+            )}
+          </button>
+
+          {showInheritanceInfo && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-purple-100 border-2 border-purple-500 rounded"></div>
+                  <span className="text-gray-700">领域覆盖配置</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-gray-100 border-2 border-gray-400 rounded"></div>
+                  <span className="text-gray-700">继承全局配置</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-orange-100 border-2 border-orange-500 rounded"></div>
+                  <span className="text-gray-700">需要配置</span>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                领域配置会覆盖全局配置，未配置的字段将自动继承全局设置。
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 能力配置Tab导航 */}
       <div className="border-b border-gray-200 mb-6">

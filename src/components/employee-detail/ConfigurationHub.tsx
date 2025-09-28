@@ -7,7 +7,6 @@ import {
   Settings,
   Brain,
   Users,
-  Shield,
   FileText,
   Wrench,
   Layers,
@@ -17,14 +16,16 @@ import {
   Eye,
   Edit3,
   Save,
-  X
+  X,
+  GitBranch,
+  Database
 } from 'lucide-react';
 import type { DigitalEmployee, DomainConfig } from '../../types/employee';
 import {
   PersonaSection,
   CapabilityConfigSection,
-  PermissionsSection,
-  RoleDefinitionSection
+  RoutingStrategySection,
+  KnowledgeAssetsSection
 } from '../employee-detail';
 
 interface ConfigurationHubProps {
@@ -42,6 +43,10 @@ const ConfigurationHub: React.FC<ConfigurationHubProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedEmployee, setEditedEmployee] = useState<DigitalEmployee | null>(null);
+  // 领域配置二级Tab状态管理
+  const [activeDomainConfigTab, setActiveDomainConfigTab] = useState<string>('persona');
+  // 单领域配置Tab状态管理
+  const [activeSingleDomainConfigTab, setActiveSingleDomainConfigTab] = useState<string>('persona');
 
   // 获取当前选中的领域配置
   const getCurrentDomain = (): DomainConfig | null => {
@@ -70,40 +75,184 @@ const ConfigurationHub: React.FC<ConfigurationHubProps> = ({
     setEditedEmployee(null);
   };
 
-  // 配置分类
-  const configurationSections = [
-    {
-      id: 'persona',
-      title: '人设配置',
-      icon: Users,
-      description: '系统提示词、性格设定、角色背景',
-      component: PersonaSection
-    },
-    {
-      id: 'capability',
-      title: '能力配置',
-      icon: Brain,
-      description: 'Prompt工程、工具管理、导师机制',
-      component: CapabilityConfigSection
-    },
-    {
-      id: 'permissions',
-      title: '权限安全',
-      icon: Shield,
-      description: '访问权限、数据权限、操作权限',
-      component: PermissionsSection
-    },
-    {
-      id: 'role',
-      title: '角色定义',
-      icon: FileText,
-      description: '职责范围、工作规范、业务边界',
-      component: RoleDefinitionSection
+  // 配置分类 - 支持单/多领域模式区分
+  const getConfigurationSections = () => {
+    const isGlobalConfig = selectedDomainId === 'global';
+
+    if (isGlobalConfig) {
+      if (employee.enableMultiDomain) {
+        // 多领域模式的全局配置：仅显示智能路由策略
+        return [
+          {
+            id: 'routing',
+            title: '智能路由策略',
+            icon: GitBranch,
+            description: '多领域路由模式、策略配置、敏感度设置',
+            component: RoutingStrategySection,
+            scope: 'global'
+          }
+        ];
+      } else {
+        // 单领域模式的配置：显示6个配置tab（无领域切换）
+        return [
+          {
+            id: 'persona',
+            title: '人设配置',
+            icon: Users,
+            description: '系统提示词、角色背景、行为约束',
+            component: PersonaSection,
+            scope: 'global'
+          },
+          {
+            id: 'prompt',
+            title: 'Prompt工程',
+            icon: FileText,
+            description: '提示词模板、策略配置',
+            component: CapabilityConfigSection,
+            scope: 'global',
+            activeTab: 'prompt'
+          },
+          {
+            id: 'tools',
+            title: '工具管理',
+            icon: Wrench,
+            description: '工具权限、使用策略',
+            component: CapabilityConfigSection,
+            scope: 'global',
+            activeTab: 'tools'
+          },
+          {
+            id: 'mentor',
+            title: '导师机制',
+            icon: Users,
+            description: '学习指导、反馈机制',
+            component: CapabilityConfigSection,
+            scope: 'global',
+            activeTab: 'mentor'
+          },
+          {
+            id: 'knowledge',
+            title: '知识配置',
+            icon: Database,
+            description: '文档管理、FAQ配置、知识积累',
+            component: KnowledgeAssetsSection,
+            scope: 'global'
+          }
+        ];
+      }
+    } else {
+      // 领域配置（仅多领域模式）
+      return [
+        {
+          id: 'persona',
+          title: '领域人设配置',
+          icon: Users,
+          description: '领域特定的系统提示词、角色背景、行为约束',
+          component: PersonaSection,
+          scope: 'domain'
+        },
+        {
+          id: 'capability',
+          title: '领域能力配置',
+          icon: Brain,
+          description: '领域特定的Prompt工程、工具权限、导师机制',
+          component: CapabilityConfigSection,
+          scope: 'domain'
+        }
+      ];
     }
-  ];
+  };
 
   // 获取当前显示的员工数据
   const getCurrentEmployee = () => editedEmployee || employee;
+
+  // 单领域配置内容渲染函数
+  const renderSingleDomainConfigContent = () => {
+    const currentEmployee = getCurrentEmployee();
+    const props = {
+      employee: currentEmployee,
+      selectedDomainId: 'global',
+      domainConfig: null,
+      editedEmployee,
+      isEditing,
+      onFieldChange: isEditing ? (field: any, value: any) => {
+        if (editedEmployee) {
+          setEditedEmployee({
+            ...editedEmployee,
+            [field]: value
+          });
+        }
+      } : undefined
+    };
+
+    switch (activeSingleDomainConfigTab) {
+      case 'persona':
+        return <PersonaSection {...props} />;
+      case 'prompt':
+      case 'tools':
+      case 'mentor':
+        return (
+          <CapabilityConfigSection
+            {...props}
+            activeTab={activeSingleDomainConfigTab}
+          />
+        );
+      case 'knowledge':
+        return (
+          <KnowledgeAssetsSection
+            {...props}
+            isDomainSpecific={false}
+          />
+        );
+      default:
+        return <PersonaSection {...props} />;
+    }
+  };
+
+  // 领域配置渲染辅助函数
+  const renderDomainConfigContent = () => {
+    const currentEmployee = getCurrentEmployee();
+    const props = {
+      employee: currentEmployee,
+      selectedDomainId,
+      domainConfig: currentDomain?.domainConfig,
+      editedEmployee,
+      isEditing,
+      onFieldChange: isEditing ? (field: any, value: any) => {
+        if (editedEmployee) {
+          setEditedEmployee({
+            ...editedEmployee,
+            [field]: value
+          });
+        }
+      } : undefined
+    };
+
+    switch (activeDomainConfigTab) {
+      case 'persona':
+        return <PersonaSection {...props} />;
+      case 'prompt':
+      case 'tools':
+      case 'mentor':
+        // 直接使用CapabilityConfigSection，但传递activeTab参数
+        return (
+          <CapabilityConfigSection
+            {...props}
+            activeTab={activeDomainConfigTab}
+          />
+        );
+      case 'knowledge':
+        return (
+          <KnowledgeAssetsSection
+            {...props}
+            isDomainSpecific={true}
+            domainName={currentDomain?.name}
+          />
+        );
+      default:
+        return <PersonaSection {...props} />;
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -115,6 +264,8 @@ const ConfigurationHub: React.FC<ConfigurationHubProps> = ({
             <h2 className="text-xl font-semibold text-gray-900">配置中心</h2>
           </div>
 
+          {/* 编辑配置按钮 - 已隐藏，各Tab有独立编辑能力 */}
+          {/*
           <div className="flex items-center gap-2">
             {isEditing ? (
               <>
@@ -143,81 +294,94 @@ const ConfigurationHub: React.FC<ConfigurationHubProps> = ({
               </button>
             )}
           </div>
+          */}
         </div>
 
-        {/* 领域选择器 */}
-        <div className="space-y-3">
-          <div className="text-sm font-medium text-gray-700 mb-2">配置范围</div>
-          <div className="flex flex-wrap gap-2">
-            {/* 全局配置按钮 */}
-            <button
-              onClick={() => onDomainChange('global')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
-                selectedDomainId === 'global'
-                  ? 'bg-blue-100 text-blue-700 border-blue-300 shadow-sm'
-                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              <Globe className="h-4 w-4" />
-              全局配置
-            </button>
-
-            {/* 领域配置按钮 */}
-            {employee.enableMultiDomain && employee.multiDomainConfig?.domains?.map(domain => (
+        {/* 领域选择器 - 仅多领域模式显示 */}
+        {employee.enableMultiDomain && (
+          <div className="space-y-3">
+            <div className="text-sm font-medium text-gray-700 mb-2">配置范围</div>
+            <div className="flex flex-wrap gap-2">
               <button
-                key={domain.id}
-                onClick={() => onDomainChange(domain.id)}
+                onClick={() => onDomainChange('global')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
-                  selectedDomainId === domain.id
+                  selectedDomainId === 'global'
                     ? 'bg-blue-100 text-blue-700 border-blue-300 shadow-sm'
                     : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
                 }`}
               >
-                <span className="text-base">{domain.icon}</span>
-                {domain.name}
-                {!domain.enabled && (
-                  <span className="text-xs bg-gray-200 text-gray-500 px-1 rounded">
-                    已禁用
-                  </span>
-                )}
+                <Globe className="h-4 w-4" />
+                全局配置
               </button>
-            ))}
-          </div>
-        </div>
 
-        {/* 当前配置范围说明 */}
-        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-          <div className="flex items-center gap-2 text-sm">
-            <Eye className="h-4 w-4 text-gray-500" />
-            <span className="font-medium text-gray-700">当前配置范围：</span>
-            {currentDomain ? (
-              <>
-                <span className="text-base">{currentDomain.icon}</span>
-                <span className="text-gray-900">{currentDomain.name} 领域</span>
-                <ChevronRight className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-600">{currentDomain.description}</span>
-              </>
-            ) : (
-              <>
-                <Globe className="h-4 w-4 text-blue-500" />
-                <span className="text-gray-900">全局配置</span>
-                <ChevronRight className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-600">适用于所有领域的基础配置</span>
-              </>
-            )}
+              {employee.multiDomainConfig?.domains?.map(domain => {
+                const hasCustomConfig = domain.domainConfig && Object.keys(domain.domainConfig).length > 0;
+
+                return (
+                  <button
+                    key={domain.id}
+                    onClick={() => onDomainChange(domain.id)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+                      selectedDomainId === domain.id
+                        ? 'bg-purple-100 text-purple-700 border-purple-300 shadow-sm'
+                        : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span className="text-base">{domain.icon}</span>
+                    {domain.name}
+
+                    {hasCustomConfig && (
+                      <span className="text-xs bg-purple-100 text-purple-600 px-1 rounded flex items-center gap-1">
+                        <Layers className="h-3 w-3" />
+                        已配置
+                      </span>
+                    )}
+
+                    {!domain.enabled && (
+                      <span className="text-xs bg-red-100 text-red-600 px-1 rounded">禁用</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* 当前配置范围说明 - 仅多领域模式显示 */}
+        {employee.enableMultiDomain && (
+          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-2 text-sm">
+              <Eye className="h-4 w-4 text-gray-500" />
+              <span className="font-medium text-gray-700">当前配置范围：</span>
+              {currentDomain ? (
+                <>
+                  <span className="text-base">{currentDomain.icon}</span>
+                  <span className="text-gray-900">{currentDomain.name} 领域</span>
+                  <ChevronRight className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-600">{currentDomain.description}</span>
+                </>
+              ) : (
+                <>
+                  <Globe className="h-4 w-4 text-blue-500" />
+                  <span className="text-gray-900">全局配置</span>
+                  <ChevronRight className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-600">适用于所有领域的基础配置</span>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 配置内容区域 */}
-      {currentDomain ? (
-        // 领域专属配置
-        <div className="space-y-6">
+      <div className="space-y-6">
+        {/* 如果是领域配置，先显示领域基本信息 */}
+        {currentDomain && (
           <div className="bg-white p-6 rounded-lg border border-gray-200">
             <div className="flex items-center gap-3 mb-4">
               <Layers className="h-6 w-6 text-purple-600" />
               <h3 className="text-lg font-semibold text-gray-900">
-                {currentDomain.name} 领域专属配置
+                {currentDomain.name} 领域基本信息
               </h3>
             </div>
 
@@ -265,30 +429,117 @@ const ConfigurationHub: React.FC<ConfigurationHubProps> = ({
                 </div>
               </div>
             )}
+          </div>
+        )}
 
-            {/* 提示：领域专属配置功能开发中 */}
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-              <div className="flex items-center gap-2 text-amber-700">
-                <Building className="h-5 w-5" />
-                <span className="font-medium">领域专属配置</span>
-              </div>
-              <p className="text-sm text-amber-600 mt-1">
-                该领域的独立人设、提示词、知识库等配置功能正在开发中。
-                当前显示的是全局配置内容，未来将支持领域级别的配置覆盖。
-              </p>
+        {/* 领域配置二级Tab导航 - 仅在选择具体领域时显示 */}
+        {currentDomain && (
+          <div className="bg-white p-6 rounded-lg border border-gray-200">
+            <div className="flex items-center gap-3 mb-4">
+              <Layers className="h-5 w-5 text-purple-600" />
+              <h3 className="text-lg font-semibold text-gray-900">领域配置管理</h3>
+              <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-medium">
+                {currentDomain.name}
+              </span>
+            </div>
+
+            {/* 二级Tab导航 - 5个平级Tab */}
+            <div className="border-b border-gray-200 mb-6">
+              <nav className="flex space-x-0 overflow-x-auto">
+                <button
+                  onClick={() => setActiveDomainConfigTab('persona')}
+                  className={`flex items-center gap-2 px-3 py-3 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
+                    activeDomainConfigTab === 'persona'
+                      ? 'border-purple-500 text-purple-600 bg-purple-50'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <Users className="h-4 w-4" />
+                  <div className="text-left">
+                    <div className="font-medium">领域人设</div>
+                    <div className="text-xs text-gray-500 hidden lg:block">角色背景、行为约束</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveDomainConfigTab('prompt')}
+                  className={`flex items-center gap-2 px-3 py-3 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
+                    activeDomainConfigTab === 'prompt'
+                      ? 'border-purple-500 text-purple-600 bg-purple-50'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <FileText className="h-4 w-4" />
+                  <div className="text-left">
+                    <div className="font-medium">Prompt工程</div>
+                    <div className="text-xs text-gray-500 hidden lg:block">提示词模板、策略</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveDomainConfigTab('tools')}
+                  className={`flex items-center gap-2 px-3 py-3 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
+                    activeDomainConfigTab === 'tools'
+                      ? 'border-purple-500 text-purple-600 bg-purple-50'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <Wrench className="h-4 w-4" />
+                  <div className="text-left">
+                    <div className="font-medium">工具管理</div>
+                    <div className="text-xs text-gray-500 hidden lg:block">工具权限、使用策略</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveDomainConfigTab('mentor')}
+                  className={`flex items-center gap-2 px-3 py-3 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
+                    activeDomainConfigTab === 'mentor'
+                      ? 'border-purple-500 text-purple-600 bg-purple-50'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <Users className="h-4 w-4" />
+                  <div className="text-left">
+                    <div className="font-medium">导师机制</div>
+                    <div className="text-xs text-gray-500 hidden lg:block">导师配置、汇报设置</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveDomainConfigTab('knowledge')}
+                  className={`flex items-center gap-2 px-3 py-3 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
+                    activeDomainConfigTab === 'knowledge'
+                      ? 'border-purple-500 text-purple-600 bg-purple-50'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <Database className="h-4 w-4" />
+                  <div className="text-left">
+                    <div className="font-medium">知识配置</div>
+                    <div className="text-xs text-gray-500 hidden lg:block">知识库、资产管理</div>
+                  </div>
+                </button>
+              </nav>
+            </div>
+
+            {/* Tab内容区域 */}
+            <div>
+              {renderDomainConfigContent()}
             </div>
           </div>
-        </div>
-      ) : (
-        // 全局配置
-        <div className="space-y-6">
-          {configurationSections.map((section) => {
+        )}
+
+        {/* 全局配置 - 仅在选择全局配置时显示 */}
+        {!currentDomain && (() => {
+          const sections = getConfigurationSections();
+
+          if (employee.enableMultiDomain) {
+            // 多领域全局配置：直接显示智能路由策略（无需标签导航）
+            const section = sections[0]; // 只有智能路由策略一个section
             const SectionComponent = section.component;
+
             return (
-              <div key={section.id} className="bg-white rounded-lg border border-gray-200">
+              <div className="bg-white rounded-lg border border-gray-200">
                 <div className="p-4 border-b border-gray-200">
                   <div className="flex items-center gap-3">
-                    <section.icon className="h-5 w-5 text-gray-600" />
+                    <section.icon className="h-5 w-5 text-blue-600" />
                     <h3 className="text-lg font-semibold text-gray-900">
                       {section.title}
                     </h3>
@@ -300,6 +551,8 @@ const ConfigurationHub: React.FC<ConfigurationHubProps> = ({
                 <div className="p-6">
                   <SectionComponent
                     employee={getCurrentEmployee()}
+                    selectedDomainId={selectedDomainId}
+                    domainConfig={currentDomain?.domainConfig}
                     editedEmployee={editedEmployee}
                     isEditing={isEditing}
                     onFieldChange={isEditing ? (field: any, value: any) => {
@@ -314,9 +567,100 @@ const ConfigurationHub: React.FC<ConfigurationHubProps> = ({
                 </div>
               </div>
             );
-          })}
-        </div>
-      )}
+          } else {
+            // 单领域配置：显示6个配置tab（无需领域选择器）
+            return (
+              <div className="bg-white p-6 rounded-lg border border-gray-200">
+                <div className="flex items-center gap-3 mb-4">
+                  <Settings className="h-5 w-5 text-gray-600" />
+                  <h3 className="text-lg font-semibold text-gray-900">配置管理</h3>
+                </div>
+
+                {/* 6个配置Tab导航 */}
+                <div className="border-b border-gray-200 mb-6">
+                  <nav className="flex space-x-0 overflow-x-auto">
+                    <button
+                      onClick={() => setActiveSingleDomainConfigTab('persona')}
+                      className={`flex items-center gap-2 px-3 py-3 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
+                        activeSingleDomainConfigTab === 'persona'
+                          ? 'border-gray-500 text-gray-600 bg-gray-50'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <Users className="h-4 w-4" />
+                      <div className="text-left">
+                        <div className="font-medium">人设配置</div>
+                        <div className="text-xs text-gray-500 hidden lg:block">角色背景、行为约束</div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setActiveSingleDomainConfigTab('prompt')}
+                      className={`flex items-center gap-2 px-3 py-3 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
+                        activeSingleDomainConfigTab === 'prompt'
+                          ? 'border-gray-500 text-gray-600 bg-gray-50'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <FileText className="h-4 w-4" />
+                      <div className="text-left">
+                        <div className="font-medium">Prompt工程</div>
+                        <div className="text-xs text-gray-500 hidden lg:block">提示词模板、策略</div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setActiveSingleDomainConfigTab('tools')}
+                      className={`flex items-center gap-2 px-3 py-3 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
+                        activeSingleDomainConfigTab === 'tools'
+                          ? 'border-gray-500 text-gray-600 bg-gray-50'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <Wrench className="h-4 w-4" />
+                      <div className="text-left">
+                        <div className="font-medium">工具管理</div>
+                        <div className="text-xs text-gray-500 hidden lg:block">工具权限、使用策略</div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setActiveSingleDomainConfigTab('mentor')}
+                      className={`flex items-center gap-2 px-3 py-3 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
+                        activeSingleDomainConfigTab === 'mentor'
+                          ? 'border-gray-500 text-gray-600 bg-gray-50'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <Users className="h-4 w-4" />
+                      <div className="text-left">
+                        <div className="font-medium">导师机制</div>
+                        <div className="text-xs text-gray-500 hidden lg:block">学习指导、反馈</div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setActiveSingleDomainConfigTab('knowledge')}
+                      className={`flex items-center gap-2 px-3 py-3 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
+                        activeSingleDomainConfigTab === 'knowledge'
+                          ? 'border-gray-500 text-gray-600 bg-gray-50'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <Database className="h-4 w-4" />
+                      <div className="text-left">
+                        <div className="font-medium">知识配置</div>
+                        <div className="text-xs text-gray-500 hidden lg:block">文档、FAQ、积累</div>
+                      </div>
+                    </button>
+                  </nav>
+                </div>
+
+                {/* 配置内容区域 */}
+                <div>
+                  {renderSingleDomainConfigContent()}
+                </div>
+              </div>
+            );
+          }
+        })()}
+      </div>
     </div>
   );
 };

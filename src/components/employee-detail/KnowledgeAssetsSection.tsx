@@ -21,12 +21,10 @@ import {
   Trash2,
   Search,
   Filter,
-  Brain,
-  Network
+  Brain
 } from 'lucide-react';
 import type { DigitalEmployee, KnowledgeDocument, FAQItem, LearnedKnowledge } from '../../types/employee';
 import { DataSourceIndicator } from '../common';
-import { KnowledgeGraphViewer } from '../knowledge';
 
 interface KnowledgeAssetsSectionProps {
   employee: DigitalEmployee;
@@ -109,13 +107,6 @@ const KnowledgeAssetsSection: React.FC<KnowledgeAssetsSectionProps> = ({
       icon: Brain,
       description: '自主学习、对话积累、知识沉淀',
       count: currentEmployee.knowledgeBase?.autoLearnedItems?.length || 0
-    },
-    {
-      id: 'graph',
-      title: '知识图谱',
-      icon: Network,
-      description: '知识关联、实体关系、图谱可视化',
-      count: currentEmployee.knowledgeBase?.knowledgeGraph?.entities?.length || 0
     }
   ];
 
@@ -518,92 +509,6 @@ const KnowledgeAssetsSection: React.FC<KnowledgeAssetsSectionProps> = ({
     );
   };
 
-  // 渲染知识图谱
-  const renderKnowledgeGraph = () => {
-    const knowledgeGraph = currentEmployee.knowledgeBase?.knowledgeGraph;
-
-    if (!knowledgeGraph) {
-      return (
-        <div className="text-center py-8 text-gray-500">
-          <Network className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-          <p>暂未生成知识图谱</p>
-          <p className="text-sm mt-1">需要先添加文档和FAQ才能生成知识图谱</p>
-          {isInternalEditing && (
-            <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-              生成知识图谱
-            </button>
-          )}
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-6">
-        {/* 知识图谱统计 */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white p-4 rounded-lg border border-gray-200 text-center">
-            <div className="text-2xl font-bold text-blue-600">{knowledgeGraph.entities.length}</div>
-            <div className="text-sm text-gray-600">实体节点</div>
-          </div>
-          <div className="bg-white p-4 rounded-lg border border-gray-200 text-center">
-            <div className="text-2xl font-bold text-green-600">{knowledgeGraph.relations.length}</div>
-            <div className="text-sm text-gray-600">关系连接</div>
-          </div>
-          <div className="bg-white p-4 rounded-lg border border-gray-200 text-center">
-            <div className="text-2xl font-bold text-purple-600">
-              {knowledgeGraph.statistics.avgConnectivity.toFixed(1)}
-            </div>
-            <div className="text-sm text-gray-600">平均连接度</div>
-          </div>
-        </div>
-
-        {/* 知识图谱可视化 */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="p-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-blue-600" />
-              知识图谱可视化
-            </h3>
-            <p className="text-sm text-gray-600 mt-1">
-              可视化展示知识实体间的关联关系，最后更新于 {new Date(knowledgeGraph.lastUpdated).toLocaleString()}
-            </p>
-          </div>
-          <KnowledgeGraphViewer
-            data={{
-              nodes: knowledgeGraph.entities.map(entity => ({
-                id: entity.id,
-                name: entity.name,
-                type: entity.type as any,
-                x: Math.random() * 600 + 100,
-                y: Math.random() * 400 + 100,
-                size: 20 + Math.random() * 15,
-                confidence: entity.confidence || 0.8,
-                properties: entity.properties
-              })),
-              edges: knowledgeGraph.relations.map(relation => ({
-                id: relation.id,
-                source: relation.sourceId,
-                target: relation.targetId,
-                type: relation.type as any,
-                weight: relation.strength || 0.5,
-                label: relation.label
-              })),
-              metadata: {
-                totalNodes: knowledgeGraph.entities.length,
-                totalEdges: knowledgeGraph.relations.length,
-                lastUpdated: knowledgeGraph.lastUpdated
-              }
-            }}
-            height={400}
-            interactive={true}
-            showControls={true}
-            onNodeClick={onNodeClick}
-            onEdgeClick={onEdgeClick}
-          />
-        </div>
-      </div>
-    );
-  };
 
   // 渲染Tab内容
   const renderTabContent = () => {
@@ -614,8 +519,6 @@ const KnowledgeAssetsSection: React.FC<KnowledgeAssetsSectionProps> = ({
         return renderFAQManagement();
       case 'learned':
         return renderLearnedKnowledge();
-      case 'graph':
-        return renderKnowledgeGraph();
       default:
         return renderDocumentManagement();
     }

@@ -4,25 +4,70 @@
  */
 
 import React, { useState } from 'react';
-import { Brain, Plus, Edit3, Trash2, Save, X, Eye, EyeOff, User, FileText, MessageSquare, AlertTriangle, Minus, Sparkles, Activity } from 'lucide-react';
+import { Brain, Plus, Edit3, Trash2, Save, X, Eye, EyeOff, User, FileText, MessageSquare, AlertTriangle, Minus, Sparkles } from 'lucide-react';
 import type { DigitalEmployee } from '../../types/employee';
-import CoreFeaturesDisplay from './CoreFeaturesDisplay';
 
 interface PersonaSectionProps {
   employee: DigitalEmployee;
+  selectedDomainId?: string;
+  domainConfig?: any;
+  editedEmployee?: DigitalEmployee | null;
+  isEditing?: boolean;
+  onFieldChange?: (field: any, value: any) => void;
 }
 
 const PersonaSection: React.FC<PersonaSectionProps> = ({
-  employee
+  employee,
+  selectedDomainId,
+  domainConfig,
+  editedEmployee,
+  isEditing = false,
+  onFieldChange
 }) => {
-  // 内部编辑状态管理
+  // 内部编辑状态管理（仅在没有外部编辑控制时使用）
   const [isInternalEditing, setIsInternalEditing] = useState(false);
   const [internalEditedEmployee, setInternalEditedEmployee] = useState<DigitalEmployee | null>(null);
+
+  // 确定当前的编辑状态
+  const currentlyEditing = isEditing || isInternalEditing;
+  const currentEmployee = editedEmployee || internalEditedEmployee || employee;
+
+  // 获取当前人设配置
+  const getCurrentPersonaConfig = () => {
+    const baseEmployee = currentEmployee;
+
+    // 如果是多领域模式且选择了具体领域
+    if (baseEmployee.enableMultiDomain && selectedDomainId && selectedDomainId !== 'global') {
+      const currentDomain = baseEmployee.multiDomainConfig?.domains?.find(d => d.id === selectedDomainId);
+      if (currentDomain?.domainConfig?.persona) {
+        // 返回领域特定的人设配置，与全局配置合并
+        return {
+          systemPrompt: currentDomain.domainConfig.persona.systemPrompt || baseEmployee.persona.systemPrompt || '',
+          characterBackground: currentDomain.domainConfig.persona.characterBackground || baseEmployee.persona.characterBackground || '',
+          personality: currentDomain.domainConfig.persona.personality || baseEmployee.persona.personality || '',
+          responsibilities: currentDomain.domainConfig.persona.responsibilities || baseEmployee.persona.responsibilities || [],
+          constraints: currentDomain.domainConfig.persona.constraints || baseEmployee.persona.constraints || [],
+          exampleDialogues: currentDomain.domainConfig.persona.exampleDialogues || baseEmployee.persona.exampleDialogues || []
+        };
+      }
+    }
+
+    // 默认返回全局人设配置
+    return baseEmployee.persona || {
+      systemPrompt: '',
+      characterBackground: '',
+      personality: '',
+      responsibilities: [],
+      constraints: [],
+      exampleDialogues: []
+    };
+  };
+
+  const currentPersonaConfig = getCurrentPersonaConfig();
 
   // 状态管理
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     basic: true,
-    coreFeatures: true,
     advanced: true,
     dialogues: true
   });
@@ -61,8 +106,45 @@ const PersonaSection: React.FC<PersonaSectionProps> = ({
     setInternalEditedEmployee(null);
   };
 
+  // 更新人设配置
   const updatePersona = (field: string, value: any) => {
-    if (internalEditedEmployee) {
+    if (onFieldChange && editedEmployee) {
+      // 使用外部编辑控制
+      const baseEmployee = editedEmployee;
+
+      // 如果是多领域模式且选择了具体领域
+      if (baseEmployee.enableMultiDomain && selectedDomainId && selectedDomainId !== 'global') {
+        // 更新领域特定配置
+        const domains = baseEmployee.multiDomainConfig?.domains || [];
+        const updatedDomains = domains.map(domain => {
+          if (domain.id === selectedDomainId) {
+            return {
+              ...domain,
+              domainConfig: {
+                ...domain.domainConfig,
+                persona: {
+                  ...domain.domainConfig?.persona,
+                  [field]: value
+                }
+              }
+            };
+          }
+          return domain;
+        });
+
+        onFieldChange('multiDomainConfig', {
+          ...baseEmployee.multiDomainConfig,
+          domains: updatedDomains
+        });
+      } else {
+        // 更新全局人设配置
+        onFieldChange('persona', {
+          ...baseEmployee.persona,
+          [field]: value
+        });
+      }
+    } else if (internalEditedEmployee) {
+      // 使用内部编辑状态
       setInternalEditedEmployee({
         ...internalEditedEmployee,
         persona: {
@@ -92,7 +174,7 @@ const PersonaSection: React.FC<PersonaSectionProps> = ({
       tags: newDialogue.tags ? newDialogue.tags.split(',').map(t => t.trim()).filter(Boolean) : []
     };
 
-    const currentDialogues = internalEditedEmployee?.persona?.exampleDialogues || [];
+    const currentDialogues = currentPersonaConfig.exampleDialogues || [];
     updatePersona('exampleDialogues', [...currentDialogues, dialogue]);
 
     setNewDialogue({ userInput: '', expectedResponse: '', tags: '' });
@@ -100,7 +182,7 @@ const PersonaSection: React.FC<PersonaSectionProps> = ({
 
   // 删除对话示例
   const removeDialogue = (dialogueId: string) => {
-    const currentDialogues = internalEditedEmployee?.persona?.exampleDialogues || [];
+    const currentDialogues = currentPersonaConfig.exampleDialogues || [];
     updatePersona('exampleDialogues', currentDialogues.filter(d => d.id !== dialogueId));
   };
 
@@ -173,26 +255,26 @@ const PersonaSection: React.FC<PersonaSectionProps> = ({
   // 添加/移除职责
   const addResponsibility = () => {
     if (!newResponsibility.trim()) return;
-    const currentResponsibilities = internalEditedEmployee?.persona?.responsibilities || [];
+    const currentResponsibilities = currentPersonaConfig.responsibilities || [];
     updatePersona('responsibilities', [...currentResponsibilities, newResponsibility.trim()]);
     setNewResponsibility('');
   };
 
   const removeResponsibility = (index: number) => {
-    const currentResponsibilities = internalEditedEmployee?.persona?.responsibilities || [];
+    const currentResponsibilities = currentPersonaConfig.responsibilities || [];
     updatePersona('responsibilities', currentResponsibilities.filter((_, i) => i !== index));
   };
 
   // 添加/移除约束
   const addConstraint = () => {
     if (!newConstraint.trim()) return;
-    const currentConstraints = internalEditedEmployee?.persona?.constraints || [];
+    const currentConstraints = currentPersonaConfig.constraints || [];
     updatePersona('constraints', [...currentConstraints, newConstraint.trim()]);
     setNewConstraint('');
   };
 
   const removeConstraint = (index: number) => {
-    const currentConstraints = internalEditedEmployee?.persona?.constraints || [];
+    const currentConstraints = currentPersonaConfig.constraints || [];
     updatePersona('constraints', currentConstraints.filter((_, i) => i !== index));
   };
 
@@ -205,37 +287,46 @@ const PersonaSection: React.FC<PersonaSectionProps> = ({
           <span className="text-xs bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 px-2 py-1 rounded-full">
             增强版
           </span>
-          {isInternalEditing && (
+          {currentlyEditing && (
             <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-medium">
               编辑中
             </span>
           )}
+          {/* 领域配置指示器 */}
+          {selectedDomainId && selectedDomainId !== 'global' && (
+            <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
+              领域配置
+            </span>
+          )}
         </div>
-        {!isInternalEditing ? (
-          <button
-            onClick={handleInternalEdit}
-            className="text-purple-600 hover:text-purple-700 flex items-center gap-1 px-3 py-2 border border-purple-200 rounded-lg hover:bg-purple-50"
-          >
-            <Edit3 className="h-4 w-4" />
-            编辑
-          </button>
-        ) : (
-          <div className="flex gap-2">
+        {/* 仅在没有外部编辑控制时显示内部编辑按钮 */}
+        {!onFieldChange && (
+          !isInternalEditing ? (
             <button
-              onClick={handleInternalCancel}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center gap-1"
+              onClick={handleInternalEdit}
+              className="text-purple-600 hover:text-purple-700 flex items-center gap-1 px-3 py-2 border border-purple-200 rounded-lg hover:bg-purple-50"
             >
-              <X className="h-4 w-4" />
-              取消
+              <Edit3 className="h-4 w-4" />
+              编辑
             </button>
-            <button
-              onClick={handleInternalSave}
-              className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-1"
-            >
-              <Save className="h-4 w-4" />
-              保存
-            </button>
-          </div>
+          ) : (
+            <div className="flex gap-2">
+              <button
+                onClick={handleInternalCancel}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center gap-1"
+              >
+                <X className="h-4 w-4" />
+                取消
+              </button>
+              <button
+                onClick={handleInternalSave}
+                className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-1"
+              >
+                <Save className="h-4 w-4" />
+                保存
+              </button>
+            </div>
+          )
         )}
       </div>
 
@@ -266,7 +357,7 @@ const PersonaSection: React.FC<PersonaSectionProps> = ({
                     <FileText className="h-4 w-4" />
                     系统提示词 <span className="text-red-500">*</span>
                   </label>
-                  {isInternalEditing && promptTemplates.length > 0 && (
+                  {currentlyEditing && promptTemplates.length > 0 && (
                     <div className="flex items-center gap-2">
                       <Sparkles className="h-4 w-4 text-blue-500" />
                       <span className="text-xs text-gray-500">快速应用模板：</span>
@@ -282,9 +373,9 @@ const PersonaSection: React.FC<PersonaSectionProps> = ({
                     </div>
                   )}
                 </div>
-                {isInternalEditing ? (
+                {currentlyEditing ? (
                   <textarea
-                    value={internalEditedEmployee?.persona.systemPrompt || ''}
+                    value={currentPersonaConfig.systemPrompt || ''}
                     onChange={(e) => updatePersona('systemPrompt', e.target.value)}
                     rows={8}
                     placeholder="定义数字员工的角色、职责、性格和对话风格..."
@@ -293,7 +384,7 @@ const PersonaSection: React.FC<PersonaSectionProps> = ({
                 ) : (
                   <div className="bg-gray-50 p-3 rounded-lg border">
                     <p className="text-gray-900 whitespace-pre-wrap">
-                      {employee.persona.systemPrompt || '暂未配置系统提示词'}
+                      {currentPersonaConfig.systemPrompt || '暂未配置系统提示词'}
                     </p>
                   </div>
                 )}
@@ -307,9 +398,9 @@ const PersonaSection: React.FC<PersonaSectionProps> = ({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   角色背景故事
                 </label>
-                {isInternalEditing ? (
+                {currentlyEditing ? (
                   <textarea
-                    value={internalEditedEmployee?.persona.characterBackground || ''}
+                    value={currentPersonaConfig.characterBackground || ''}
                     onChange={(e) => updatePersona('characterBackground', e.target.value)}
                     rows={4}
                     placeholder="描述数字员工的背景故事、工作经历、专业特长等..."
@@ -318,7 +409,7 @@ const PersonaSection: React.FC<PersonaSectionProps> = ({
                 ) : (
                   <div className="bg-gray-50 p-3 rounded-lg border">
                     <p className="text-gray-900 whitespace-pre-wrap">
-                      {employee.persona.characterBackground || '暂未配置角色背景'}
+                      {currentPersonaConfig.characterBackground || '暂未配置角色背景'}
                     </p>
                   </div>
                 )}
@@ -332,17 +423,17 @@ const PersonaSection: React.FC<PersonaSectionProps> = ({
                 {/* 性格特点 */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">性格特点</label>
-                  {isInternalEditing ? (
+                  {currentlyEditing ? (
                     <input
                       type="text"
-                      value={internalEditedEmployee?.persona.personality || ''}
+                      value={currentPersonaConfig.personality || ''}
                       onChange={(e) => updatePersona('personality', e.target.value)}
                       placeholder="如：友好、专业、耐心、热情..."
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     />
                   ) : (
                     <p className="text-gray-900 p-3 bg-gray-50 rounded-lg">
-                      {employee.persona.personality || '暂未设置性格特点'}
+                      {currentPersonaConfig.personality || '暂未设置性格特点'}
                     </p>
                   )}
                 </div>
@@ -352,10 +443,10 @@ const PersonaSection: React.FC<PersonaSectionProps> = ({
                   <label className="block text-sm font-medium text-gray-700 mb-2">主要职责</label>
                   <div className="space-y-2">
                     <div className="flex flex-wrap gap-2">
-                      {(isInternalEditing ? internalEditedEmployee?.persona?.responsibilities : employee.persona.responsibilities || []).map((resp, index) => (
+                      {(currentPersonaConfig.responsibilities || []).map((resp, index) => (
                         <div key={index} className="flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs">
                           <span>{resp}</span>
-                          {isInternalEditing && (
+                          {currentlyEditing && (
                             <button
                               onClick={() => removeResponsibility(index)}
                               className="text-blue-600 hover:text-red-600 ml-1"
@@ -366,7 +457,7 @@ const PersonaSection: React.FC<PersonaSectionProps> = ({
                         </div>
                       ))}
                     </div>
-                    {isInternalEditing && (
+                    {currentlyEditing && (
                       <div className="flex gap-2">
                         <input
                           type="text"
@@ -396,44 +487,6 @@ const PersonaSection: React.FC<PersonaSectionProps> = ({
           )}
         </div>
 
-        {/* 核心特征配置 */}
-        <div className="border border-gray-200 rounded-lg">
-          <button
-            onClick={() => toggleSection('coreFeatures')}
-            className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
-          >
-            <div className="flex items-center gap-2">
-              <Activity className="h-4 w-4 text-indigo-600" />
-              <span className="font-medium text-gray-900">核心特征配置</span>
-              <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">
-                性格・工作・沟通
-              </span>
-            </div>
-            {expandedSections.coreFeatures ? (
-              <EyeOff className="h-4 w-4 text-gray-500" />
-            ) : (
-              <Eye className="h-4 w-4 text-gray-500" />
-            )}
-          </button>
-
-          {expandedSections.coreFeatures && (
-            <div className="px-4 pb-4 space-y-4 border-t border-gray-100">
-              <CoreFeaturesDisplay
-                employee={employee}
-                editedEmployee={internalEditedEmployee}
-                isEditing={isInternalEditing}
-                onFieldChange={(field, value) => {
-                  if (internalEditedEmployee) {
-                    setInternalEditedEmployee({
-                      ...internalEditedEmployee,
-                      [field]: value
-                    });
-                  }
-                }}
-              />
-            </div>
-          )}
-        </div>
 
         {/* 高级人设配置 */}
         <div className="border border-gray-200 rounded-lg">
@@ -463,10 +516,10 @@ const PersonaSection: React.FC<PersonaSectionProps> = ({
                   行为约束
                 </label>
                 <div className="space-y-2">
-                  {(isInternalEditing ? internalEditedEmployee?.persona?.constraints : employee.persona?.constraints || []).map((constraint, index) => (
+                  {(currentPersonaConfig.constraints || []).map((constraint, index) => (
                     <div key={index} className="flex items-center gap-2 p-2 bg-orange-50 border border-orange-200 rounded-lg">
                       <span className="text-orange-800 text-sm flex-1">{constraint}</span>
-                      {isInternalEditing && (
+                      {currentlyEditing && (
                         <button
                           onClick={() => removeConstraint(index)}
                           className="text-orange-600 hover:text-red-600 p-1"
@@ -477,7 +530,7 @@ const PersonaSection: React.FC<PersonaSectionProps> = ({
                     </div>
                   ))}
 
-                  {isInternalEditing && (
+                  {currentlyEditing && (
                     <div className="flex gap-2">
                       <input
                         type="text"
@@ -520,7 +573,7 @@ const PersonaSection: React.FC<PersonaSectionProps> = ({
               <MessageSquare className="h-4 w-4 text-green-600" />
               <span className="font-medium text-gray-900">对话示例管理</span>
               <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
-                {(isInternalEditing ? internalEditedEmployee?.persona?.exampleDialogues : employee.persona?.exampleDialogues || []).length} 个示例
+                {(currentPersonaConfig.exampleDialogues || []).length} 个示例
               </span>
             </div>
             {expandedSections.dialogues ? (
@@ -533,7 +586,7 @@ const PersonaSection: React.FC<PersonaSectionProps> = ({
           {expandedSections.dialogues && (
             <div className="px-4 pb-4 space-y-4 border-t border-gray-100">
               {/* 现有对话示例 */}
-              {(isInternalEditing ? internalEditedEmployee?.persona?.exampleDialogues : employee.persona?.exampleDialogues || []).length === 0 ? (
+              {(currentPersonaConfig.exampleDialogues || []).length === 0 ? (
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                   <MessageSquare className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-gray-500 font-medium">暂无对话示例</p>
@@ -543,7 +596,7 @@ const PersonaSection: React.FC<PersonaSectionProps> = ({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {(isInternalEditing ? internalEditedEmployee?.persona?.exampleDialogues : employee.persona?.exampleDialogues || []).map((dialogue, index) => (
+                  {(currentPersonaConfig.exampleDialogues || []).map((dialogue, index) => (
                     <div key={dialogue.id} className="border border-gray-200 rounded-lg p-4 bg-gradient-to-r from-green-50 to-blue-50">
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex items-center gap-2">
@@ -558,7 +611,7 @@ const PersonaSection: React.FC<PersonaSectionProps> = ({
                             </div>
                           )}
                         </div>
-                        {isInternalEditing && (
+                        {currentlyEditing && (
                           <div className="flex gap-1">
                             <button
                               onClick={() => setEditingDialogue(editingDialogue === dialogue.id ? null : dialogue.id)}
@@ -592,7 +645,7 @@ const PersonaSection: React.FC<PersonaSectionProps> = ({
               )}
 
               {/* 添加新对话示例 */}
-              {isInternalEditing && (
+              {currentlyEditing && (
                 <div className="border-2 border-dashed border-green-300 rounded-lg p-4 bg-green-50">
                   <div className="flex items-center gap-2 mb-4">
                     <Plus className="h-5 w-5 text-green-600" />

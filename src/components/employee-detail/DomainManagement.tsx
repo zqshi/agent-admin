@@ -23,11 +23,13 @@ import { DigitalEmployee, DomainConfig, MultiDomainConfig } from '../../types/em
 interface DomainManagementProps {
   employee: DigitalEmployee;
   onEmployeeChange?: (employee: DigitalEmployee) => void;
+  hideListAndDetails?: boolean;
 }
 
 const DomainManagement: React.FC<DomainManagementProps> = ({
   employee,
-  onEmployeeChange
+  onEmployeeChange,
+  hideListAndDetails = false
 }) => {
   const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null);
   const [showAddDomainModal, setShowAddDomainModal] = useState(false);
@@ -474,34 +476,36 @@ const DomainManagement: React.FC<DomainManagementProps> = ({
         </div>
       </div>
 
-      {/* 领域列表 */}
-      <div className="bg-white p-6 rounded-lg border border-gray-200">
-        <h4 className="text-lg font-medium text-gray-900 mb-4">领域列表</h4>
+      {/* 领域列表 - 根据 hideListAndDetails 属性控制显示 */}
+      {!hideListAndDetails && (
+        <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <h4 className="text-lg font-medium text-gray-900 mb-4">领域列表</h4>
 
-        {(currentConfig.multiDomainConfig?.domains?.length || 0) === 0 ? (
-          <div className="text-center py-12 bg-gray-50 rounded-lg">
-            <Layers className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <h4 className="text-lg font-medium text-gray-900 mb-2">暂无配置领域</h4>
-            <p className="text-gray-600 mb-4">开始添加第一个业务领域来配置多领域功能</p>
-            <button
-              onClick={() => setShowAddDomainModal(true)}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              添加领域
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {(currentConfig.multiDomainConfig?.domains || []).map(domain => (
-              <DomainCard key={domain.id} domain={domain} />
-            ))}
-          </div>
-        )}
-      </div>
+          {(currentConfig.multiDomainConfig?.domains?.length || 0) === 0 ? (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <Layers className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <h4 className="text-lg font-medium text-gray-900 mb-2">暂无配置领域</h4>
+              <p className="text-gray-600 mb-4">开始添加第一个业务领域来配置多领域功能</p>
+              <button
+                onClick={() => setShowAddDomainModal(true)}
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                添加领域
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {(currentConfig.multiDomainConfig?.domains || []).map(domain => (
+                <DomainCard key={domain.id} domain={domain} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
-      {/* 选中领域的详情 */}
-      {selectedDomainId && (
+      {/* 选中领域的详情 - 根据 hideListAndDetails 属性控制显示 */}
+      {!hideListAndDetails && selectedDomainId && (
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <h4 className="text-lg font-medium text-gray-900 mb-4">领域详情</h4>
           {(() => {
@@ -573,7 +577,7 @@ const DomainManagement: React.FC<DomainManagementProps> = ({
                     <span className="font-medium">高级配置</span>
                   </div>
                   <p className="text-sm text-blue-600">
-                    请在“配置中心”Tab中管理该领域的人设、Prompt、工具等详细配置。
+                    请在"配置中心"Tab中管理该领域的人设、Prompt、工具等详细配置。
                   </p>
                 </div>
               </div>

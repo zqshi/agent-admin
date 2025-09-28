@@ -12,7 +12,6 @@ export { ConfigVersionManager } from './ConfigVersionManager';
 export { default as EnhancedMetricsSection } from './EnhancedMetricsSection';
 export { default as InsightsCenter } from './InsightsCenter';
 export { default as ConfigurationCenter } from './ConfigurationCenter';
-export { default as RoleDefinitionSection } from './RoleDefinitionSection';
 export { default as CapabilityConfigSection } from './CapabilityConfigSection';
 export { default as KnowledgeAssetsSection } from './KnowledgeAssetsSection';
 export { default as RoutingStrategySection } from './RoutingStrategySection';
