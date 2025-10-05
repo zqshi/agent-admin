@@ -19,7 +19,7 @@ export type DataSourceType =
 export type DataSourceSize = 'sm' | 'md' | 'lg';
 
 // 显示样式
-export type DataSourceVariant = 'badge' | 'inline' | 'tooltip';
+export type DataSourceVariant = 'badge' | 'inline' | 'tooltip' | 'dot';
 
 export interface DataSourceIndicatorProps {
   /** 数据来源类型 */
@@ -232,12 +232,27 @@ const DataSourceIndicator: React.FC<DataSourceIndicatorProps> = ({
     </div>
   );
 
+  // 渲染点样式
+  const renderDot = () => (
+    <span
+      className={`inline-flex items-center ${onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+      onClick={onClick}
+      title={`${config.description}${lastUpdated ? ` • ${formatTimestamp(lastUpdated)}` : ''}`}
+    >
+      <span
+        className={`h-2 w-2 rounded-full ${config.badgeClass.replace('bg-', 'bg-').replace('text-', '')} ${className}`}
+      />
+    </span>
+  );
+
   // 根据样式类型渲染不同的组件
   switch (variant) {
     case 'inline':
       return renderInline();
     case 'tooltip':
       return renderTooltip();
+    case 'dot':
+      return renderDot();
     case 'badge':
     default:
       return renderBadge();

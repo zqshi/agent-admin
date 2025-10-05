@@ -740,14 +740,14 @@ const CapabilityConfigSection: React.FC<CapabilityConfigSectionProps> = ({
               全局配置
             </span>
           )}
-          {currentlyEditing && (
+          {isInternalEditing && (
             <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
               编辑模式
             </span>
           )}
         </div>
 
-        {!currentlyEditing ? (
+        {!isInternalEditing ? (
           <button
             onClick={handleInternalEdit}
             className="text-blue-600 hover:text-blue-700 flex items-center gap-1 px-3 py-2 border border-blue-200 rounded-lg hover:bg-blue-50"

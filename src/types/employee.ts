@@ -233,6 +233,9 @@ export interface DigitalEmployee extends BaseEmployee {
   // 运行指标
   metrics: EmployeeMetrics;
 
+  // 高级配置（向后兼容）
+  advancedConfig?: Record<string, any>;
+
   // 配置解析缓存（运行时使用）
   _resolvedConfigs?: Map<string, ResolvedEmployeeConfig>;
 }
@@ -425,6 +428,9 @@ export interface KnowledgeGraphData {
     relationCount: number;
     avgConnectivity: number;
   };
+  // 向后兼容的别名
+  nodes?: GraphEntity[];
+  edges?: GraphRelation[];
 }
 
 export interface GraphEntity {
